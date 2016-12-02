@@ -36,7 +36,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /**
- * CaRT (Collective and RPC Transport) APIs.
+ * CaRT (Collective and RPC Transport) APIs
  */
 
 #ifndef __CRT_API_H__
@@ -60,21 +60,22 @@ extern "C" {
 /**
  * Initialize CRT transport layer.
  *
- * \param cli_grpid [IN]	client-side primary group ID, be ignored for
+ * \param cli_grpid [IN]	Client-side primary group ID, can be ignored for
  *				server-side. User can provide a NULL value in
- *				that case CRT_DEFAULT_CLI_GRPID will be used.
- * \param srv_grpid [IN]	server-side primary group ID, client will attach
+ *				cases that CRT_DEFAULT_CLI_GRPID will be used.
+ * \param srv_grpid [IN]	Server-side primary group ID, the client will attach
  *				to it when initializing. User can provide a NULL
- *				value in that case CRT_DEFAULT_SRV_GRPID will be
+ *				value in cases that CRT_DEFAULT_SRV_GRPID will be
  *				used.
- * \param server [IN]		zero means pure client, otherwise will enable
- *				the server which listens for incoming connection
- *				request.
- * \param flags [IN]		bit flags, /see enum crt_init_flag_bits.
+ * \param server [IN]		Zero means pure client, otherwise will enable
+ *				the server that listens for incoming connection
+ *				requests.
+
+ * \param flags [IN]		Bit flags, /see enum crt_init_flag_bits.
  *
- * \return			zero on success, negative value if error
+ * \return			Zero on success, negative value if error.
  *
- * Notes: crt_init() is a collective call which means every caller process
+ * Notes: crt_init() is a collective call, which means every caller process
  *	  should make the call collectively, as now it will internally call
  *	  PMIx_Fence.
  */
@@ -84,12 +85,12 @@ crt_init(crt_group_id_t cli_grpid, crt_group_id_t srv_grpid, uint32_t flags);
 /**
  * Create CRT transport context.
  *
- * \param arg [IN]		input argument, now the only usage is passing
- *				argobots pool pointer. If user does not use
- *				argobots it should pass in NULL.
- * \param crt_ctx [OUT]		created CRT transport context
+ * \param arg [IN]		Input argument, now the only usage is passing the
+ *				argobots pool pointer. If you do not use
+ *				argobots, it should pass in NULL.
+ * \param crt_ctx [OUT]		Created CRT transport context.
  *
- * \return			zero on success, negative value if error
+ * \return			Zero on success, negative value if error.
  */
 int
 crt_context_create(void *arg, crt_context_t *crt_ctx);
@@ -97,17 +98,17 @@ crt_context_create(void *arg, crt_context_t *crt_ctx);
 /**
  * Destroy CRT transport context.
  *
- * \param crt_ctx [IN]          CRT transport context to be destroyed
+ * \param crt_ctx [IN]          CRT transport context to be destroyed.
  * \param force [IN]            1) force == 0
- *                                 return as -EBUSY if there is any in-flight
- *                                 RPC request, so caller can wait its
+ *                                 Return as -EBUSY if there is any in-flight
+ *                                 RPC request, so the caller can wait its
  *                                 completion or timeout.
  *                              2) force != 0
- *                                 will cancel all in-flight RPC requests.
+ *                                 This will cancel all in-flight RPC requests.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  *
- * Notes: currently there is no in-flight list/queue in mercury.
+ * Notes: There is currently no in-flight list/queue in Mercury.
  */
 int
 crt_context_destroy(crt_context_t crt_ctx, int force);
@@ -116,10 +117,10 @@ crt_context_destroy(crt_context_t crt_ctx, int force);
  * Query the index of the transport context, the index value ranges in
  * [0, ctx_num - 1].
  *
- * \param crt_ctx [IN]          CRT transport context
- * \param ctx_idx [OUT]         pointer to the returned index
+ * \param crt_ctx [IN]          CRT transport context.
+ * \param ctx_idx [OUT]         Pointer to the returned index.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_context_idx(crt_context_t crt_ctx, int *ctx_idx);
@@ -127,9 +128,9 @@ crt_context_idx(crt_context_t crt_ctx, int *ctx_idx);
 /**
  * Query the total number of the transport contexts.
  *
- * \param ctx_num [OUT]         pointer to the returned number
+ * \param ctx_num [OUT]         Pointer to the returned number.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_context_num(int *ctx_num);
@@ -137,10 +138,10 @@ crt_context_num(int *ctx_num);
 /**
  * Finalize CRT transport layer.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  *
- * Notes: crt_finalize() is a collective call which means every caller process
- *	  should make the call collectively, as now it will internally call
+ * Notes: crt_finalize() is a collective call which means that every caller process
+ *	  should make the call collectively, as it will now internally call
  *	  PMIx_Fence.
  */
 int
@@ -150,18 +151,18 @@ crt_finalize(void);
  * Progress CRT transport layer.
  *
  * \param crt_ctx	[IN]	CRT transport context
- * \param timeout	[IN]	how long is caller going to wait (micro-second)
- *				if \a timeout > 0 when there is no operation to
- *				progress. Can return when one or more operation
+ * \param timeout	[IN]	How long the caller is going to wait (in micro-seconds).
+ *				If \a timeout > 0 when there is no operation to
+ *				progress. Can return when one or more operations
  *				progressed.
- *				zero means no waiting and -1 waits indefinitely.
- * \param cond_cb	[IN]	optional progress condition callback.
+ *				Zero means no waiting and -1 waits indefinitely.
+ * \param cond_cb	[IN]	Optional progress condition callback.
  *				CRT internally calls this function, when it
  *				returns non-zero then stops the progressing or
  *				waiting and returns.
- * \param arg		[IN]	argument to cond_cb.
+ * \param arg		[IN]	Argument to cond_cb.
  *
- * \return			zero on success, negative value if error
+ * \return			Zero on success, negative value if error.
  */
 int
 crt_progress(crt_context_t crt_ctx, int64_t timeout,
@@ -170,28 +171,28 @@ crt_progress(crt_context_t crt_ctx, int64_t timeout,
 /**
  * Create a RPC request.
  *
- * \param crt_ctx [IN]          CRT transport context
- * \param tgt_ep [IN]           RPC target endpoint
- * \param opc [IN]              RPC request opcode
- * \param req [OUT]             pointer to created request
+ * \param crt_ctx [IN]          CRT transport context.
+ * \param tgt_ep [IN]           RPC target endpoint.
+ * \param opc [IN]              RPC request opcode.
+ * \param req [OUT]             Pointer to the created request.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  *
- * Notes: the crt_req_create will internally allocate buffers for input and
+ * Notes: The crt_req_create will internally allocate buffers for input and
  *        output parameters (crt_rpc_t::dr_input and crt_rpc_t::dr_output), and
  *        sets the appropriate size (crt_rpc_t::dr_input_size/dr_output_size).
- *        User needs not to allocate extra input/output buffers. After the
- *        request created, user can directly fill input parameters into
+ *        You do not need to allocate extra input/output buffers. After the
+ *        request is created, you can directly fill the input parameters into
  *        crt_rpc_t::dr_input and send the RPC request.
  *        When the RPC request finishes executing, CRT internally frees the
- *        RPC request and the input/output buffers, so user needs not to call
+ *        RPC request and the input/output buffers, so you don't have to call
  *        crt_req_destroy (no such API exported) or free the input/output
  *        buffers.
- *        Similarly, on the RPC server-side, when a RPC request received, CRT
+ *        Similarly, on the RPC server-side, when an RPC request is received, CRT
  *        internally allocates input/output buffers as well, and internally
- *        frees those buffers when the reply is sent out. So in user's RPC
- *        handler it needs not to allocate extra input/output buffers, and also
- *        needs not to free input/output buffers in the completion callback of
+ *        frees those buffers when the reply is sent out. Therefore, your RPC
+ *        handler does not need to allocate extra input/output buffers, and also
+ *        does not need to free input/output buffers in the completion callback of
  *        crt_reply_send.
  */
 int
@@ -201,15 +202,15 @@ crt_req_create(crt_context_t crt_ctx, crt_endpoint_t tgt_ep, crt_opcode_t opc,
 /**
  * Add reference of the RPC request.
  *
- * The typical usage is that user needs to do some asynchronous operations in
- * RPC handler and does not want to block in RPC handler, then it can call this
- * API to hold a reference and return. Later when that asynchronous operation is
- * done, it can release the reference (/see crt_req_decref). CRT internally
+ * The typical usage is that you need to do some asynchronous operations in
+ * the RPC handler and do not want to block the RPC handler. You can call this
+ * API to hold a reference and return. When the asynchronous operation is
+ * complete, it can release the reference (/see crt_req_decref). CRT internally
  * frees the resource of the RPC request when its reference drops to zero.
  *
- * \param req [IN]              pointer to RPC request
+ * \param req [IN]              Pointer to RPC request.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_req_addref(crt_rpc_t *req);
@@ -217,42 +218,42 @@ crt_req_addref(crt_rpc_t *req);
 /**
  * Decrease reference of the RPC request. /see crt_req_addref.
  *
- * \param req [IN]              pointer to RPC request
+ * \param req [IN]              Pointer to RPC request.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_req_decref(crt_rpc_t *req);
 
 /**
- * Send a RPC request. In the case of sending failure, CRT internally destroy
- * the request \a req. In the case of succeed, the \a req will be internally
- * destroyed when the reply received. User needs not call crt_req_decref() to
+ * Send an RPC request. In the case of a sending failure, CRT will internally destroy
+ * the request \a req. When successful, the \a req will be internally
+ * destroyed when the reply is received. You don't need to call crt_req_decref() to
  * destroy the request in either case.
  *
- * \param req [IN]              pointer to RPC request
- * \param complete_cb [IN]      completion callback, will be triggered when the
+ * \param req [IN]              Pointer to the RPC request.
+ * \param complete_cb [IN]      Completion callback, will be triggered when the
  *                              RPC request's reply arrives, in the context of
- *                              user's calling of crt_progress().
- * \param arg [IN]              arguments for the \a complete_cb
+ *                              your calling of crt_progress().
+ * \param arg [IN]              Arguments for the \a complete_cb.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  *
- * Notes: the crt_rpc_t is exported to user, caller should fill the
- *        crt_rpc_t::dr_input and before sending the RPC request.
+ * Notes: The crt_rpc_t is exported to the user, the caller should fill the
+ *        crt_rpc_t::dr_input before sending the RPC request.
  *        \see crt_req_create.
  */
 int
 crt_req_send(crt_rpc_t *req, crt_cb_t complete_cb, void *arg);
 
 /**
- * Send a RPC reply.
+ * Send an RPC reply.
  *
- * \param req [IN]              pointer to RPC request
+ * \param req [IN]              Pointer to the RPC request.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  *
- * Notes: the crt_rpc_t is exported to user, caller should fill the
+ * Notes: The crt_rpc_t is exported to the user, the caller should fill the
  *        crt_rpc_t::dr_output before sending the RPC reply.
  *        \see crt_req_create.
  */
@@ -260,11 +261,11 @@ int
 crt_reply_send(crt_rpc_t *req);
 
 /**
- * Return request buffer
+ * Return request buffer.
  *
- * \param req [IN]              pointer to RPC request
+ * \param req [IN]              Pointer to the RPC request.
  *
- * \return                      pointer to request buffer
+ * \return                      Pointer to the request buffer.
  */
 static inline void *
 crt_req_get(crt_rpc_t *rpc)
@@ -275,9 +276,9 @@ crt_req_get(crt_rpc_t *rpc)
 /**
  * Return reply buffer
  *
- * \param req [IN]              pointer to RPC request
+ * \param req [IN]              Pointer to the RPC request.
  *
- * \return                      pointer to reply buffer
+ * \return                      Pointer to reply buffer.
  */
 static inline void *
 crt_reply_get(crt_rpc_t *rpc)
@@ -288,12 +289,12 @@ crt_reply_get(crt_rpc_t *rpc)
 /**
  * Abort a RPC request.
  *
- * \param req [IN]              pointer to RPC request
+ * \param req [IN]              Pointer to the RPC request.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  *                              If the RPC has been sent out by crt_req_send,
  *                              the completion callback will be called with
- *                              CER_CANCELED set to crt_cb_info::dci_rc for a
+ *                              CER_CANCELED set to crt_cb_info::dci_rc for
  *                              successful aborting.
  */
 int
@@ -302,40 +303,41 @@ crt_req_abort(crt_rpc_t *req);
 /**
  * Abort all in-flight RPC requests targeting to an endpoint.
  *
- * \param ep [IN]		endpoint address
+ * \param ep [IN]		Endpoint address.
  *
- * \return			zero on success, negative value if error
+ * \return			Zero on success, negative value if error.
  */
 int
 crt_ep_abort(crt_endpoint_t ep);
 
 /**
- * Dynamically register a RPC at client-side.
+ * Dynamically register an RPC at the client-side.
  *
- * \param opc [IN]              unique opcode for the RPC
- * \param drf [IN]		pointer to the request format, which
+ * \param opc [IN]              Unique opcode for the RPC
+ * \param drf [IN]		Pointer to the request format, which
  *                              describe the request format and provide
- *                              callback to pack/unpack each items in the
+ *                              callback to pack/unpack each item in the
  *                              request.
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_rpc_register(crt_opcode_t opc, struct crt_req_format *drf);
 
 /**
- * Dynamically register a RPC at server-side.
+ * Dynamically register an RPC at the server-side.
  *
- * \param opc [IN]              unique opcode for the RPC
- * \param drf [IN]		pointer to the request format, which
- *                              describe the request format and provide
- *                              callback to pack/unpack each items in the
+ * \param opc [IN]              Unique opcode for the RPC.
+ * \param drf [IN]		A pointer to the request format, which
+ *                              describes the request format and provides
+
+ *                              callback to pack/unpack each item in the
  *                              request.
- * \param rpc_handler [IN]      pointer to RPC handler which will be triggered
- *                              when RPC request opcode associated with rpc_name
- *                              is received. Will return -CER_INVAL if pass in
+ * \param rpc_handler [IN]      A pointer to the RPC handler which will be triggered
+ *                              when an RPC request opcode associated with rpc_name
+ *                              is received. Will return -CER_INVAL if pass in the
  *                              NULL rpc_handler.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_rpc_srv_register(crt_opcode_t opc, struct crt_req_format *drf,
@@ -348,12 +350,12 @@ crt_rpc_srv_register(crt_opcode_t opc, struct crt_req_format *drf,
 /**
  * Create a bulk handle
  *
- * \param crt_ctx [IN]          CRT transport context
- * \param sgl [IN]              pointer to buffer segment list
- * \param bulk_perm [IN]        bulk permission, \see crt_bulk_perm_t
- * \param bulk_hdl [OUT]        created bulk handle
+ * \param crt_ctx [IN]          CRT transport context.
+ * \param sgl [IN]              A pointer to the buffer segment list.
+ * \param bulk_perm [IN]        Bulk permission, \see crt_bulk_perm_t.
+ * \param bulk_hdl [OUT]        The created bulk handle.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_bulk_create(crt_context_t crt_ctx, crt_sg_list_t *sgl,
@@ -363,16 +365,16 @@ crt_bulk_create(crt_context_t crt_ctx, crt_sg_list_t *sgl,
  * Access local bulk handle to retrieve the sgl (segment list) associated
  * with it.
  *
- * \param bulk_hdl [IN]         bulk handle
- * \param sgl[IN/OUT]           pointer to buffer segment list
- *                              Caller should provide a valid sgl pointer, if
+ * \param bulk_hdl [IN]         The bulk handle.
+ * \param sgl[IN/OUT]           A pointer to the buffer segment list.
+ *                              The caller should provide a valid sgl pointer. If
  *                              sgl->sg_nr.num is too small, -CER_TRUNC will be
- *                              returned and the needed number of iovs be set at
+ *                              returned and the needed number of iovs will be set at
  *                              sgl->sg_nr.num_out.
  *                              On success, sgl->sg_nr.num_out will be set as
  *                              the actual number of iovs.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_bulk_access(crt_bulk_t bulk_hdl, crt_sg_list_t *sgl);
@@ -380,26 +382,27 @@ crt_bulk_access(crt_bulk_t bulk_hdl, crt_sg_list_t *sgl);
 /**
  * Free a bulk handle
  *
- * \param bulk_hdl [IN]         bulk handle to be freed
+ * \param bulk_hdl [IN]         The bulk handle to be freed.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_bulk_free(crt_bulk_t bulk_hdl);
 
 /**
- * Start a bulk transferring (inside a RPC handler).
+ * Start a bulk transferring (inside an RPC handler).
  *
- * \param bulk_desc [IN]        pointer to bulk transferring descriptor
- *				it is user's responsibility to allocate and free
- *				it. Can free it after the calling returns.
- * \param complete_cb [IN]      completion callback
- * \param arg [IN]              arguments for the \a complete_cb
- * \param opid [OUT]            returned bulk opid which can be used to abort
- *				the bulk. It is optional, can pass in NULL if
- *				don't need it.
+ * \param bulk_desc [IN]        A pointer to bulk transferring descriptor.
+ *				it is your responsibility to allocate and free
+ *				it. It can be freed after the calling returns.
+ * \param complete_cb [IN]      Completion callback.
+ * \param arg [IN]              Arguments for the \a complete_cb.
+ * \param opid [OUT]            Returned bulk opid which can be used to abort
+ *				the bulk. This is optional and can pass in NULL if
+ *				it is not needed.
+
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_bulk_transfer(struct crt_bulk_desc *bulk_desc, crt_bulk_cb_t complete_cb,
@@ -408,10 +411,10 @@ crt_bulk_transfer(struct crt_bulk_desc *bulk_desc, crt_bulk_cb_t complete_cb,
 /**
  * Get length (number of bytes) of data abstracted by bulk handle.
  *
- * \param bulk_hdl [IN]         bulk handle
- * \param bulk_len [OUT]        length of the data
+ * \param bulk_hdl [IN]         Bulk handle.
+ * \param bulk_len [OUT]        Length of the data.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_bulk_get_len(crt_bulk_t bulk_hdl, crt_size_t *bulk_len);
@@ -419,10 +422,10 @@ crt_bulk_get_len(crt_bulk_t bulk_hdl, crt_size_t *bulk_len);
 /**
  * Get the number of segments of data abstracted by bulk handle.
  *
- * \param bulk_hdl [IN]         bulk handle
- * \param bulk_sgnum [OUT]      number of segments
+ * \param bulk_hdl [IN]         Bulk handle.
+ * \param bulk_sgnum [OUT]      Number of segments.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_bulk_get_sgnum(crt_bulk_t bulk_hdl, unsigned int *bulk_sgnum);
@@ -430,11 +433,11 @@ crt_bulk_get_sgnum(crt_bulk_t bulk_hdl, unsigned int *bulk_sgnum);
 /*
  * Abort a bulk transferring.
  *
- * \param crt_ctx [IN]          CRT transport context
- * \param opid [IN]             bulk opid
+ * \param crt_ctx [IN]          CRT transport context.
+ * \param opid [IN]             Bulk opid.
  *
- * \return                      zero on success, negative value if error
- *                              If abort succeed, the bulk transfer's completion
+ * \return                      Zero on success, negative value if error.
+ *                              If abort succeeds, the bulk transfer's completion
  *                              callback will be called with CER_CANCELED set to
  *                              crt_bulk_cb_info::bci_rc.
  */
@@ -462,14 +465,14 @@ enum crt_tree_type {
 /*
  * Calculate the tree topology.
  *
- * \param tree_type [IN]	tree type
- * \param branch_ratio [IN]	branch ratio, be ignored for CRT_TREE_FLAT.
- *				for KNOMIAL tree or KARY tree, the valid value
- *				should within the range of
+ * \param tree_type [IN]	Tree type.
+ * \param branch_ratio [IN]	Branch ratio, can be ignored for CRT_TREE_FLAT.
+ *				For KNOMIAL tree or KARY tree, the valid value
+ *				should be within the range of
  *				[CRT_TREE_MIN_RATIO, CRT_TREE_MAX_RATIO], or
- *				will be treated as invalid parameter.
+ *				it will be treated as an invalid parameter.
  *
- * \return			tree topology value on success,
+ * \return			Tree topology value on success,
  *				negative value if error.
  */
 static inline int
@@ -484,41 +487,41 @@ crt_tree_topo(enum crt_tree_type tree_type, uint32_t branch_ratio)
 
 struct crt_corpc_ops {
 	/*
-	 * collective RPC reply aggregating callback.
+	 * Collective RPC reply aggregating callback.
 	 *
-	 * \param source [IN]		the rpc structure of aggregating source
-	 * \param result[IN]		the rpc structure of aggregating result
-	 * \param priv [IN]		the private pointer, valid only on
-	 *				collective RPC initiator (same as the
-	 *				priv pointer passed in for
+	 * \param source [IN]		The RPC structure of the aggregating source.
+	 * \param result[IN]		The RPC structure of the aggregating result.
+	 * \param priv [IN]		The private pointer, valid only on
+	 *				collective the RPC initiator (same as the
+	 *				priv pointer, passed in for
 	 *				crt_corpc_req_create).
 	 *
-	 * \return			zero on success, negative value if error
+	 * \return			Zero on success, negative value if error.
 	 */
 	int (*co_aggregate)(crt_rpc_t *source, crt_rpc_t *result, void *priv);
 };
 
 /*
- * Group create completion callback
+ * Group create completion callback.
  *
- * \param grp [IN]		group handle, valid only when the group has been
+ * \param grp [IN]		Group handle, valid only when the group has been
  *				created successfully.
  * \param priv [IN]		A private pointer associated with the group
  *				(passed in for crt_group_create).
- * \param status [IN]		status code that indicates whether the group has
+ * \param status [IN]		Status code that indicates whether the group has
  *				been created successfully or not.
- *				zero for success, negative value otherwise.
+ *				Zero for success, negative value otherwise.
  */
 typedef int (*crt_grp_create_cb_t)(crt_group_t *grp, void *priv, int status);
 
 /*
- * Group destroy completion callback
+ * Group destroy completion callback.
  *
- * \param args [IN]		arguments pointer passed in for
+ * \param args [IN]		Arguments pointer passed in for
  *				crt_group_destroy.
- * \param status [IN]		status code that indicates whether the group
+ * \param status [IN]		Status code that indicates whether the group
  *				has been destroyed successfully or not.
- *				zero for success, negative value otherwise.
+ *				Zero for success, negative value otherwise.
  *
  */
 typedef int (*crt_grp_destroy_cb_t)(void *args, int status);
@@ -526,21 +529,21 @@ typedef int (*crt_grp_destroy_cb_t)(void *args, int status);
 /*
  * Create CRT sub-group (a subset of the primary group).
  *
- * \param grp_id [IN]		unique group ID.
- * \param member_ranks [IN]	rank list of members for the group.
+ * \param grp_id [IN]		Unique group ID.
+ * \param member_ranks [IN]	Rank list of members for the group.
  *				Can-only create the group on the node which is
  *				one member of the group, otherwise -CER_OOG will
  *				be returned.
  * \param populate_now [IN]	True if the group should be populated now;
- *				otherwise, group population will be later
- *				piggybacked on the first broadcast over the
+ *				otherwise, group population will be piggybacked later
+ *				on the first broadcast over the
  *				group.
  * \param grp_create_cb [IN]	Callback function to notify completion of the
  *				group creation process,
  *				\see crt_grp_create_cb_t.
  * \param priv [IN]		A private pointer associated with the group.
  *
- * \return			zero on success, negative value if error
+ * \return			Zero on success, negative value if error.
  */
 int
 crt_group_create(crt_group_id_t grp_id, crt_rank_list_t *member_ranks,
@@ -550,38 +553,38 @@ crt_group_create(crt_group_id_t grp_id, crt_rank_list_t *member_ranks,
 /*
  * Lookup the group handle of one group ID (sub-group or primary group).
  *
- * For sub-group, its creation is initiated by one node, after the group being
- * populated (internally performed inside crt_group_create) user can query the
+ * For sub-group, its creation is initiated by one node, after the group is
+ * populated (internally performed inside crt_group_create), you can query the
  * group handle (crt_group_t *) on other nodes.
  *
  * The primary group can be queried using the group ID passed to crt_init.
  * Some special cases:
- * 1) If (grp_id == NULL), it means the default local primary group ID, i.e.
- *    the CRT_DEFAULT_CLI_GRPID for client and CRT_DEFAULT_SRV_GRPID for server.
- * 2) To query attached remote service primary group, can pass in its group ID.
+ * 1) If (grp_id == NULL), the default local primary group ID, such as
+ *    CRT_DEFAULT_CLI_GRPID for client and CRT_DEFAULT_SRV_GRPID for server.
+ * 2) To query the attached remote service primary group, you can pass in its group ID.
  *    For the client-side, if it passed in NULL as crt_init's srv_grpid
- *    parameter, then can use CRT_DEFAULT_SRV_GRPID to lookup the attached
+ *    parameter, then use CRT_DEFAULT_SRV_GRPID to look up the attached
  *    service primary group handle.
  *
- * Notes: user can cache the returned group handle to avoid the overhead of
- *	  frequent lookup.
+ * Notes: You can cache the returned group handle to avoid the overhead of
+ *	  frequent look up.
  *
- * \param grp_id [IN]		unique group ID.
+ * \param grp_id [IN]		Unique group ID.
  *
- * \return			group handle on success, NULL if not found.
+ * \return			Group handle on success, NULL if not found.
  */
 crt_group_t *
 crt_group_lookup(crt_group_id_t grp_id);
 
 /*
- * Destroy a CRT group. Can either call this API or pass a special flag -
+ * Destroy a CRT group. You can either call this API or pass a special flag -
  * CRT_RPC_FLAG_GRP_DESTROY to a broadcast RPC to destroy the group.
  *
- * \param grp [IN]		group handle to be destroyed.
- * \param grp_destroy_cb [IN]	optional completion callback.
- * \param args [IN]		optional args for \a grp_destroy_cb.
+ * \param grp [IN]		Group handle to be destroyed.
+ * \param grp_destroy_cb [IN]	Optional completion callback.
+ * \param args [IN]		Optional args for \a grp_destroy_cb.
  *
- * \return			zero on success, negative value if error
+ * \return			Zero on success, negative value if error.
  */
 int
 crt_group_destroy(crt_group_t *grp, crt_grp_destroy_cb_t grp_destroy_cb,
@@ -591,15 +594,15 @@ crt_group_destroy(crt_group_t *grp, crt_grp_destroy_cb_t grp_destroy_cb,
  * Attach to a primary service group.
  *
  * In crt_init(), the client will internally attach to the default service
- * primary group. User can pass crt_endpoint_t::ep_grp pointer as NULL to send
+ * primary group. You can pass crt_endpoint_t::ep_grp pointer as NULL to send
  * RPC to the default service primary group.
- * User can explicitly call this API to attach to other server tier, and set
+ * You can explicitly call this API to attach to another server tier, and set
  * crt_endpoint_t::ep_grp as the returned attached_grp to send RPC to that tier.
  *
  * \param srv_grpid [IN]	Primary service group ID to attach to.
  * \param attached_grp [OUT]	Returned attached group handle pointer.
  *
- * \return			zero on success, negative value if error
+ * \return			Zero on success, negative value if error.
  */
 int
 crt_group_attach(crt_group_id_t srv_grpid, crt_group_t **attached_grp);
@@ -607,9 +610,9 @@ crt_group_attach(crt_group_id_t srv_grpid, crt_group_t **attached_grp);
 /*
  * Detach a primary service group which was attached previously.
  *
- * \param attached_grp [IN]	attached primary service group handle.
+ * \param attached_grp [IN]	Attached primary service group handle.
  *
- * \return			zero on success, negative value if error
+ * \return			Zero on success, negative value if error.
  */
 int
 crt_group_detach(crt_group_t *attached_grp);
@@ -617,27 +620,27 @@ crt_group_detach(crt_group_t *attached_grp);
 /*
  * Create collective RPC request. Can reuse the crt_req_send to broadcast it.
  *
- * \param crt_ctx [IN]		CRT context
- * \param grp [IN]		CRT group for the collective RPC
- * \param excluded_ranks [IN]	optional excluded ranks, the RPC will be
+ * \param crt_ctx [IN]		CRT context.
+ * \param grp [IN]		CRT group for the collective RPC.
+ * \param excluded_ranks [IN]	Optional excluded ranks, the RPC will be
  *				delivered to all members in the group except
  *				those in excluded_ranks.
- *				the ranks in excluded_ranks are numbered in
- *				primary group.
- * \param opc [IN]		unique opcode for the RPC
- * \param co_bulk_hdl [IN]	collective bulk handle
+ *				The ranks in excluded_ranks are numbered in
+ *				the primary group.
+ * \param opc [IN]		Unique opcode for the RPC.
+ * \param co_bulk_hdl [IN]	Collective bulk handle.
  * \param priv [IN]		A private pointer associated with the request
  *				will be passed to crt_corpc_ops::co_aggregate as
  *				2nd parameter.
- * \param flags [IN]		collective RPC flags for example taking
+ * \param flags [IN]		Collective RPC flags. For example, taking
  *				CRT_RPC_FLAG_GRP_DESTROY to destroy the group
- *				when this bcast RPC finished.
- * \param tree_topo[IN]		tree topology for the collective propagation,
+ *				when this broadcast RPC has finished.
+ * \param tree_topo[IN]		Tree topology for the collective propagation,
  *				can be calculated by crt_tree_topo().
  *				/see enum crt_tree_type, /see crt_tree_topo().
- * \param req [out]		created collective RPC request
+ * \param req [out]		Created collective RPC request.
  *
- * \return			zero on success, negative value if error
+ * \return			Zero on success, negative value if error.
  */
 int
 crt_corpc_req_create(crt_context_t crt_ctx, crt_group_t *grp,
@@ -648,37 +651,37 @@ crt_corpc_req_create(crt_context_t crt_ctx, crt_group_t *grp,
 /**
  * Dynamically register a collective RPC.
  *
- * \param opc [IN]		unique opcode for the RPC
- * \param drf [IN]		pointer to the request format, which
- *				describe the request format and provide
- *				callback to pack/unpack each items in the
+ * \param opc [IN]		Unique opcode for the RPC.
+ * \param drf [IN]		Pointer to the request format, which
+ *				describes the request format and provides
+ *				callback to pack/unpack each item in the
  *				request.
- * \param rpc_handler [IN]	pointer to RPC handler which will be triggered
- *				when RPC request opcode associated with rpc_name
+ * \param rpc_handler [IN]	A pointer to the RPC handler which will be triggered
+ *				when an RPC request opcode associated with rpc_name
  *				is received.
- * \param co_ops [IN]		pointer to corpc ops table.
+ * \param co_ops [IN]		A pointer to the corpc ops table.
  *
  * Notes:
- * 1) User can use crt_rpc_srv_reg to register collective RPC if no reply
- *    aggregation needed.
- * 2) Can pass in a NULL drf or rpc_handler if it was registered already, this
+ * 1) You can use crt_rpc_srv_reg to register collective RPC if no reply
+ *    aggregation is needed.
+ * 2) Can pass in a NULL drf or rpc_handler if it was registered already. This
  *    routine only overwrite if they are non-NULL.
  * 3) A NULL co_ops will be treated as invalid argument.
  *
- * \return			zero on success, negative value if error
+ * \return			Zero on success, negative value if error.
  */
 int
 crt_corpc_register(crt_opcode_t opc, struct crt_req_format *drf,
 		   crt_rpc_cb_t rpc_handler, struct crt_corpc_ops *co_ops);
 
 /**
- * Query the caller's rank number within group.
+ * Query the caller's rank number within the group.
  *
- * \param grp [IN]		CRT group handle, NULL mean the primary/global
- *				group
- * \param rank[OUT]		result rank number
+ * \param grp [IN]		CRT group handle, NULL means the primary/global
+ *				group.
+ * \param rank[OUT]		Result rank number.
  *
- * \return			zero on success, negative value if error
+ * \return			Zero on success, negative value if error.
  */
 int
 crt_group_rank(crt_group_t *grp, crt_rank_t *rank);
@@ -686,11 +689,11 @@ crt_group_rank(crt_group_t *grp, crt_rank_t *rank);
 /**
  * Query number of group members.
  *
- * \param grp [IN]		CRT group handle, NULL mean the local
- *				primary/global group
- * \param size[OUT]		size (total number of ranks) of the group
+ * \param grp [IN]		CRT group handle, NULL means the local
+ *				primary/global group.
+ * \param size[OUT]		Size (total number of ranks) of the group.
  *
- * \return			zero on success, negative value if error
+ * \return			Zero on success, negative value if error.
  */
 int
 crt_group_size(crt_group_t *grp, uint32_t *size);
@@ -711,10 +714,10 @@ typedef enum {
 /**
  * Get the operation type associated to the proc processor.
  *
- * \param proc [IN]             abstract processor object
- * \param proc_op [OUT]         returned proc operation type
+ * \param proc [IN]             Abstract processor object.
+ * \param proc_op [OUT]         Returned proc operation type.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_proc_get_op(crt_proc_t proc, crt_proc_op_t *proc_op);
@@ -723,11 +726,11 @@ crt_proc_get_op(crt_proc_t proc, crt_proc_op_t *proc_op);
  * Base proc routine using memcpy().
  * Only uses memcpy() / use crt_proc_raw() for encoding raw buffers.
  *
- * \param proc [IN/OUT]         abstract processor object
- * \param data [IN/OUT]         pointer to data
- * \param data_size [IN]        data size
+ * \param proc [IN/OUT]         Abstract processor object.
+ * \param data [IN/OUT]         A pointer to data
+ * \param data_size [IN]        Data size
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_proc_memcpy(crt_proc_t proc, void *data, crt_size_t data_size);
@@ -735,10 +738,10 @@ crt_proc_memcpy(crt_proc_t proc, void *data, crt_size_t data_size);
 /**
  * Generic processing routine.
  *
- * \param proc [IN/OUT]         abstract processor object
- * \param data [IN/OUT]         pointer to data
+ * \param proc [IN/OUT]         Abstract processor object.
+ * \param data [IN/OUT]         A pointer to data.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_proc_int8_t(crt_proc_t proc, int8_t *data);
@@ -746,10 +749,10 @@ crt_proc_int8_t(crt_proc_t proc, int8_t *data);
 /**
  * Generic processing routine.
  *
- * \param proc [IN/OUT]         abstract processor object
- * \param data [IN/OUT]         pointer to data
+ * \param proc [IN/OUT]         Abstract processor object
+ * \param data [IN/OUT]         A pointer to data
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error
  */
 int
 crt_proc_uint8_t(crt_proc_t proc, uint8_t *data);
@@ -757,10 +760,10 @@ crt_proc_uint8_t(crt_proc_t proc, uint8_t *data);
 /**
  * Generic processing routine.
  *
- * \param proc [IN/OUT]         abstract processor object
- * \param data [IN/OUT]         pointer to data
+ * \param proc [IN/OUT]         Abstract processor object.
+ * \param data [IN/OUT]         A pointer to data.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_proc_int16_t(crt_proc_t proc, int16_t *data);
@@ -768,10 +771,10 @@ crt_proc_int16_t(crt_proc_t proc, int16_t *data);
 /**
  * Generic processing routine.
  *
- * \param proc [IN/OUT]         abstract processor object
- * \param data [IN/OUT]         pointer to data
+ * \param proc [IN/OUT]         Abstract processor object.
+ * \param data [IN/OUT]         A pointer to data
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_proc_uint16_t(crt_proc_t proc, uint16_t *data);
@@ -779,10 +782,10 @@ crt_proc_uint16_t(crt_proc_t proc, uint16_t *data);
 /**
  * Generic processing routine.
  *
- * \param proc [IN/OUT]         abstract processor object
- * \param data [IN/OUT]         pointer to data
+ * \param proc [IN/OUT]         Abstract processor object.
+ * \param data [IN/OUT]         A pointer to data.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_proc_int32_t(crt_proc_t proc, int32_t *data);
@@ -790,10 +793,10 @@ crt_proc_int32_t(crt_proc_t proc, int32_t *data);
 /**
  * Generic processing routine.
  *
- * \param proc [IN/OUT]         abstract processor object
- * \param data [IN/OUT]         pointer to data
+ * \param proc [IN/OUT]         Abstract processor object.
+ * \param data [IN/OUT]         A pointer to data.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_proc_uint32_t(crt_proc_t proc, uint32_t *data);
@@ -801,10 +804,10 @@ crt_proc_uint32_t(crt_proc_t proc, uint32_t *data);
 /**
  * Generic processing routine.
  *
- * \param proc [IN/OUT]         abstract processor object
- * \param data [IN/OUT]         pointer to data
+ * \param proc [IN/OUT]         Abstract processor object.
+ * \param data [IN/OUT]         A pointer to data.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_proc_int64_t(crt_proc_t proc, int64_t *data);
@@ -812,10 +815,10 @@ crt_proc_int64_t(crt_proc_t proc, int64_t *data);
 /**
  * Generic processing routine.
  *
- * \param proc [IN/OUT]         abstract processor object
- * \param data [IN/OUT]         pointer to data
+ * \param proc [IN/OUT]         Abstract processor object.
+ * \param data [IN/OUT]         A pointer to data.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_proc_uint64_t(crt_proc_t proc, uint64_t *data);
@@ -823,10 +826,10 @@ crt_proc_uint64_t(crt_proc_t proc, uint64_t *data);
 /**
  * Generic processing routine.
  *
- * \param proc [IN/OUT]         abstract processor object
- * \param data [IN/OUT]         pointer to data
+ * \param proc [IN/OUT]         Abstract processor object.
+ * \param data [IN/OUT]         A pointer to data.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_proc_bool(crt_proc_t proc, bool *data);
@@ -834,11 +837,11 @@ crt_proc_bool(crt_proc_t proc, bool *data);
 /**
  * Generic processing routine.
  *
- * \param proc [IN/OUT]         abstract processor object
- * \param buf [IN/OUT]          pointer to buffer
- * \param buf_size [IN]         buffer size
+ * \param proc [IN/OUT]         Abstract processor object.
+ * \param buf [IN/OUT]          A pointer to buffer.
+ * \param buf_size [IN]         Buffer size.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_proc_raw(crt_proc_t proc, void *buf, crt_size_t buf_size);
@@ -846,10 +849,10 @@ crt_proc_raw(crt_proc_t proc, void *buf, crt_size_t buf_size);
 /**
  * Generic processing routine.
  *
- * \param proc [IN/OUT]         abstract processor object
- * \param bulk_hdl [IN/OUT]     pointer to bulk handle
+ * \param proc [IN/OUT]         Abstract processor object.
+ * \param bulk_hdl [IN/OUT]     A pointer to bulk handle.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_proc_crt_bulk_t(crt_proc_t proc, crt_bulk_t *bulk_hdl);
@@ -857,10 +860,10 @@ crt_proc_crt_bulk_t(crt_proc_t proc, crt_bulk_t *bulk_hdl);
 /**
  * Generic processing routine.
  *
- * \param proc [IN/OUT]         abstract processor object
- * \param data [IN/OUT]         pointer to data
+ * \param proc [IN/OUT]         Abstract processor object.
+ * \param data [IN/OUT]         A pointer to data.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_proc_crt_string_t(crt_proc_t proc, crt_string_t *data);
@@ -868,10 +871,10 @@ crt_proc_crt_string_t(crt_proc_t proc, crt_string_t *data);
 /**
  * Generic processing routine.
  *
- * \param proc [IN/OUT]         abstract processor object
- * \param data [IN/OUT]         pointer to data
+ * \param proc [IN/OUT]         Abstract processor object.
+ * \param data [IN/OUT]         A pointer to data.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_proc_crt_const_string_t(crt_proc_t proc, crt_const_string_t *data);
@@ -879,10 +882,10 @@ crt_proc_crt_const_string_t(crt_proc_t proc, crt_const_string_t *data);
 /**
  * Generic processing routine.
  *
- * \param proc [IN/OUT]         abstract processor object
- * \param data [IN/OUT]         pointer to data
+ * \param proc [IN/OUT]         Abstract processor object
+ * \param data [IN/OUT]         A pointer to data
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_proc_uuid_t(crt_proc_t proc, uuid_t *data);
@@ -890,16 +893,16 @@ crt_proc_uuid_t(crt_proc_t proc, uuid_t *data);
 /**
  * Generic processing routine.
  *
- * \param proc [IN/OUT]         abstract processor object
- * \param data [IN/OUT]         second level pointer to data
+ * \param proc [IN/OUT]         Abstract processor object.
+ * \param data [IN/OUT]         A second level pointer to data.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  *
  * Notes:
- * 1) here pass in the 2nd level pointer of crt_rank_list_t, to make it
+ * 1) Here you can pass in the 2nd level pointer of crt_rank_list_t, making it
  *    possible to set it to NULL when decoding.
- * 2) if the rank_list is non-NULL, caller should firstly duplicate it and pass
- *    the duplicated rank list's 2nd level pointer as parameter, because this
+ * 2) If the rank_list is non-NULL, the caller should first duplicate it and then pass
+ *    the duplicated rank list's 2nd level pointer as the parameter, because this
  *    function will internally free the memory when freeing the input or output.
  */
 int
@@ -908,10 +911,10 @@ crt_proc_crt_rank_list_t(crt_proc_t proc, crt_rank_list_t **data);
 /**
  * Generic processing routine.
  *
- * \param proc [IN/OUT]         abstract processor object
- * \param data [IN/OUT]         pointer to data
+ * \param proc [IN/OUT]         Abstract processor object.
+ * \param data [IN/OUT]         A pointer to data.
  *
- * \return                      zero on success, negative value if error
+ * \return                      Zero on success, negative value if error.
  */
 int
 crt_proc_crt_iov_t(crt_proc_t proc, crt_iov_t *data);
