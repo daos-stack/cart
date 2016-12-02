@@ -44,45 +44,45 @@
 
 typedef enum {
 	CER_ERR_BASE		= 1000,
-	/** no permission */
+	/** No permission */
 	CER_NO_PERM		= (CER_ERR_BASE + 1),
-	/** invalid handle */
+	/** Invalid handle */
 	CER_NO_HDL		= (CER_ERR_BASE + 2),
-	/** invalid parameters */
+	/** Invalid parameters */
 	CER_INVAL		= (CER_ERR_BASE + 3),
-	/** entity already exists */
+	/** Entity already exists */
 	CER_EXIST		= (CER_ERR_BASE + 4),
-	/** nonexistent entity */
+	/** Nonexistent entity */
 	CER_NONEXIST		= (CER_ERR_BASE + 5),
-	/** unreachable node */
+	/** Unreachable node */
 	CER_UNREACH		= (CER_ERR_BASE + 6),
-	/** no space on storage target */
+	/** No space on storage target */
 	CER_NOSPACE		= (CER_ERR_BASE + 7),
-	/** already did sth */
+	/** Already did sth */
 	CER_ALREADY		= (CER_ERR_BASE + 8),
 	/** NO memory */
 	CER_NOMEM		= (CER_ERR_BASE + 9),
 	/** Function not implemented */
 	CER_NOSYS		= (CER_ERR_BASE + 10),
-	/** timed out */
+	/** Timed out */
 	CER_TIMEDOUT		= (CER_ERR_BASE + 11),
 	/** Busy */
 	CER_BUSY		= (CER_ERR_BASE + 12),
 	/** Try again */
 	CER_AGAIN		= (CER_ERR_BASE + 13),
-	/** incompatible protocol */
+	/** Incompatible protocol */
 	CER_PROTO		= (CER_ERR_BASE + 14),
-	/** not initialized */
+	/** Not initialized */
 	CER_UNINIT		= (CER_ERR_BASE + 15),
-	/** buffer too short (larger buffer needed) */
+	/** Buffer too short (larger buffer needed) */
 	CER_TRUNC		= (CER_ERR_BASE + 16),
-	/** value too large for defined data type */
+	/** Value too large for defined data type */
 	CER_OVERFLOW		= (CER_ERR_BASE + 17),
-	/** operation canceled */
+	/** Operation cancelled */
 	CER_CANCELED		= (CER_ERR_BASE + 18),
 	/** Out-Of-Group or member list */
 	CER_OOG			= (CER_ERR_BASE + 19),
-	/** transport layer mercury error */
+	/** Transport layer Mercury error */
 	CER_HG			= (CER_ERR_BASE + 20),
 	/** CRT RPC (opcode) unregister */
 	CER_UNREG		= (CER_ERR_BASE + 21),
@@ -98,7 +98,7 @@ typedef enum {
 	CER_BADPATH		= (CER_ERR_BASE + 26),
 	/** Not a directory */
 	CER_NOTDIR		= (CER_ERR_BASE + 27),
-	/** unknown error */
+	/** Unknown error */
 	CER_UNKNOWN		= (CER_ERR_BASE + 500),
 	/** TODO: add more error numbers */
 } crt_errno_t;
