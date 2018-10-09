@@ -1,0 +1,83 @@
+FROM opensuse:leap
+MAINTAINER TBD
+
+# Build arguments can be set via -build-arg
+# set NOBUILD to disable git clone & build
+ARG NOBUILD
+# use same UID as host and default value of 1000 if not specified
+ARG UID=1000
+
+# Update distribution
+# It's better to put the apt-get update in the same "cache layer" as the
+# apt-get install command so that the apt database is updated if/when the
+# installed packages list below is updated
+
+# Install basic tools
+RUN zypper -n update 
+RUN zypper -n  install -y git   \
+                       gcc make cmake scons \
+                       python-pylint python3-pylint bash curl flex
+# Phyl leap can't find golang-go
+#                       gcc golang-go make cmake libtool-bin scons autoconf    
+#                       libboost-dev uuid-dev libssl-dev libevent-dev          \
+#                       libltdl-dev librdmacm-dev libcmocka0 libcmocka-dev     \
+#                       libreadline6-dev curl doxygen pandoc flex patch nasm   \
+#                       yasm graphviz doxygen libibverbs-dev librdmacm-dev     \
+#                       libcunit1-dev libnuma-dev libaio-dev sg3-utils         \
+#                       libiscsi-dev python-dev mscgen ninja-build meson       \
+#                       pylint bash locales go-dep
+# zypper search didn't find anything for:
+#  doxygen
+# Searching for these broke the build
+#  libbost-dev -- Note the typo
+#  libboost-dev
+#  python-dev
+#  locales
+# Different names
+#  pylint = python-pylint
+#  pylint3 = python3-pylint
+
+# Phyl
+RUN zypper -n install -y python3
+# Leap can't find these
+#RUN zypper -n install -y python3 python-yaml python3-yaml pylint3
+#RUN zypper -n install -y python-paramiko python3-paramiko
+RUN search="$(zypper search bash)" && echo $search
+RUN search="$(zypper search flex)" && echo $search
+RUN search="$(zypper search mscgen)" && echo $search
+RUN search="$(zypper search locales)" && echo $search
+RUN search="$(zypper search uuid-dev)" && echo $search
+
+
+# hack the default shell to bash instead of dash
+RUN rm /bin/sh && ln -s bash /bin/sh
+
+# Phyl -- can't find this one
+#RUN locale-gen en_US.UTF-8
+
+# Dependencies
+
+# Add DAOS user
+ENV USER cart
+ENV PASSWD cart
+RUN useradd -u $UID -ms /bin/bash $USER
+RUN echo "$USER:$PASSWD" | chpasswd
+
+# Switch to new user
+USER $USER
+WORKDIR /home/$USER
+
+# Fetch DAOS code
+RUN if [ "x$NOBUILD" = "x" ] ; then git clone https://github.com/daos-stack/cart.git; fi
+WORKDIR /home/$USER/daos
+
+# Build DAOS & dependencies
+RUN if [ "x$NOBUILD" = "x" ] ; then git submodule init && git submodule update; fi
+RUN if [ "x$NOBUILD" = "x" ] ; then scons --build-deps=yes USE_INSTALLED=all install; fi
+
+# Set environment variables
+ENV PATH=/home/daos/daos/install/bin:$PATH
+ENV LD_LIBRARY_PATH=/home/daos/daos/install/lib:/home/daos/daos/install/lib/daos_srv:$LD_LIBRARY_PATH
+ENV CPATH=/home/daos/daos/install/include:$CPATH
+ENV CRT_PHY_ADDR_STR="ofi+sockets"
+ENV OFI_INTERFACE=eth0

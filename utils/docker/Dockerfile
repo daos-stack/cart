@@ -1,0 +1,88 @@
+#
+# Copyright 2018, Intel Corporation
+#
+# 'recipe' for Docker to build an image of centOS-based
+# environment for building the DAOS project.
+#
+
+# Pull base image
+FROM centos:7
+MAINTAINER Johann Lombardi <johann.lombardi@intel.com>
+
+# Build arguments can be set via -build-arg
+# set NOBUILD to disable git clone & build
+ARG NOBUILD
+# use same UID as host and default value of 1000 if not specified
+ARG UID=1000
+ARG DONT_USE_RPMS=true
+
+# Update distribution
+#Nothing to do for CentOS
+
+# external deps build/repos
+# sadly this doesn't work
+#RUN yum-config-manager --save --setopt=*_job_daos-stack-org_job_${ext}_job_master_lastSuccessfulBuild_artifact_artifacts_.gpgcheck=0
+RUN if $DONT_USE_RPMS; then exit 0; fi;    \
+for ext in openpa libfabric mercury; do \
+    yum-config-manager --add-repo=http://jenkins-3.wolf.hpdd.intel.com:8080/job/daos-stack-org/job/${ext}/job/master/lastSuccessfulBuild/artifact/artifacts/; \
+    echo "gpgcheck = False" >> /etc/yum.repos.d/jenkins-3.wolf.hpdd.intel.com_8080_job_daos-stack-org_job_${ext}_job_master_lastSuccessfulBuild_artifact_artifacts_.repo; \
+done
+
+# for good measure, clean the metadata
+RUN yum clean metadata
+
+# Install basic tools
+RUN yum install -y epel-release
+RUN yum install -y git gcc gcc-c++ make cmake golang libtool scons boost-devel   \
+                   libuuid-devel openssl-devel libevent-devel libtool-ltdl-devel \
+                   libcmocka libcmocka-devel readline-devel                      \
+                   doxygen pandoc flex patch nasm yasm ninja-build meson         \
+                   CUnit-devel libaio-devel python-pep8 lcov                     \
+                   python clang-analyzer sg3_utils libiscsi-devel                \
+                   numactl-devel doxygen graphviz pylint                         \
+                   python34 python34-pylint python34-PyYAML.x86_64 PyYAML.x86_64 \
+                   python2-paramiko python34-paramiko
+# Phyl
+#RUN yum install -y python34 python34-pylint
+#RUN yum install -y python34-PyYAML.x86_64 PyYAML.x86_64 
+#RUN yum install -y python2-paramiko python34-paramiko
+# Phyl end
+RUN if $DONT_USE_RPMS; then exit 0; fi;                   \
+yum install -y openpa-devel libfabric-devel mercury-devel
+
+# Dependencies
+# Packages for NVML, PMIx, hwloc and OpenMPI exist in CentOS, but are unfortunately
+# outdated. The DAOS build system will rebuilt those packages.
+
+# Phyl
+# Get all the DAOS stuff out of here
+
+# Add CaRT user
+ENV USER cart
+ENV PASSWD cart
+RUN useradd -u $UID -ms /bin/bash $USER
+RUN echo "$USER:$PASSWD" | chpasswd
+
+# Phyl
+# Create directory for DAOS backend storage
+#RUN mkdir /mnt/daos
+#RUN chown daos.daos /mnt/daos
+
+# Switch to new user
+USER $USER
+WORKDIR /home/$USER
+
+# Fetch CaRT code
+RUN if [ "x$NOBUILD" = "x" ] ; then git clone https://github.com/daos-stack/cart.git; fi
+WORKDIR /home/$USER/daos
+
+# Build CaRT & dependencies
+RUN if [ "x$NOBUILD" = "x" ] ; then git submodule init && git submodule update; fi
+RUN if [ "x$NOBUILD" = "x" ] ; then scons --build-deps=yes USE_INSTALLED=all install; fi
+
+# Set environment variables
+ENV PATH=/home/daos/daos/install/bin:$PATH
+ENV LD_LIBRARY_PATH=/home/daos/daos/install/lib:/home/daos/daos/install/lib/daos_srv:$LD_LIBRARY_PATH
+ENV CPATH=/home/daos/daos/install/include:$CPATH
+ENV CRT_PHY_ADDR_STR="ofi+sockets"
+ENV OFI_INTERFACE=eth0
