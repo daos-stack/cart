@@ -89,6 +89,9 @@ if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
   cd -
 fi
 
+# Phyl
+echo "TR_REDIRECT_OUTPUT = ${TR_REDIRECT_OUTPUT}"
+
 if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
   echo "Nothing to do yet"
   scons utest --utest-mode=memcheck
