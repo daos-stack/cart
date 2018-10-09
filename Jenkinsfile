@@ -4,7 +4,6 @@ pipeline {
     environment {
         SHELL = '/bin/bash'
         TR_REDIRECT_OUTPUT = 'yes'
-        GITHUB_USER = credentials('aa4ae90b-b992-4fb6-b33b-236a53a26f77')
     }
     options {
         // preserve stashes so that jobs can be started at the test stage
