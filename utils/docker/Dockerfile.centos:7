@@ -75,15 +75,15 @@ WORKDIR /home/$USER
 
 # Fetch CaRT code
 RUN if [ "x$NOBUILD" = "x" ] ; then git clone https://github.com/daos-stack/cart.git; fi
-WORKDIR /home/$USER/daos
+WORKDIR /home/$USER/cart
 
 # Build CaRT & dependencies
 RUN if [ "x$NOBUILD" = "x" ] ; then git submodule init && git submodule update; fi
 RUN if [ "x$NOBUILD" = "x" ] ; then scons --build-deps=yes USE_INSTALLED=all install; fi
 
 # Set environment variables
-ENV PATH=/home/daos/daos/install/bin:$PATH
-ENV LD_LIBRARY_PATH=/home/daos/daos/install/lib:/home/daos/daos/install/lib/daos_srv:$LD_LIBRARY_PATH
-ENV CPATH=/home/daos/daos/install/include:$CPATH
+ENV PATH=/home/cart/cart/install/bin:$PATH
+ENV LD_LIBRARY_PATH=/home/cart/cart/install/lib:/home/cart/cart/install/lib/cart_srv:$LD_LIBRARY_PATH
+ENV CPATH=/home/cart/cart/install/include:$CPATH
 ENV CRT_PHY_ADDR_STR="ofi+sockets"
 ENV OFI_INTERFACE=eth0
