@@ -44,7 +44,7 @@ RUN yum install -y git gcc gcc-c++ make cmake golang libtool scons boost-devel  
                    python2-paramiko python34-paramiko
 # Phyl
 #RUN yum install -y python34 python34-pylint
-#RUN yum install -y python34-PyYAML.x86_64 PyYAML.x86_64 
+#RUN yum install -y python34-PyYAML.x86_64 PyYAML.x86_64
 #RUN yum install -y python2-paramiko python34-paramiko
 # Phyl end
 RUN if $DONT_USE_RPMS; then exit 0; fi;                   \

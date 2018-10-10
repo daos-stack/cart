@@ -14,22 +14,9 @@ MAINTAINER Johann Lombardi <johann.lombardi@intel.com>
 ARG NOBUILD
 # use same UID as host and default value of 1000 if not specified
 ARG UID=1000
-ARG DONT_USE_RPMS=true
 
 # Update distribution
 #Nothing to do for CentOS
-
-# external deps build/repos
-# sadly this doesn't work
-#RUN yum-config-manager --save --setopt=*_job_daos-stack-org_job_${ext}_job_master_lastSuccessfulBuild_artifact_artifacts_.gpgcheck=0
-RUN if $DONT_USE_RPMS; then exit 0; fi;    \
-for ext in openpa libfabric mercury; do \
-    yum-config-manager --add-repo=http://jenkins-3.wolf.hpdd.intel.com:8080/job/daos-stack-org/job/${ext}/job/master/lastSuccessfulBuild/artifact/artifacts/; \
-    echo "gpgcheck = False" >> /etc/yum.repos.d/jenkins-3.wolf.hpdd.intel.com_8080_job_daos-stack-org_job_${ext}_job_master_lastSuccessfulBuild_artifact_artifacts_.repo; \
-done
-
-# for good measure, clean the metadata
-RUN yum clean metadata
 
 # Install basic tools
 RUN yum install -y epel-release
@@ -39,17 +26,40 @@ RUN yum install -y git gcc gcc-c++ make cmake golang libtool scons boost-devel  
                    doxygen pandoc flex patch nasm yasm ninja-build meson         \
                    CUnit-devel libaio-devel python-pep8 lcov                     \
                    python clang-analyzer sg3_utils libiscsi-devel                \
-                   numactl-devel doxygen graphviz pylint                         \
-                   python34 python34-pylint python34-PyYAML.x86_64 PyYAML.x86_64 \
+                   numactl-devel doxygen graphviz pylint valgrind rsync
+# these are needed for test_runner and can be removed when we are done using it
+RUN yum install -y python34 python34-pylint python34-PyYAML.x86_64 PyYAML.x86_64 \
                    python2-paramiko python34-paramiko
-# Phyl
-#RUN yum install -y python34 python34-pylint
-#RUN yum install -y python34-PyYAML.x86_64 PyYAML.x86_64 
-#RUN yum install -y python2-paramiko python34-paramiko
-RUN yum install -y valgrind rsync
-# Phyl end
-RUN if $DONT_USE_RPMS; then exit 0; fi;                   \
-yum install -y openpa-devel libfabric-devel mercury-devel
+RUN yum -y install ShellCheck
+#RUN yum -y install python2-pygithub.noarch
+# ugly hack for https://bugzilla.redhat.com/show_bug.cgi?id=1634082
+RUN yumdownloader python2-pygithub && yum -y install python-jwt && rpm --nodeps -ivh python2-pygithub-*.el7.noarch.rpm
+# ugly hack for https://github.com/PyGithub/PyGithub/pull/909 until we get a
+# new release
+RUN echo -e "From c53fe24fe8529dd2dd0a989a4a57b49ace2e1a6d Mon Sep 17 00:00:00 2001\n\
+From: "Brian J. Murrell" <brian@interlinx.bc.ca>\n\
+Date: Tue, 25 Sep 2018 17:31:10 -0400\n\
+Subject: [PATCH] Line comments are not posted in create_review()\n\
+\n\
+When create_review() is called with comments in the comments argument,\n\
+they are not actually posted in the API call.\n\
+---\n\
+ github/PullRequest.py | 2 ++\n\
+ 1 file changed, 2 insertions(+)\n\
+\n\
+diff --git a/github/PullRequest.py b/github/PullRequest.py\n\
+index c855dfb8..688e0625 100644\n\
+--- /usr/lib/python2.7/site-packages/github/PullRequest.py.old\n\
++++ /usr/lib/python2.7/site-packages/github/PullRequest.py\n\
+@@ -434,6 +434,8 @@ def create_review(self, commit, body, event=github.GithubObject.NotSet, comments\n\
+         post_parameters['event'] = 'COMMENT' if event == github.GithubObject.NotSet else event\n\
+         if comments is github.GithubObject.NotSet:\n\
+             post_parameters['comments'] = []\n\
++        else:\n\
++            post_parameters['comments'] = comments\n\
+         headers, data = self._requester.requestJsonAndCheck(\n\
+             "POST",\n\
+             self.url + "/reviews",\n" | patch -p0
 
 # Dependencies
 # Packages for NVML, PMIx, hwloc and OpenMPI exist in CentOS, but are unfortunately

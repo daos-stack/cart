@@ -13,12 +13,12 @@ ARG UID=1000
 # installed packages list below is updated
 
 # Install basic tools
-RUN zypper -n update 
+RUN zypper -n update
 RUN zypper -n  install -y git   \
                        gcc make cmake scons \
                        python-pylint python3-pylint bash curl flex
 # Phyl leap can't find golang-go
-#                       gcc golang-go make cmake libtool-bin scons autoconf    
+#                       gcc golang-go make cmake libtool-bin scons autoconf    \
 #                       libboost-dev uuid-dev libssl-dev libevent-dev          \
 #                       libltdl-dev librdmacm-dev libcmocka0 libcmocka-dev     \
 #                       libreadline6-dev curl doxygen pandoc flex patch nasm   \

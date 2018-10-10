@@ -29,11 +29,10 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y git   \
                        yasm graphviz doxygen libibverbs-dev librdmacm-dev     \
                        libcunit1-dev libnuma-dev libaio-dev sg3-utils         \
                        libiscsi-dev python-dev mscgen ninja-build meson       \
-                       pylint bash locales go-dep
-# Phyl
-RUN apt-get install -y python3 python-yaml python3-yaml pylint3
-RUN apt-get install -y python-paramiko python3-paramiko
-RUN apt-get install -y valgrind rsync
+                       pylint bash locales valgrind rsync
+# these are needed for test_runner and can be removed when we are done using it
+RUN apt-get install -y python3 python-yaml python3-yaml pylint3 \
+                       python-paramiko python3-paramiko
 RUN ln -s /usr/bin/cc /bin/cc
 
 # hack the default shell to bash instead of dash

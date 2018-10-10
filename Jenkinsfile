@@ -1,11 +1,16 @@
 // Fake comment
+// To use a test branch (i.e. PR) until it lands to master
+// I.e. for testing library changes
+@Library(value="pipeline-lib@test-branch") _
+
 pipeline {
     agent none
 
     environment {
-        SHELL = '/bin/bash'
         TR_REDIRECT_OUTPUT = 'yes'
+        GITHUB_USER = credentials('aa4ae90b-b992-4fb6-b33b-236a53a26f77')
     }
+
     options {
         // preserve stashes so that jobs can be started at the test stage
         preserveStashes(buildCount: 5)
@@ -14,7 +19,7 @@ pipeline {
     stages {
         stage('Pre-build') {
             parallel {
-                stage('check_modules.sh') {
+                stage('checkpatch') {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.centos:7'
@@ -24,17 +29,8 @@ pipeline {
                         }
                     }
                     steps {
-                        sh '''rm -rf *
-                              ls -l'''
-                        checkout scm
-                        sh '''pwd
-                              ls -l
-                              git submodule status
-                              git submodule update --init --recursive
-                              git submodule status
-                              ls -l
-                              ls -l utils
-                              utils/check_modules.sh'''
+                        checkPatch user: GITHUB_USER_USR,
+                                   password: GITHUB_USER_PSW
                     }
                     post {
                         always {
@@ -56,18 +52,7 @@ pipeline {
                         }
                     }
                     steps {
-                        checkout scm
-                        sh '''git submodule update --init --recursive
-                              scons -c
-                              # scons -c is not perfect so get out the big hammer
-                              rm -rf _build.external install build
-                              SCONS_ARGS="--config=force --build-deps=yes USE_INSTALLED=all install"
-                              if ! scons $SCONS_ARGS; then
-                                  echo "$SCONS_ARGS failed"
-                                  rc=\${PIPESTATUS[0]}
-                                  cat config.log || true 
-                                  exit \$rc
-                              fi'''
+                        sconsBuild()
                         stash name: 'CentOS-install', includes: 'install/**'
                         stash name: 'CentOS-build-files', includes: '.build_vars-Linux.*, cart-linux.conf, .sconsign-Linux.dblite, .sconf-temp-Linux/**'
                     }
@@ -86,24 +71,18 @@ pipeline {
                         }
                     }
                     steps {
-                        dir('install') {
-                            deleteDir()
-                        }
-                        unstash 'CentOS-install'
-                        unstash 'CentOS-build-files'
-                        sh '''export TR_REDIRECT_OUTPUT='yes'
-                        bash utils/run_test.sh'''
+                        runTest stashes: [ 'CentOS-install', 'CentOS-build-files' ],
+                                script: '''export TR_REDIRECT_OUTPUT='yes'
+                                           bash utils/run_test.sh'''
                     }
                     post {
                         always {
-                            sh '''mv build/Linux/src/utest/utest.log build/Linux/src/utest/utest.centos.7.log 
+                            sh '''mv build/Linux/src/utest/utest.log build/Linux/src/utest/utest.centos.7.log
                                   mv install/Linux/TESTING/testLogs install/Linux/TESTING/testLogs.centos.7
                                   //cd build/Linux/src/utest
                                   //for file in *.xml; do
-                                      //mv "$file" "$(basename "$file" .xml).centos.7.xml"
-                                  //done
-                                  //cd -
-                                  '''
+                                  //    mv "$file" "${file%.xml}.centos.7.xml"
+                                  //done'''
                             archiveArtifacts artifacts: 'build/Linux/src/utest/utest.centos.7.log', allowEmptyArchive: true
                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs.centos.7/**', allowEmptyArchive: true
                             //archiveArtifacts artifacts: 'build/Linux/src/utest/*.xml', allowEmptyArchive: true
