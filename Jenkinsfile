@@ -4,11 +4,7 @@ pipeline {
     environment {
         SHELL = '/bin/bash'
         TR_REDIRECT_OUTPUT = 'yes'
-        GITHUB_USER = credentials('aa4ae90b-b992-4fb6-b33b-236a53a26f77')
-        BAHTTPS_PROXY = "${env.HTTP_PROXY ? '--build-arg HTTP_PROXY="' + env.HTTP_PROXY + '" --build-arg http_proxy="' + env.HTTP_PROXY + '"' : ''}"
-        BAHTTP_PROXY = "${env.HTTP_PROXY ? '--build-arg HTTPS_PROXY="' + env.HTTPS_PROXY + '" --build-arg https_proxy="' + env.HTTPS_PROXY + '"' : ''}"
-        UID = sh(script: "id -u", returnStdout: true)
-        BUILDARGS = "--build-arg NOBUILD=1 --build-arg UID=$env.UID $env.BAHTTP_PROXY $env.BAHTTPS_PROXY"
+        GITHUB_USER = credentials('aa4ae90b-b992-4fb6-b33b-236a53a26f77'
     }
 
     options {
@@ -17,9 +13,9 @@ pipeline {
     }
 
     stages {
-        stage('Pre-build') {
+        /*stage('Pre-build') {
             parallel {
-                stage('checkpatch') {
+                stage('check_modules.sh') {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.centos:7'
@@ -29,25 +25,24 @@ pipeline {
                         }
                     }
                     steps {
-                        /*sh '''git submodule update --init --recursive
-                              utils/check_modules.sh'''*/
-                        checkPatch user: GITHUB_USER_USR,
-                                   password: GITHUB_USER_PSW,
-                                   ignored_files: "src/control/vendor/*",
-                                   jenkins_review: "48/33548/2"
+                        //githubNotify description: 'checkmodules.sh',  context: 'checkmodules.sh', status: 'PENDING'
+                        sh '''git submodule update --init --recursive
+                              utils/check_modules.sh'''
                     }
                     post {
-                        always {
-                            archiveArtifacts artifacts: 'pylint.log',
-                            allowEmptyArchive: true
+                        success {
+                            //githubNotify description: 'checkmodules.sh',  context: 'checkmodules.sh', status: 'SUCCESS'
+                            sh '''echo "Success" '''
+                        }
+                        unstable {
+                            //githubNotify description: 'checkmodules.sh',  context: 'checkmodules.sh', status: 'FAILURE'
+                            sh '''echo "Failure" '''
                         }
                     }
                 }
             }
-        }
-
+        }*/
         stage('Build') {
-            failFast true
             parallel {
                 stage('Build on CentOS 7') {
                     agent {
@@ -69,10 +64,10 @@ pipeline {
                               if ! scons $SCONS_ARGS; then
                                   echo "$SCONS_ARGS failed"
                                   rc=\${PIPESTATUS[0]}
-                                  cat config.log || true 
+                                  cat config.log || true
                                   exit \$rc
                               fi'''*/
-                        sh '''rm -rf _build.external-Linux'''
+                        sh '''/bin/rm -rf _build.external-Linux
                         sconsBuild()
                         stash name: 'CentOS-install', includes: 'install/**'
                         stash name: 'CentOS-build-files', includes: '.build_vars-Linux.*, cart-linux.conf, .sconsign-Linux.dblite, .sconf-temp-Linux/**'
@@ -124,8 +119,8 @@ pipeline {
                         }
                     }
                 }
-            } 
-        }*/    
+            }
+        }*/
 
     }
 }
