@@ -1,4 +1,3 @@
-// Retrigger
 pipeline {
     agent any
 
@@ -6,10 +5,6 @@ pipeline {
         SHELL = '/bin/bash'
         TR_REDIRECT_OUTPUT = 'yes'
         GITHUB_USER = credentials('aa4ae90b-b992-4fb6-b33b-236a53a26f77')
-        BAHTTPS_PROXY = "${env.HTTP_PROXY ? '--build-arg HTTP_PROXY="' + env.HTTP_PROXY + '" --build-arg http_proxy="' + env.HTTP_PROXY + '"' : ''}"
-        BAHTTP_PROXY = "${env.HTTP_PROXY ? '--build-arg HTTPS_PROXY="' + env.HTTPS_PROXY + '" --build-arg https_proxy="' + env.HTTPS_PROXY + '"' : ''}"
-        UID = sh(script: "id -u", returnStdout: true)
-        BUILDARGS = "--build-arg NOBUILD=1 --build-arg UID=$env.UID $env.BAHTTP_PROXY $env.BAHTTPS_PROXY"
     }
 
     options {
@@ -48,7 +43,6 @@ pipeline {
             }
         }*/
         stage('Build') {
-            failFast true
             parallel {
                 stage('Build on CentOS 7') {
                     agent {
@@ -62,7 +56,7 @@ pipeline {
                     steps {
                         //githubNotify description: 'CentOS 7 Build',  context: 'build/centos7', status: 'PENDING'
                         checkout scm
-                        /*sh '''git submodule update --init --recursive
+                        sh '''git submodule update --init --recursive
                               scons -c
                               # scons -c is not perfect so get out the big hammer
                               rm -rf _build.external-Linux install build
@@ -72,9 +66,9 @@ pipeline {
                                   rc=\${PIPESTATUS[0]}
                                   cat config.log || true
                                   exit \$rc
-                              fi'''*/
-                        sh '''rm -rf _build.external-Linux'''
-                        sconsBuild()
+                              fi'''
+                        /*sh '''/bin/rm -rf _build.external-Linux
+                        sconsBuild()*/
                         stash name: 'CentOS-install', includes: 'install/**'
                         stash name: 'CentOS-build-files', includes: '.build_vars-Linux.*, cart-linux.conf, .sconsign-Linux.dblite, .sconf-temp-Linux/**'
                     }
