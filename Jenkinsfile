@@ -72,7 +72,7 @@ pipeline {
                                   cat config.log || true
                                   exit \$rc
                               fi'''*/
-                        sh '''/bin/rm -rf _build.external-Linux
+                        sh '''/bin/rm -rf _build.external-Linux'''
                         sconsBuild()
                         stash name: 'CentOS-install', includes: 'install/**'
                         stash name: 'CentOS-build-files', includes: '.build_vars-Linux.*, cart-linux.conf, .sconsign-Linux.dblite, .sconf-temp-Linux/**'
