@@ -32,7 +32,7 @@ pipeline {
                         /*sh '''git submodule update --init --recursive
                               utils/check_modules.sh'''*/
                         checkPatch user: GITHUB_USER_USR,
-                                   password: GITHUB_USER_PSW
+                                   password: GITHUB_USER_PSW,
                                    ignored_files: "src/control/vendor/*",
                                    jenkins_review: "48/33548/2"
                     }
