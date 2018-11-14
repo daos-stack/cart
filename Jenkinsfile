@@ -61,8 +61,8 @@ pipeline {
                     }
                     steps {
                         //githubNotify description: 'CentOS 7 Build',  context: 'build/centos7', status: 'PENDING'
-                        /*checkout scm
-                        sh '''git submodule update --init --recursive
+                        checkout scm
+                        /*sh '''git submodule update --init --recursive
                               scons -c
                               # scons -c is not perfect so get out the big hammer
                               rm -rf _build.external-Linux install build
@@ -73,7 +73,7 @@ pipeline {
                                   cat config.log || true
                                   exit \$rc
                               fi'''*/
-                        sh '''/bin/rm -rf _build.external-Linux'''
+                        sh '''rm -rf _build.external-Linux'''
                         sconsBuild()
                         stash name: 'CentOS-install', includes: 'install/**'
                         stash name: 'CentOS-build-files', includes: '.build_vars-Linux.*, cart-linux.conf, .sconsign-Linux.dblite, .sconf-temp-Linux/**'
