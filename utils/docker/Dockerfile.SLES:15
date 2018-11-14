@@ -1,0 +1,3 @@
+FROM suse/sles12:latest
+RUN zypper ref -s
+RUN zypper --gpg-auto-import-keys ref -s
