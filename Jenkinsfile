@@ -33,7 +33,7 @@ pipeline {
                     }
                     steps {
                         checkPatch user: GITHUB_USER_USR,
-                                   password: GITHUB_USER_PSW
+                                   password: GITHUB_USER_PSW,
                                    ignored_files: "src/control/vendor/*"
                     }
                     post {
