@@ -107,7 +107,7 @@ pipeline {
                     steps {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-files' ],
                                 /*script:  'LD_LIBRARY_PATH=install/lib64:install/lib  HOSTPREFIX=wolf-53 bash -x utils/run_test.sh  && echo "run_test.sh exited successfully with  ${PIPESTATUS[0]}" || echo "run_test.sh exited  failure with ${PIPESTATUS[0]}"',*/
-                                script: 'bash -x /utils/run_test.sh && echo "run_test.sh exited successfully with ${PIPESTATUS[0]}" || echo "run_test.sh exited failure with ${PIPESTATUS[0]}"',
+                                script: 'bash -x utils/run_test.sh && echo "run_test.sh exited successfully with ${PIPESTATUS[0]}" || echo "run_test.sh exited failure with ${PIPESTATUS[0]}"',
                                 junit_files: null
                     }
                     post {
