@@ -53,7 +53,8 @@ pipeline {
                             dir 'utils/docker'
                             label 'docker_runner'
                             additionalBuildArgs  '--build-arg NOBUILD=1 --build-arg UID=$(id -u)'
-                            customWorkspace("/var/lib/jenkins/workspace/daos-stack-org_cart:PR-8-centos7")
+                            // This caused a failure
+                            //customWorkspace("/var/lib/jenkins/workspace/daos-stack-org_cart:PR-8-centos7")
                         }
                     }
                     steps {
