@@ -73,7 +73,8 @@ pipeline {
                         stash name: 'CentOS-install', includes: 'install/**'
                         stash name: 'CentOS-build-files', includes: '.build_vars-Linux.*, cart-linux.conf, .sconsign-Linux.dblite, .sconf-temp-Linux/**'
                     }
-                    post {
+                    // Phyl -- This seemed to cause problems
+                    /*post {
                         always {
                             recordIssues enabledForFailure: true,
                             aggregatingResults: true,
@@ -81,12 +82,11 @@ pipeline {
                             tools: [
                                 [tool: [$class: 'GnuMakeGcc']],
                                 [tool: [$class: 'CppCheck']],
-                            ],
-                            // Phyl -- I included -Linux
+                            ]
                             filters: [excludeFile('.*\\/_build\\.external-Linux\\/.*'),
                                      excludeFile('_build\\.external-Linux\\/.*')]
                         }
-                    }
+                    }*/
                 }
             }
         }
@@ -106,13 +106,14 @@ pipeline {
                     }*/
                     steps {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: 'LD_LIBRARY_PATH=install/lib64:install/lib HOSTPREFIX=wolf-53 bash -x utils/run_test.sh --init && echo "run_test.sh exited successfully with ${PIPESTATUS[0]}" || echo "run_test.sh exited failure with ${PIPESTATUS[0]}"',
+                                /*script:  'LD_LIBRARY_PATH=install/lib64:install/lib  HOSTPREFIX=wolf-53 bash -x utils/run_test.sh  && echo "run_test.sh exited successfully with  ${PIPESTATUS[0]}" || echo "run_test.sh exited  failure with ${PIPESTATUS[0]}"',*/
+                                script: 'bash -x /utils/run_test.sh && echo "run_test.sh exited successfully with ${PIPESTATUS[0]}" || echo "run_test.sh exited failure with ${PIPESTATUS[0]}"'
                                 junit_files: null
                     }
                     post {
                         always {
-                            sh '''mv build/Linux/src/utest/utest.log build/Linux/src/utest/utest.centos.7.log
-                                  mv install/Linux/TESTING/testLogs install/Linux/TESTING/testLogs.centos.7'''
+                            /*sh '''mv build/Linux/src/utest/utest.log build/Linux/src/utest/utest.centos.7.log
+                                  mv install/Linux/TESTING/testLogs install/Linux/TESTING/testLogs.centos.7'''*/
                             archiveArtifacts artifacts: 'build/Linux/src/utest/utest.centos.7.log', allowEmptyArchive: true
                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs.centos.7/**', allowEmptyArchive: true
                         }
