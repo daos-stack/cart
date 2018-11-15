@@ -20,7 +20,7 @@ pipeline {
     }
 
     stages {
-        stage('Pre-build') {
+        /*stage('Pre-build') {
             parallel {
                 stage('checkpatch') {
                     agent {
@@ -43,7 +43,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         stage('Build') {
             parallel {
                 stage('Build on CentOS 7') {
@@ -77,13 +77,14 @@ pipeline {
                         always {
                             recordIssues enabledForFailure: true,
                             aggregatingResults: true,
-                            id: "analysis-ubuntu18",
+                            id: "analysis-centos7",
                             tools: [
                                 [tool: [$class: 'GnuMakeGcc']],
                                 [tool: [$class: 'CppCheck']],
                             ],
-                            filters: [excludeFile('.*\\/_build\\.external\\/.*'),
-                                     excludeFile('_build\\.external\\/.*')]
+                            // Phyl -- I included -Linux
+                            filters: [excludeFile('.*\\/_build\\.external-Linux\\/.*'),
+                                     excludeFile('_build\\.external-Linux\\/.*')]
                         }
                     }
                 }
