@@ -48,7 +48,7 @@ pipeline {
                 stage('Build on Leap') {
                     agent {
                         dockerfile {
-                            filename 'Dockerfile.leap'
+                            filename 'Dockerfile.leap:15'
                             dir 'utils/docker'
                             label 'docker_runner'
                             additionalBuildArgs  '--build-arg NOBUILD=1 --build-arg UID=$(id -u)'
