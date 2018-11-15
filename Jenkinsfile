@@ -55,7 +55,7 @@ pipeline {
                               scons -c
                               # scons -c is not perfect so get out the big hammer
                               rm -rf _build.external-Linux install build
-                              SCONS_ARGS="--build-deps=yes --config=force install"
+                              SCONS_ARGS="--build-deps=yes --config=force USE_INSTALLED=all install"
                               if ! scons $SCONS_ARGS; then
                                   echo "$SCONS_ARGS failed"
                                   rc=\${PIPESTATUS[0]}
