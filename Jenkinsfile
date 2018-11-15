@@ -1,17 +1,8 @@
-// To use a test branch (i.e. PR) until it lands to master
-// I.e. for testing library changes
-
 pipeline {
-    agent any
+    agent none
 
     environment {
         SHELL = '/bin/bash'
-        TR_REDIRECT_OUTPUT = 'yes'
-        GITHUB_USER = credentials('aa4ae90b-b992-4fb6-b33b-236a53a26f77')
-        BAHTTPS_PROXY = "${env.HTTP_PROXY ? '--build-arg HTTP_PROXY="' + env.HTTP_PROXY + '" --build-arg http_proxy="' + env.HTTP_PROXY + '"' : ''}"
-        BAHTTP_PROXY = "${env.HTTP_PROXY ? '--build-arg HTTPS_PROXY="' + env.HTTPS_PROXY + '" --build-arg https_proxy="' + env.HTTPS_PROXY + '"' : ''}"
-        UID = sh(script: "id -u", returnStdout: true)
-        BUILDARGS = "--build-arg NOBUILD=1 --build-arg UID=$env.UID $env.BAHTTP_PROXY $env.BAHTTPS_PROXY"
     }
 
     options {
@@ -20,30 +11,25 @@ pipeline {
     }
 
     stages {
-        /*stage('Pre-build') {
+        stage('Pre-build') {
             parallel {
-                stage('checkpatch') {
+                stage('check_modules.sh') {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.centos:7'
                             dir 'utils/docker'
                             label 'docker_runner'
-                            additionalBuildArgs  '--build-arg NOBUILD=1 --build-arg UID=$(id -u)'
+                            additionalBuildArgs  '--build-arg NOBUILD=1 --build-arg UID=$(id -u) --build-arg DONT_USE_RPMS=false'
                         }
                     }
                     steps {
-                        checkPatch user: GITHUB_USER_USR,
-                                   password: GITHUB_USER_PSW,
-                                   ignored_files: "src/control/vendor/*"
-                    }
-                    post {
-                        always {
-                            archiveArtifacts artifacts: 'pylint.log', allowEmptyArchive: true
-                        }
-                    }
+                        sh '''git submodule update --init --recursive
+                              utils/check_modules.sh'''
+                    } 
                 }
             }
-        }*/
+        }
+
         stage('Build') {
             parallel {
                 stage('Build on CentOS 7') {
@@ -53,11 +39,10 @@ pipeline {
                             dir 'utils/docker'
                             label 'docker_runner'
                             additionalBuildArgs  '--build-arg NOBUILD=1 --build-arg UID=$(id -u)'
-                            // This caused a failure
-                            //customWorkspace("/var/lib/jenkins/workspace/daos-stack-org_cart:PR-8-centos7")
                         }
                     }
                     steps {
+                        //githubNotify description: 'CentOS 7 Build',  context: 'build/centos7', status: 'PENDING'
                         checkout scm
                         sh '''git submodule update --init --recursive
                               scons -c
@@ -67,24 +52,20 @@ pipeline {
                               if ! scons $SCONS_ARGS; then
                                   echo "$SCONS_ARGS failed"
                                   rc=\${PIPESTATUS[0]}
-                                  cat config.log || true
+                                  cat config.log || true 
                                   exit \$rc
                               fi'''
                         stash name: 'CentOS-install', includes: 'install/**'
                         stash name: 'CentOS-build-files', includes: '.build_vars-Linux.*, cart-linux.conf, .sconsign-Linux.dblite, .sconf-temp-Linux/**'
                     }
-                    // Phyl -- This seemed to cause problems
                     /*post {
-                        always {
-                            recordIssues enabledForFailure: true,
-                            aggregatingResults: true,
-                            id: "analysis-centos7",
-                            tools: [
-                                [tool: [$class: 'GnuMakeGcc']],
-                                [tool: [$class: 'CppCheck']],
-                            ]
-                            filters: [excludeFile('.*\\/_build\\.external-Linux\\/.*'),
-                                     excludeFile('_build\\.external-Linux\\/.*')]
+                        success {
+                            //githubNotify description: 'CentOS 7 Build',  context: 'build/centos7', status: 'SUCCESS'
+                            sh '''echo "Success" '''
+                        }
+                        unstable {
+                            //githubNotify description: 'CentOS 7 Build',  context: 'build/centos7', status: 'FAILURE'
+                            sh '''echo "Failure" '''
                         }
                     }*/
                 }
@@ -92,34 +73,40 @@ pipeline {
         }
         stage('Test') {
             parallel {
-                stage('Centos Test') {
-                    // Phyl -- Another difference is that Brian doesn't use a dockerfile
-                    // here. He just goes native.
-                    /*agent {
+                stage('run_test.sh') {
+                    agent {
                         dockerfile {
                             filename 'Dockerfile.centos:7'
                             dir 'utils/docker'
                             label 'docker_runner'
-                            // The last build-arg here may be a culprint
                             additionalBuildArgs  '--build-arg NOBUILD=1 --build-arg UID=$(id -u) --build-arg DONT_USE_RPMS=false'
                         }
-                    }*/
+                    }
                     steps {
-                        runTest stashes: [ 'CentOS-install', 'CentOS-build-files' ],
-                                /*script:  'LD_LIBRARY_PATH=install/lib64:install/lib  HOSTPREFIX=wolf-53 bash -x utils/run_test.sh  && echo "run_test.sh exited successfully with  ${PIPESTATUS[0]}" || echo "run_test.sh exited  failure with ${PIPESTATUS[0]}"',*/
-                                script: 'bash -x utils/run_test.sh && echo "run_test.sh exited successfully with ${PIPESTATUS[0]}" || echo "run_test.sh exited failure with ${PIPESTATUS[0]}"',
-                                junit_files: null
-                    }
-                    post {
-                        always {
-                            /*sh '''mv build/Linux/src/utest/utest.log build/Linux/src/utest/utest.centos.7.log
-                                  mv install/Linux/TESTING/testLogs install/Linux/TESTING/testLogs.centos.7'''*/
-                            archiveArtifacts artifacts: 'build/Linux/src/utest/utest.centos.7.log', allowEmptyArchive: true
-                            archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs.centos.7/**', allowEmptyArchive: true
+                        //githubNotify description: 'run_test.sh',  context: 'test/run_test.sh', status: 'PENDING'
+                        dir('install') {
+                            deleteDir()
                         }
+                        unstash 'CentOS-install'
+                        unstash 'CentOS-build-files'
+                        sh '''bash utils/run_test.sh'''
                     }
+                    /*post {
+                        always {
+                            archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output', allowEmptyArchive: true
+                        }
+                        success {
+                            //githubNotify description: 'run_test.sh',  context: 'test/run_test.sh', status: 'SUCCESS'
+                            sh '''echo "Success" '''
+                        }
+                        unstable {
+                            //githubNotify description: 'run_test.sh',  context: 'test/run_test.sh', status: 'FAILURE'
+                            sh '''echo "Failure" '''
+                        }
+                    }*/
                 }
-            }
-        }
+            } 
+        }    
+
     }
 }
