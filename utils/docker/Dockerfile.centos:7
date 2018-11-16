@@ -18,14 +18,6 @@ ARG NOBUILD
 ARG UID=1000
 ARG DONT_USE_RPMS=true
 
-# Update distribution
-#Nothing to do for CentOS
-#
-#RUN if $DONT_USE_RPMS; then exit 0; fi;    \
-#for ext in openpa libfabric mercury; do \
-#    yum-config-manager --add-repo=http://jenkins-3.wolf.hpdd.intel.com:8080/job/daos-stack-org/job/${ext}/job/master/lastSuccessfulBuild/artifact/artifacts/; \
-#    echo "gpgcheck = False" >> /etc/yum.repos.d/jenkins-3.wolf.hpdd.intel.com_8080_job_daos-stack-org_job_${ext}_job_master_lastSuccessfulBuild_artifact_artifacts_.repo; \
-#done
 
 # for good measure, clean the metadata
 RUN yum clean metadata
@@ -41,19 +33,6 @@ RUN yum install -y git gcc gcc-c++ make cmake golang libtool scons boost-devel  
                    numactl-devel doxygen graphviz pylint python2-pygithub        \
                    python34 python34-pylint python34-PyYAML.x86_64 PyYAML.x86_64 \
                    python2-paramiko python34-paramiko valgrind rsync
-# Phyl
-#RUN yum install -y python34 python34-pylint
-#RUN yum install -y python34-PyYAML.x86_64 PyYAML.x86_64
-#RUN yum install -y python2-paramiko python34-paramiko
-#RUN yum install -y valgrind rsync
-# Phyl end
-#
-#RUN if $DONT_USE_RPMS; then exit 0; fi;                   \
-#yum install -y openpa-devel libfabric-devel mercury-devel
-
-# Dependencies
-# Packages for NVML, PMIx, hwloc and OpenMPI exist in CentOS, but are unfortunately
-# outdated. The DAOS build system will rebuilt those packages.
 
 # Add CaRT user
 ENV USER cart
