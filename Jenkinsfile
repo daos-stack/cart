@@ -34,9 +34,7 @@ pipeline {
                               SCONS_ARGS="--build-deps=yes --config=force install"
                               if ! scons $SCONS_ARGS; then
                                   echo "$SCONS_ARGS failed"
-                                  rc=\${PIPESTATUS[0]}
-                                  cat config.log || true 
-                                  exit \$rc
+                                  exit 1
                               fi'''
                         stash name: 'Centos-install', includes: 'install/**'
                         stash name: 'Centos-build-files', includes: '.build_vars-Linux.*, cart-linux.conf, .sconsign-Linux.dblite, .sconf-temp-Linux/**'
