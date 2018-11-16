@@ -33,6 +33,11 @@ RUN yum install -y git gcc gcc-c++ make cmake golang libtool scons boost-devel  
                    numactl-devel doxygen graphviz pylint python2-pygithub        \
                    python34 python34-pylint python34-PyYAML.x86_64 PyYAML.x86_64 \
                    python2-paramiko python34-paramiko valgrind rsync
+# Phyl
+RUN yum install -y libyaml-devel file shellCheck yum-plugin-copr
+RUN yum copr -y enable jhli/ipmctl
+RUN yum copr -y enable jhli/safeclib
+RUN yum install -y libsafec libipmctl-devel
 
 # Add CaRT user
 ENV USER cart
