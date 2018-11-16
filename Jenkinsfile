@@ -26,7 +26,6 @@ pipeline {
                         }
                     }
                     steps {
-                        //sconsBuild()
                         checkout scm
                         sh '''git submodule update --init --recursive
                               scons -c
