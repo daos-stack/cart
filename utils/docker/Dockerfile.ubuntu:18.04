@@ -35,8 +35,9 @@ RUN apt-get install -y python3 python-yaml python3-yaml pylint3
 RUN apt-get install -y python-paramiko python3-paramiko
 RUN apt-get install -y valgrind rsync
 RUN apt-get install -y python-github
-RUN apt-get install -y libyaml-dev libsafec-dev 
-# Coulding find this one libipmctl-dev
+RUN apt-get install -y libyaml-dev
+# Couldn't find libsafec-dev
+# Couldn't find libipmctl-dev
 
 RUN ln -s /usr/bin/cc /bin/cc
 
