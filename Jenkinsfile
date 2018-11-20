@@ -130,7 +130,10 @@ pipeline {
                     }
                     post {
                         always {
-                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output', allowEmptyArchive: true
+                            /*archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output', allowEmptyArchive: true */
+                            archiveArtifacts artifacts: 'build/Linux/src/utest/utest.log', allowEmptyArchive: true
+                            archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**', allowEmptyArchive: true
+                            archiveArtifacts artifacts: 'build/Linux/src/utest/*.xml', allowEmptyArchive: true
                         }
                     }
                 }
