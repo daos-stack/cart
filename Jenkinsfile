@@ -152,99 +152,12 @@ pipeline {
                               junit_files: null
                     }
                     post {
-                        /* temporarily moved into runTest->stepResult due to JENKINS-39203
-                        success {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'run_test.sh',  context: 'test/run_test.sh', status: 'SUCCESS'
-                        }
-                        unstable {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'run_test.sh',  context: 'test/run_test.sh', status: 'FAILURE'
-                        }
-                        failure {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'run_test.sh',  context: 'test/run_test.sh', status: 'ERROR'
-                        }
-                        */
                         always {
-                            sh '''rm -rf run_test.sh/
-                                  mkdir run_test.sh/
-                                  [ -f /tmp/daos.log ] && mv /tmp/daos.log run_test.sh/ || true'''
-                            archiveArtifacts artifacts: 'run_test.sh/**'
+                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output', allowEmptyArchive: true
                         }
                     }
                 }
             }
         }
-//NOTESTYET        stage('Test') {
-//NOTESTYET            parallel {
-//NOTESTYET                stage('Functional all') {
-//NOTESTYET                    agent {
-//NOTESTYET                        label 'cluster_provisioner'
-//NOTESTYET                    }
-//NOTESTYET                    steps {
-//NOTESTYET                        runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-//NOTESTYET                                script: 'bash ftest.sh all; echo "rc: $?"',
-//NOTESTYET                                junit_files: "src/tests/ftest/avocado/job-results/*/*.xml"
-//NOTESTYET                    }
-//NOTESTYET                    post {
-//NOTESTYET                        /* temporarily moved into runTest->stepResult due to JENKINS-39203
-//NOTESTYET                        success {
-//NOTESTYET                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Functional all',  context: 'test/functional_quick', status: 'SUCCESS'
-//NOTESTYET                        }
-//NOTESTYET                        unstable {
-//NOTESTYET                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Functional all',  context: 'test/functional_quick', status: 'FAILURE'
-//NOTESTYET                        }
-//NOTESTYET                        failure {
-//NOTESTYET                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Functional all',  context: 'test/functional_quick', status: 'ERROR'
-//NOTESTYET                        }
-//NOTESTYET                        */
-//NOTESTYET                        always {
-//NOTESTYET                            sh '''rm -rf src/tests/ftest/avocado/job-results/*/html/ "Functional all"/
-//NOTESTYET                                  mkdir "Functional all"/
-//NOTESTYET                                  ls daos.log* && mv daos.log* "Functional all"/ || true
-//NOTESTYET                                  mv src/tests/ftest/avocado/job-results/* "Functional all"/
-//NOTESTYET                                  ls -l "Functional all"/ || true'''
-//NOTESTYET                            junit 'Functional all/*/results.xml'
-//NOTESTYET                            archiveArtifacts artifacts: 'Functional all/**'
-//NOTESTYET                        }
-//NOTESTYET                    }
-//NOTESTYET                }
-//NOTESTYET// we don't need to run this separately when running "all" above
-//NOTESTYET//                stage('Functional daos_test') {
-//NOTESTYET//                    agent {
-//NOTESTYET//                        label 'cluster_provisioner'
-//NOTESTYET//                    }
-//NOTESTYET//                    steps {
-//NOTESTYET//                        runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-//NOTESTYET//                                script: 'bash ftest.sh daos_test; echo "rc: $?"',
-//NOTESTYET//                                // Hrm.  I wonder if there is any way to tell Avocado
-//NOTESTYET//                                // to put daos_test's own JUnit files into a job-results
-//NOTESTYET//                                // dir
-//NOTESTYET//                                junit_files: "install/Linux/tmp/*results.xml"
-//NOTESTYET//                    }
-//NOTESTYET//                    post {
-//NOTESTYET//                        /* temporarily moved into runTest->stepResult due to JENKINS-39203
-//NOTESTYET//                        success {
-//NOTESTYET//                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Functional daos_test',  context: 'test/functional_daos_test', status: 'SUCCESS'
-//NOTESTYET//                        }
-//NOTESTYET//                        unstable {
-//NOTESTYET//                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Functional daos_test',  context: 'test/functional_daos_test', status: 'FAILURE'
-//NOTESTYET//                        }
-//NOTESTYET//                        failure {
-//NOTESTYET//                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Functional daos_test',  context: 'test/functional_daos_test', status: 'ERROR'
-//NOTESTYET//                        }
-//NOTESTYET//                        */
-//NOTESTYET//                        always {
-//NOTESTYET//                            sh '''rm -rf src/tests/ftest/avocado/job-results/*/html/ "Functional daos_test"/
-//NOTESTYET//                                  mkdir "Functional daos_test"/
-//NOTESTYET//                                  mv src/tests/ftest/avocado/job-results/* "Functional daos_test"/
-//NOTESTYET//                                  pwd
-//NOTESTYET//                                  ls *daos.log* && mv -f *daos.log* "Functional daos_test"/ || true
-//NOTESTYET//                                  find "Functional daos_test"/ -print || true'''
-//NOTESTYET//                            junit 'install/Linux/tmp/*results.xml, Functional daos_test/*/results.xml'
-//NOTESTYET//                            archiveArtifacts artifacts: 'Functional daos_test/**'
-//NOTESTYET//                        }
-//NOTESTYET//                    }
-//NOTESTYET//                }
-//NOTESTYET            }
-//NOTESTYET        }
     }
 }
