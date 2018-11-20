@@ -1,3 +1,8 @@
+/* Failed the test stage 11/20/2018 with
+[run_test.sh] + scons utest
+[run_test.sh] utils/run_test.sh: line 86: scons: command not found
+[run_test.sh] + echo 'run_test.sh exited failure with 127'
+*/
 // To use a test branch (i.e. PR) until it lands to master
 // I.e. for testing library changes
 @Library(value="pipeline-lib@sconsBuild-clean") _
@@ -19,7 +24,7 @@ pipeline {
     }
 
     stages {
-        stage('Pre-build') {
+        /*stage('Pre-build') {
             parallel {
                 stage('checkpatch') {
                     agent {
@@ -53,7 +58,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         stage('Build') {
             // abort other builds if/when one fails to avoid wasting time
             // and resources
@@ -144,7 +149,13 @@ pipeline {
             parallel {
                 stage('run_test.sh') {
                     agent {
-                        label 'single'
+                        /* See if adding dockerfile to test lets it see scons */ 
+                        dockerfile {
+                            filename 'Dockerfile.centos:7'
+                            dir 'utils/docker'
+                            label 'docker_runner'
+                            additionalBuildArgs '$BUILDARGS'
+                        }
                     }
                     steps {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
