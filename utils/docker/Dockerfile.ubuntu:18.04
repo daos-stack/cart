@@ -35,6 +35,8 @@ RUN apt-get install -y python3 python-yaml python3-yaml pylint3
 RUN apt-get install -y python-paramiko python3-paramiko
 RUN apt-get install -y valgrind rsync
 RUN apt-get install -y python-github
+Run apt-get install -y libyaml-dev libsafec-dev libipmctl-dev
+
 RUN ln -s /usr/bin/cc /bin/cc
 
 # hack the default shell to bash instead of dash
