@@ -114,7 +114,7 @@ pipeline {
         stage('Unit Test') {
             parallel {
                 stage('run_test.sh') {
-                    agent {
+                    /*agent {
                         /* See if adding dockerfile to test lets it see scons */ 
                         dockerfile {
                             filename 'Dockerfile.centos:7'
@@ -122,6 +122,9 @@ pipeline {
                             label 'docker_runner'
                             additionalBuildArgs '$BUILDARGS'
                         }
+                    }*/
+                    agent {
+                        label 'single'
                     }
                     steps {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
