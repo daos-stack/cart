@@ -8,8 +8,15 @@
 @Library(value="pipeline-lib@sconsBuild-clean") _
 
 pipeline {
-    agent any
-
+//    agent any
+    agent {
+        dockerfile {
+            filename 'Dockerfile.centos:7'
+            dir 'utils/docker'
+            label 'docker_runner'
+            additionalBuildArgs '$BUILDARGS'
+        }
+    }
     environment {
         GITHUB_USER = credentials('aa4ae90b-b992-4fb6-b33b-236a53a26f77')
         BAHTTPS_PROXY = "${env.HTTP_PROXY ? '--build-arg HTTP_PROXY="' + env.HTTP_PROXY + '" --build-arg http_proxy="' + env.HTTP_PROXY + '"' : ''}"
@@ -27,14 +34,14 @@ pipeline {
         stage('Pre-build') {
             parallel {
                 stage('checkpatch') {
-                    agent {
+                    /*agent {
                         dockerfile {
                             filename 'Dockerfile.centos:7'
                             dir 'utils/docker'
                             label 'docker_runner'
                             additionalBuildArgs '$BUILDARGS'
                         }
-                    }
+                    }*/
                     steps {
                         checkPatch user: GITHUB_USER_USR,
                                    password: GITHUB_USER_PSW,
@@ -53,10 +60,10 @@ pipeline {
             // and resources
             failFast true
             parallel {
-                stage('Build on CentOS 7') {
+                stage('Build on Leap 15') {
                     agent {
                         dockerfile {
-                            filename 'Dockerfile.centos:7'
+                            filename 'Dockerfile.leap:15'
                             dir 'utils/docker'
                             label 'docker_runner'
                             additionalBuildArgs '$BUILDARGS'
@@ -64,8 +71,8 @@ pipeline {
                     }
                     steps {
                         sconsBuild clean: "_build.external-Linux"
-                        stash name: 'CentOS-install', includes: 'install/**'
-                        stash name: 'CentOS-build-vars', includes: '.build_vars-Linux.*'
+                        stash name: 'Leap-install', includes: 'install/**'
+                        stash name: 'Leap-build-vars', includes: '.build_vars-Linux.*'
                     }
                     post {
                         always {
@@ -81,7 +88,7 @@ pipeline {
                         }
                     }
                 }
-                stage('Build on Ubuntu 18.04') {
+                /*stage('Build on Ubuntu 18.04') {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.ubuntu:18.04'
@@ -108,22 +115,19 @@ pipeline {
                                                    excludeFile('_build\\.external\\/.*')]
                         }
                     }
-                }
+                }*/
             }
         }
-        stage('Unit Test') {
+        /*stage('Unit Test') {
             parallel {
                 stage('run_test.sh') {
-                    /*agent {
+                    agent {
                         dockerfile {
                             filename 'Dockerfile.centos:7'
                             dir 'utils/docker'
                             label 'docker_runner'
                             additionalBuildArgs '$BUILDARGS'
                         }
-                    }*/
-                    agent {
-                        label 'single'
                     }
                     steps {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
@@ -132,7 +136,6 @@ pipeline {
                     }
                     post {
                         always {
-                            /*archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output', allowEmptyArchive: true */
                             archiveArtifacts artifacts: 'build/Linux/src/utest/utest.log', allowEmptyArchive: true
                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**', allowEmptyArchive: true
                             archiveArtifacts artifacts: 'build/Linux/src/utest/*.xml', allowEmptyArchive: true
@@ -140,6 +143,6 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
     }
 }
