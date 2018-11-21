@@ -1,22 +1,10 @@
-/* Failed the test stage 11/20/2018 with
-[run_test.sh] + scons utest
-[run_test.sh] utils/run_test.sh: line 86: scons: command not found
-[run_test.sh] + echo 'run_test.sh exited failure with 127'
-*/
 // To use a test branch (i.e. PR) until it lands to master
 // I.e. for testing library changes
 @Library(value="pipeline-lib@sconsBuild-clean") _
 
 pipeline {
-//    agent any
-    agent {
-        dockerfile {
-            filename 'Dockerfile.centos:7'
-            dir 'utils/docker'
-            label 'docker_runner'
-            additionalBuildArgs '$BUILDARGS'
-        }
-    }
+    agent any
+
     environment {
         GITHUB_USER = credentials('aa4ae90b-b992-4fb6-b33b-236a53a26f77')
         BAHTTPS_PROXY = "${env.HTTP_PROXY ? '--build-arg HTTP_PROXY="' + env.HTTP_PROXY + '" --build-arg http_proxy="' + env.HTTP_PROXY + '"' : ''}"
@@ -31,17 +19,17 @@ pipeline {
     }
 
     stages {
-        stage('Pre-build') {
+        /*stage('Pre-build') {
             parallel {
                 stage('checkpatch') {
-                    /*agent {
+                    agent {
                         dockerfile {
                             filename 'Dockerfile.centos:7'
                             dir 'utils/docker'
                             label 'docker_runner'
                             additionalBuildArgs '$BUILDARGS'
                         }
-                    }*/
+                    }
                     steps {
                         checkPatch user: GITHUB_USER_USR,
                                    password: GITHUB_USER_PSW,
@@ -54,16 +42,16 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         stage('Build') {
             // abort other builds if/when one fails to avoid wasting time
             // and resources
             failFast true
             parallel {
-                stage('Build on Leap 15') {
+                stage('Build on CentOS 7') {
                     agent {
                         dockerfile {
-                            filename 'Dockerfile.leap:15'
+                            filename 'Dockerfile.centos:7'
                             dir 'utils/docker'
                             label 'docker_runner'
                             additionalBuildArgs '$BUILDARGS'
@@ -71,8 +59,9 @@ pipeline {
                     }
                     steps {
                         sconsBuild clean: "_build.external-Linux"
-                        stash name: 'Leap-install', includes: 'install/**'
-                        stash name: 'Leap-build-vars', includes: '.build_vars-Linux.*'
+                        stash name: 'CentOS-install', includes: 'install/**'
+                        stash name: 'CentOS-build-vars', includes: '.build_vars-Linux.*'
+                        //stash name: 'CentOS-tests', includes: 'build/src/rdb/raft/src/tests_main, build/src/common/tests/btree_direct, build/src/common/tests/btree, src/common/tests/btree.sh, build/src/common/tests/sched, build/src/client/api/tests/eq_tests, src/vos/tests/evt_ctl.sh, build/src/vos/vea/tests/vea_ut, src/rdb/raft_tests/raft_tests.py'
                     }
                     post {
                         always {
@@ -86,9 +75,20 @@ pipeline {
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
                         }
+                        /* temporarily moved into stepResult due to JENKINS-39203
+                        success {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'CentOS 7 Build',  context: 'build/centos7', status: 'SUCCESS'
+                        }
+                        unstable {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'CentOS 7 Build',  context: 'build/centos7', status: 'FAILURE'
+                        }
+                        failure {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'CentOS 7 Build',  context: 'build/centos7', status: 'ERROR'
+                        }
+                        */
                     }
                 }
-                /*stage('Build on Ubuntu 18.04') {
+                stage('Build on Ubuntu 18.04') {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.ubuntu:18.04'
@@ -114,14 +114,26 @@ pipeline {
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
                         }
+                        /* temporarily moved into stepResult due to JENKINS-39203
+                        success {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Ubuntu 18 Build',  context: 'build/ubuntu18', status: 'SUCCESS'
+                        }
+                        unstable {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Ubuntu 18 Build',  context: 'build/ubuntu18', status: 'FAILURE'
+                        }
+                        failure {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Ubuntu 18 Build',  context: 'build/ubuntu18', status: 'ERROR'
+                        }
+                        */
                     }
-                }*/
+                }
             }
         }
-        /*stage('Unit Test') {
+        stage('Unit Test') {
             parallel {
                 stage('run_test.sh') {
                     agent {
+                        /* See if adding dockerfile to test lets it see scons */ 
                         dockerfile {
                             filename 'Dockerfile.centos:7'
                             dir 'utils/docker'
@@ -136,13 +148,11 @@ pipeline {
                     }
                     post {
                         always {
-                            archiveArtifacts artifacts: 'build/Linux/src/utest/utest.log', allowEmptyArchive: true
-                            archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**', allowEmptyArchive: true
-                            archiveArtifacts artifacts: 'build/Linux/src/utest/*.xml', allowEmptyArchive: true
+                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output', allowEmptyArchive: true
                         }
                     }
                 }
             }
-        }*/
+        }
     }
 }
