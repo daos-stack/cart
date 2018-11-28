@@ -88,50 +88,11 @@ pipeline {
                         */
                     }
                 }
-                stage('Build on Ubuntu 18.04') {
-                    agent {
-                        dockerfile {
-                            filename 'Dockerfile.ubuntu:18.04'
-                            dir 'utils/docker'
-                            label 'docker_runner'
-                            additionalBuildArgs '$BUILDARGS'
-                        }
-                    }
-                    steps {
-                        sh '''echo "Skipping Ubuntu 18 build due to https://jira.hpdd.intel.com/browse/CART-548"
-                              exit 0'''
-                        //sconsBuild clean: "_build.external-Linux"
-                    }
-                    post {
-                        always {
-                            recordIssues enabledForFailure: true,
-                                         aggregatingResults: true,
-                                         id: "analysis-ubuntu18",
-                                         tools: [
-                                             [tool: [$class: 'GnuMakeGcc']],
-                                             [tool: [$class: 'CppCheck']],
-                                         ],
-                                         filters: [excludeFile('.*\\/_build\\.external\\/.*'),
-                                                   excludeFile('_build\\.external\\/.*')]
-                        }
-                        /* temporarily moved into stepResult due to JENKINS-39203
-                        success {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Ubuntu 18 Build',  context: 'build/ubuntu18', status: 'SUCCESS'
-                        }
-                        unstable {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Ubuntu 18 Build',  context: 'build/ubuntu18', status: 'FAILURE'
-                        }
-                        failure {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Ubuntu 18 Build',  context: 'build/ubuntu18', status: 'ERROR'
-                        }
-                        */
-                    }
-                }
             }
         }
         stage('Unit Test') {
             parallel {
-                stage('run_test.sh') {
+                stage('Single Node') {
                     agent {
                         /* See if adding dockerfile to test lets it see scons */ 
                         dockerfile {
@@ -144,6 +105,27 @@ pipeline {
                     steps {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
                                 script: 'bash -x utils/run_test.sh && echo "run_test.sh exited successfully with ${PIPESTATUS[0]}" || echo "run_test.sh exited failure with ${PIPESTATUS[0]}"',
+                              junit_files: null
+                    }
+                    post {
+                        always {
+                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output', allowEmptyArchive: true
+                        }
+                    }
+                }
+                stage('Two Node') {
+                    agent {
+                        /* See if adding dockerfile to test lets it see scons */ 
+                        dockerfile {
+                            filename 'Dockerfile.centos:7'
+                            dir 'utils/docker'
+                            label 'docker_runner'
+                            additionalBuildArgs '$BUILDARGS'
+                        }
+                    }
+                    steps {
+                        runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
+                                script: 'bash -x utils/run_test.sh --config config.json && echo "run_test.sh exited successfully with ${PIPESTATUS[0]}" || echo "run_test.sh exited failure with ${PIPESTATUS[0]}"',
                               junit_files: null
                     }
                     post {
