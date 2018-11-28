@@ -86,7 +86,12 @@ if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
   scons utest
   cd ${TESTDIR}
 # Phyl -- I'm betting that the "@" means that the entire list is passed in
-  python3 test_runner "${JENKINS_TEST_LIST[@]}"
+  if [ "$1" = "--config" ]; then
+    echo "Using config file ${2}"
+    python3 test_runner --config="${2}" "${JENKINS_TEST_LIST[@]}"
+  else
+    python3 test_runner "${JENKINS_TEST_LIST[@]}"
+  fi
   cd -
 fi
 
