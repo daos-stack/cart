@@ -1,0 +1,4 @@
+{ "host_list": ["wolf-77", "wolf-78"],
+  "use_daemon":"DvmRunner"
+}
+

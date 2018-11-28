@@ -92,7 +92,7 @@ pipeline {
         }
         stage('Unit Test') {
             parallel {
-                stage('Single Node') {
+                /*stage('Single Node') {
                     agent {
                         /* See if adding dockerfile to test lets it see scons */ 
                         dockerfile {
@@ -112,7 +112,7 @@ pipeline {
                              archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output', allowEmptyArchive: true
                         }
                     }
-                }
+                }*/
                 stage('Two Node') {
                     agent {
                         /* See if adding dockerfile to test lets it see scons */ 
@@ -125,7 +125,7 @@ pipeline {
                     }
                     steps {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: 'bash -x utils/run_test.sh --config config.json && echo "run_test.sh exited successfully with ${PIPESTATUS[0]}" || echo "run_test.sh exited failure with ${PIPESTATUS[0]}"',
+                                script: 'bash -x utils/run_test.sh --config utils/config.json && echo "run_test.sh exited successfully with ${PIPESTATUS[0]}" || echo "run_test.sh exited failure with ${PIPESTATUS[0]}"',
                               junit_files: null
                     }
                     post {
