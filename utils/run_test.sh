@@ -85,6 +85,7 @@ if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
   echo "Nothing to do yet, wish we could fail some tests"
   scons utest
   cd ${TESTDIR}
+# Phyl -- I'm betting that the "@" means that the entire list is passed in
   python3 test_runner "${JENKINS_TEST_LIST[@]}"
   cd -
 fi
