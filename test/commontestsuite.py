@@ -109,6 +109,7 @@ class CommonTestSuite(unittest.TestCase):
 
         # The one node test passes both Client and Server args.
         # Otherwise passes only Client args.
+# Phyl -- if there is no server arg, just launch a client
         if not srvr_arg:
             # Launch the client in the foreground
             cmdstr = cmd + cli_cmdstr
@@ -116,6 +117,7 @@ class CommonTestSuite(unittest.TestCase):
             srv_cmdstr = " {!s} -N {!s} {!s}{!s} {!s} :".format(
                 server, NPROC, env, prefix, srvr_arg)
             # Launch server and client on the same node
+# Phyl -- if there is a server arg, lauch both server and client
             cmdstr = cmd + srv_cmdstr + cli_cmdstr
 
         procrtn = self.execute_cmd(testdesc, cmdstr)
