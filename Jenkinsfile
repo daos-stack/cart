@@ -94,7 +94,6 @@ pipeline {
             parallel {
                 /*stage('Single Node') {
                     agent {
-                        /* See if adding dockerfile to test lets it see scons */ 
                         dockerfile {
                             filename 'Dockerfile.centos:7'
                             dir 'utils/docker'
