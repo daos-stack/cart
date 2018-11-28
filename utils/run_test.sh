@@ -68,10 +68,12 @@ JENKINS_TEST_LIST=(scripts/cart_echo_test.yml                   \
 # Check for symbol names in the library.
 if [ -d "utils" ]; then
   utils/test_cart_lib.sh
-  cwd=$(pwd)"/utils"
+# Phyl
+#  cwd=$(pwd)"/utils"
 else
   ./test_cart_lib.sh
-  cwd=$(pwd)
+# Phyl
+#  cwd=$(pwd)
 fi
 # Run the tests from the install TESTING directory
 if [ -z "$CART_TEST_MODE"  ]; then
@@ -89,8 +91,12 @@ if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
   cd ${TESTDIR}
 # Phyl -- I'm betting that the "@" means that the entire list is passed in
   if [ "$1" = "--config" ]; then
-     echo "Using config file $cwd"/"${2}"
-     python3 test_runner --config=$cwd"/""${2}" "${JENKINS_TEST_LIST[@]}"
+     echo "Using config file ../../../utils/${2}"
+# Phyl -- this is getting FileNotFoundError: [Errno 2] No such file or
+# directory: '/var/lib/jenkins
+# Phyl -- [Two Node] Using config file
+# /var/lib/jenkins/workspace/daos-stack-org_cart_PR-8-YQDEPPTT3CAP6I63B7H3CDZP6YIALVL3C6P6CV4AM43TSOM4BFEQ@2/utils/utils/config.json
+     python3 test_runner --config=../../../utils/"${2}" "${JENKINS_TEST_LIST[@]}"
   else
     python3 test_runner "${JENKINS_TEST_LIST[@]}"
   fi
