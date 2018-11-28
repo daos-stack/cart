@@ -125,6 +125,8 @@ class CommonTestSuite(unittest.TestCase):
         """Launch the server in the background"""
         server, srvr_arg = args
 
+# Phyl here the cmd is set with the server info and the executable like
+# tests/cart_echo_srv
         # Create the input string with server args
         (cmd, prefix) = self.add_prefix_logdir()
         cmdstr = "{!s} {!s} -N {!s} {!s}{!s} {!s}".format(
@@ -292,6 +294,9 @@ class CommonTestSuite(unittest.TestCase):
             prefix = " valgrind --tool=callgrind --callgrind-out-file=" + \
                      log_path + "/callgrind.%q{PMIX_ID}.out"
 
+# Phyl --  Specify the URI of the Open MPI server, or the name
+#          of the file (specified as file:filename) that contains that info
+#          Maybe look at DvmRunner
         if os.getenv('TR_USE_URI', ""):
             dvmfile = " --ompi-server file:%s " % os.getenv('TR_USE_URI')
         else:
