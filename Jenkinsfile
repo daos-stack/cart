@@ -114,13 +114,16 @@ pipeline {
                 }*/
                 stage('Two Node') {
                     agent {
+                        label 'cluster_provisioner-2'
+                    }
+                    /*agent {
                         dockerfile {
                             filename 'Dockerfile.centos:7'
                             dir 'utils/docker'
                             label 'docker_runner'
                             additionalBuildArgs '$BUILDARGS'
                         }
-                    }
+                    }*/
                     steps {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
                                 script: 'bash -x utils/run_test.sh --config utils/config.json && echo "run_test.sh exited successfully with ${PIPESTATUS[0]}" || echo "run_test.sh exited failure with ${PIPESTATUS[0]}"',
