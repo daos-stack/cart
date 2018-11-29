@@ -92,7 +92,7 @@ pipeline {
         }
         stage('Unit Test') {
             parallel {
-                /*stage('Single Node') {
+                stage('Single Node') {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.centos:7'
@@ -111,8 +111,8 @@ pipeline {
                              archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output', allowEmptyArchive: true
                         }
                     }
-                }*/
-                stage('Two Node') {
+                }
+                /*stage('Two Node') {
                     agent {
                         label 'cluster_provisioner-2'
                     }
@@ -126,7 +126,7 @@ pipeline {
                              archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**', allowEmptyArchive: true
                         }
                     }
-                }
+                }*/
             }
         }
     }
