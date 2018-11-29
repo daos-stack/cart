@@ -116,14 +116,6 @@ pipeline {
                     agent {
                         label 'cluster_provisioner-2'
                     }
-                    /*agent {
-                        dockerfile {
-                            filename 'Dockerfile.centos:7'
-                            dir 'utils/docker'
-                            label 'docker_runner'
-                            additionalBuildArgs '$BUILDARGS'
-                        }
-                    }*/
                     steps {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
                                 script: 'bash -x utils/run_test.sh --config utils/config.json && echo "run_test.sh exited successfully with ${PIPESTATUS[0]}" || echo "run_test.sh exited failure with ${PIPESTATUS[0]}"',
@@ -131,7 +123,7 @@ pipeline {
                     }
                     post {
                         always {
-                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output', allowEmptyArchive: true
+                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**', allowEmptyArchive: true
                         }
                     }
                 }
