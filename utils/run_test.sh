@@ -83,13 +83,11 @@ else
 fi
 if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
   echo "Nothing to do yet, wish we could fail some tests"
-# Phyl
-#  scons utest
-#  cd ${TESTDIR}
+  scons utest
+ cd ${TESTDIR}
 # Phyl -- I'm betting that the "@" means that the entire list is passed in
   if [ "$1" = "--config" ]; then
-     cd ${TESTDIR}
-     echo "Using config file ../../../${2}"
+    echo "Using config file ../../../${2}"
 # Phyl -- this is getting FileNotFoundError: [Errno 2] No such file or
 # directory: '/var/lib/jenkins
 # Phyl -- [Two Node] Using config file
@@ -104,10 +102,8 @@ if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
 #[Two Node] TestRunner: orte-dvm failed to start
 #[Two Node] TestRunner: orte-dvm rc: 255
 # Phyl -- Wull, yeah. It can't get to wolf-77 and 78, Duh!
-     python3 test_runner --config=../../../"${2}" "${JENKINS_TEST_LIST[@]}"
+    python3 test_runner --config=../../../"${2}" "${JENKINS_TEST_LIST[@]}"
   else
-    scons utest
-    cd ${TESTDIR}
     python3 test_runner "${JENKINS_TEST_LIST[@]}"
   fi
   cd -
