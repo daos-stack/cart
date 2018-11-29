@@ -68,12 +68,8 @@ JENKINS_TEST_LIST=(scripts/cart_echo_test.yml                   \
 # Check for symbol names in the library.
 if [ -d "utils" ]; then
   utils/test_cart_lib.sh
-# Phyl
-#  cwd=$(pwd)"/utils"
 else
   ./test_cart_lib.sh
-# Phyl
-#  cwd=$(pwd)
 fi
 # Run the tests from the install TESTING directory
 if [ -z "$CART_TEST_MODE"  ]; then
@@ -87,10 +83,12 @@ else
 fi
 if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
   echo "Nothing to do yet, wish we could fail some tests"
-  scons utest
-  cd ${TESTDIR}
+# Phyl
+#  scons utest
+#  cd ${TESTDIR}
 # Phyl -- I'm betting that the "@" means that the entire list is passed in
   if [ "$1" = "--config" ]; then
+     cd ${TESTDIR}
      echo "Using config file ../../../${2}"
 # Phyl -- this is getting FileNotFoundError: [Errno 2] No such file or
 # directory: '/var/lib/jenkins
@@ -98,8 +96,18 @@ if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
 # /var/lib/jenkins/workspace/daos-stack-org_cart_PR-8-YQDEPPTT3CAP6I63B7H3CDZP6YIALVL3C6P6CV4AM43TSOM4BFEQ@2/utils/utils/config.json
 # Phyl -- Now it's: [Two Node] Using config file
 # /var/lib/jenkins/workspace/daos-stack-org_cart_PR-8-YQDEPPTT3CAP6I63B7H3CDZP6YIALVL3C6P6CV4AM43TSOM4BFEQ@2/utils/utils/config.json
+# Phyl -- and now it's: [Two Node] TestRunner: start orte-dvm process
+#[Two Node] 
+#[Two Node] TestRunner: orte-dvm process wait
+#[Two Node] TestRunner: orte-dvm process started pid: 1074 
+#[Two Node] 
+#[Two Node] TestRunner: orte-dvm failed to start
+#[Two Node] TestRunner: orte-dvm rc: 255
+# Phyl -- Wull, yeah. It can't get to wolf-77 and 78, Duh!
      python3 test_runner --config=../../../"${2}" "${JENKINS_TEST_LIST[@]}"
   else
+    scons utest
+    cd ${TESTDIR}
     python3 test_runner "${JENKINS_TEST_LIST[@]}"
   fi
   cd -
