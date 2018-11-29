@@ -50,13 +50,16 @@ pipeline {
             parallel {
                 stage('Build on CentOS 7') {
                     agent {
+                        label 'cluster_provisioner-2'
+                    }
+                    /*agent {
                         dockerfile {
                             filename 'Dockerfile.centos:7'
                             dir 'utils/docker'
                             label 'docker_runner'
                             additionalBuildArgs '$BUILDARGS'
                         }
-                    }
+                    }*/
                     steps {
                         sconsBuild clean: "_build.external-Linux"
                         stash name: 'CentOS-install', includes: 'install/**'
