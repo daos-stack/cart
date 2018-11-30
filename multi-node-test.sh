@@ -50,7 +50,12 @@ trap 'echo "encountered an unchecked return code, exiting with error"' ERR
 # shellcheck disable=SC2154
 # Phyl -- so this gets rid of any leftover mount points from a previous run
 # I moved this up from where it was in the original
+# Phyl
+echo "SL_OMPI_PREFIX = ${SL_OMPI_PREFIX}"
+
+# Phyl DAOS_BASE is /home/cart/cart or the /var/lib equiv.
 DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
+echo "DAOS_BASE = ${DAOS_BASE}"
 
 echo "HOSTNAME=${HOSTNAME}"
 
@@ -63,25 +68,18 @@ first_vm=$(($(($((EXECUTOR_NUMBER+4))*2))-1))
 echo $first_vm
 second_vm=$(($((EXECUTOR_NUMBER+4))*2))
 echo $second_vm
-#vm1=vm"$(((EXECUTOR_NUMBER+4)*2-1))"
-#vm2=vm"$(((EXECUTOR_NUMBER+4)*2))"
-vm1=vm$first_vm
-echo vm1
-# vm1
+vm1=vm"$(((EXECUTOR_NUMBER+4)*2-1))"
+vm2=vm"$(((EXECUTOR_NUMBER+4)*2))"
+#vm1=vm$first_vm
 echo $vm1
-# vm11
-vm2=vm$second_vm
 echo $vm2
-
-
 
 
 trap 'set +e
 i=5
 # due to flakiness on wolf-53, try this several times
 while [ $i -gt 0 ]; do
-#    pdsh -R ssh -S -w ${HOSTPREFIX}vm[1-12] "set -x
-    pdsh -R ssh -S -w ${HOSTPREFIX}vm[$first_vm-$second_vm] "set -x
+    pdsh -R ssh -S -w ${HOSTPREFIX}vm[1-12] "set -x
     x=0
     while [ \$x -lt 30 ] &&
           grep $DAOS_BASE /proc/mounts &&
@@ -101,7 +99,8 @@ done' EXIT
 #DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
 # Phyl -- the following edits the /etc/fstab file
 # Need to change 11-12 to something like $vm1-$vm2
-if ! pdsh -R ssh -S -w "${HOSTPREFIX}"vm[$first_vm-$second_vm] "set -ex
+#if ! pdsh -R ssh -S -w "${HOSTPREFIX}"vm[${first_vm}-${second_vm}] "set -ex
+if ! pdsh -R ssh -S -w "${HOSTPREFIX}"vm[1-12] "set -ex
 ulimit -c unlimited
 sudo mkdir -p $DAOS_BASE
 sudo ed <<EOF /etc/fstab
