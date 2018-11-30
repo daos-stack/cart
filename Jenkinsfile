@@ -50,16 +50,13 @@ pipeline {
             parallel {
                 stage('Build on CentOS 7') {
                     agent {
-                        label 'cluster_provisioner-2'
-                    }
-                    /*agent {
                         dockerfile {
                             filename 'Dockerfile.centos:7'
                             dir 'utils/docker'
                             label 'docker_runner'
                             additionalBuildArgs '$BUILDARGS'
                         }
-                    }*/
+                    }
                     steps {
                         sconsBuild clean: "_build.external-Linux"
                         stash name: 'CentOS-install', includes: 'install/**'
@@ -120,9 +117,10 @@ pipeline {
                         label 'cluster_provisioner-2'
                     }
                     steps {
+                        echo "Starting Two-node runTest"
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: 'bash -x utils/run_test.sh --config utils/config.json && echo "run_test.sh exited successfully with ${PIPESTATUS[0]}" || echo "run_test.sh exited failure with ${PIPESTATUS[0]}"',
-                              junit_files: null
+                                script: 'bash -x ./multi-node-test.sh 2; echo "rc: $?"',
+                                junit_files: null
                     }
                     post {
                         always {
