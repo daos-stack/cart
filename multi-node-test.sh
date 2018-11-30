@@ -51,11 +51,37 @@ trap 'echo "encountered an unchecked return code, exiting with error"' ERR
 # Phyl -- so this gets rid of any leftover mount points from a previous run
 # I moved this up from where it was in the original
 DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
+
+echo "HOSTNAME=${HOSTNAME}"
+
+EXECUTOR_NUMBER=${EXECUTOR_NUMBER:-2}
+echo "EXECUTOR_NUMBER = ${EXECUTOR_NUMBER}"
+
+# Brian said to use this instead of hard-coding vms 11 and 12 11/30/2018
+#first_vm=$((EXECUTOR_NUMBER+4)*2-1)
+first_vm=$(($(($((EXECUTOR_NUMBER+4))*2))-1))
+echo $first_vm
+second_vm=$(($((EXECUTOR_NUMBER+4))*2))
+echo $second_vm
+#vm1=vm"$(((EXECUTOR_NUMBER+4)*2-1))"
+#vm2=vm"$(((EXECUTOR_NUMBER+4)*2))"
+vm1=vm$first_vm
+echo vm1
+# vm1
+echo $vm1
+# vm11
+vm2=vm$second_vm
+echo $vm2
+
+
+
+
 trap 'set +e
 i=5
 # due to flakiness on wolf-53, try this several times
 while [ $i -gt 0 ]; do
-    pdsh -R ssh -S -w ${HOSTPREFIX}vm[1-9] "set -x
+#    pdsh -R ssh -S -w ${HOSTPREFIX}vm[1-12] "set -x
+    pdsh -R ssh -S -w ${HOSTPREFIX}vm[$first_vm-$second_vm] "set -x
     x=0
     while [ \$x -lt 30 ] &&
           grep $DAOS_BASE /proc/mounts &&
@@ -74,7 +100,8 @@ done' EXIT
 # Phyl -- I moved this up.
 #DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
 # Phyl -- the following edits the /etc/fstab file
-if ! pdsh -R ssh -S -w "${HOSTPREFIX}"vm[11-12] "set -ex
+# Need to change 11-12 to something like $vm1-$vm2
+if ! pdsh -R ssh -S -w "${HOSTPREFIX}"vm[$first_vm-$second_vm] "set -ex
 ulimit -c unlimited
 sudo mkdir -p $DAOS_BASE
 sudo ed <<EOF /etc/fstab
@@ -101,7 +128,7 @@ echo "hit enter to continue"
 if [ "$1" = "2" ]; then
     cat <<EOF > install/Linux/TESTING/scripts/config.json
 {
-    "host_list": ["${HOSTPREFIX}vm11", "${HOSTPREFIX}vm12"],
+    "host_list": ["${HOSTPREFIX}${vm1}", "${HOSTPREFIX}${vm2}"],
     "use_daemon":"DvmRunner"
 }
 EOF
@@ -110,7 +137,7 @@ fi
 rm -rf install/Linux/TESTING/testLogs/
 
 # shellcheck disable=SC2029
-if ! ssh "${HOSTPREFIX}"vm11 "set -ex
+if ! ssh "${HOSTPREFIX}"vm1 "set -ex
 ulimit -c unlimited
 cd $DAOS_BASE
 
