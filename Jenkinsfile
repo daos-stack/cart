@@ -114,7 +114,7 @@ pipeline {
                 }*/
                 stage('Two Node') {
                     agent {
-                        label 'cluster_provisioner-2'
+                        label 'cluster_provisioner-2_nodes'
                     }
                     steps {
                         echo "Starting Two-node runTest"
