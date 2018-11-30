@@ -62,15 +62,18 @@ echo "HOSTNAME=${HOSTNAME}"
 EXECUTOR_NUMBER=${EXECUTOR_NUMBER:-2}
 echo "EXECUTOR_NUMBER = ${EXECUTOR_NUMBER}"
 
+# Phyl
 # Brian said to use this instead of hard-coding vms 11 and 12 11/30/2018
 #first_vm=$((EXECUTOR_NUMBER+4)*2-1)
-first_vm=$(($(($((EXECUTOR_NUMBER+4))*2))-1))
-echo $first_vm
-second_vm=$(($((EXECUTOR_NUMBER+4))*2))
-echo $second_vm
-vm1=vm"$(((EXECUTOR_NUMBER+4)*2-1))"
-vm2=vm"$(((EXECUTOR_NUMBER+4)*2))"
-#vm1=vm$first_vm
+if [ "$1" = "2" ]; then
+    vm2="$(((${EXECUTOR_NUMBER:-0}+4)*2))"
+    vm1="$((vm2-1))"
+    vmrange="$vm1-$vm2"
+    vm1="vm$vm1"
+    vm2="vm$vm2"
+fi
+# Phyl
+
 echo $vm1
 echo $vm2
 
@@ -79,7 +82,7 @@ trap 'set +e
 i=5
 # due to flakiness on wolf-53, try this several times
 while [ $i -gt 0 ]; do
-    pdsh -R ssh -S -w ${HOSTPREFIX}vm[1-12] "set -x
+    pdsh -R ssh -S -w ${HOSTPREFIX}vm[1,$vmrange] "set -x
     x=0
     while [ \$x -lt 30 ] &&
           grep $DAOS_BASE /proc/mounts &&
@@ -100,7 +103,7 @@ done' EXIT
 # Phyl -- the following edits the /etc/fstab file
 # Need to change 11-12 to something like $vm1-$vm2
 #if ! pdsh -R ssh -S -w "${HOSTPREFIX}"vm[${first_vm}-${second_vm}] "set -ex
-if ! pdsh -R ssh -S -w "${HOSTPREFIX}"vm[1-12] "set -ex
+if ! pdsh -R ssh -S -w "${HOSTPREFIX}"vm[1,$vmrange] "set -ex
 ulimit -c unlimited
 sudo mkdir -p $DAOS_BASE
 sudo ed <<EOF /etc/fstab
