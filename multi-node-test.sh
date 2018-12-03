@@ -48,26 +48,28 @@ trap 'echo "encountered an unchecked return code, exiting with error"' ERR
 . .build_vars-Linux.sh
 
 # shellcheck disable=SC2154
-# Phyl -- so this gets rid of any leftover mount points from a previous run
-# I moved this up from where it was in the original
 # Phyl
-echo "SL_OMPI_PREFIX = ${SL_OMPI_PREFIX}"
-
+# I moved this up from where it was in the original
 # Phyl DAOS_BASE is /home/cart/cart or the /var/lib equiv.
+echo "SL_OMPI_PREFIX = ${SL_OMPI_PREFIX}"
 DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
 echo "DAOS_BASE = ${DAOS_BASE}"
 
 echo "HOSTNAME=${HOSTNAME}"
 
-EXECUTOR_NUMBER=${EXECUTOR_NUMBER:-2}
-echo "EXECUTOR_NUMBER = ${EXECUTOR_NUMBER}"
-
 # Phyl
 # Brian said to use this instead of hard-coding vms 11 and 12 11/30/2018
 #first_vm=$((EXECUTOR_NUMBER+4)*2-1)
+# 12/3/2018 Brian changed this to the new one below
 if [ "$1" = "2" ]; then
-    vm2="$(((${EXECUTOR_NUMBER:-0}+4)*2))"
-    vm1="$((vm2-1))"
+#    vm2="$(((${EXECUTOR_NUMBER:-0}+4)*2))"
+#    vm1="$((vm2-1))"
+#    vmrange="$vm1-$vm2"
+#    vm1="vm$vm1"
+#    vm2="vm$vm2"
+    test_runner_vm=$((${EXECUTOR_NUMBER:-0}*3+7))
+    vm1="$((test_runner_vm+1))"
+    vm2="$((test_runner_vm+2))"
     vmrange="$vm1-$vm2"
     vm1="vm$vm1"
     vm2="vm$vm2"
@@ -101,8 +103,6 @@ done' EXIT
 # Phyl -- I moved this up.
 #DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
 # Phyl -- the following edits the /etc/fstab file
-# Need to change 11-12 to something like $vm1-$vm2
-#if ! pdsh -R ssh -S -w "${HOSTPREFIX}"vm[${first_vm}-${second_vm}] "set -ex
 if ! pdsh -R ssh -S -w "${HOSTPREFIX}"vm[1,$vmrange] "set -ex
 ulimit -c unlimited
 sudo mkdir -p $DAOS_BASE
