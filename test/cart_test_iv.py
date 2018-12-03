@@ -201,6 +201,10 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
 
                 # Parse return code and make sure it matches
                 if expected_rc != test_result["return_code"]:
+# Phyl
+                    self.logger.info("PHYL*** action expected_rc {}!= \
+                            test_result{} ValueError".format(expected_rc, \
+                            test_result["return_code"]))
                     raise ValueError("Fetch returned return code {!s} != " \
                                      "expected value {!s}".format(
                                          test_result["return_code"],
@@ -212,15 +216,21 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
 
                 # Check that returned key matches expected one
                 if not _check_key(key_rank, key_idx, test_result["key"]):
+# Phyl
+                    self.logger.info("PHYL*** _check_key raised ValueError")
                     raise ValueError("Fetch returned unexpected key")
 
                 # Check that returned value matches expected one
                 if not _check_value(action['expected_value'],
                                     test_result["value"]):
+# Phyl
+                    self.logger.info("PHYL*** _check_value raised ValueError")
                     raise ValueError("Fetch returned unexpected value")
 
             if "update" in operation:
                 if 'value' not in action:
+# Phyl
+                    self.logger.info("PHYL*** value not in action raised ValueError")
                     raise ValueError("Update operation requires value")
 
                 command = "{!s} -o '{!s}' -r '{!s}' -k '{!s}:{!s}' -v '{!s}'" \
@@ -354,5 +364,7 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
         ]
 
         status = self._iv_base_test(testmsg, 2, sample_actions)
+# Phyl
+        self.logger.info("PHYL*** status = {}".format(status))
         if status:
             self.fail("test_iv_base failed: %d " % status)
