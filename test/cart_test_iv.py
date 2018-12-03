@@ -193,7 +193,7 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
                     .format(command, operation, rank, key_rank, key_idx,
                             log_path)
 # Phyl
-                    self.logger.info("PHYL*** command = {}".format(command))
+                self.logger.info("PHYL*** command = {}".format(command))
 
                 cli_rtn = self.launch_test(testmsg, '1', self.pass_env,
                                            cli=cli_host, cli_arg=command)
