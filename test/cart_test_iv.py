@@ -144,10 +144,14 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
                 ('rank' not in action) or
                 ('key' not in action)):
             self.logger.error("Error happened during action check")
+# Phyl
+            self.logger.info("PHYL*** _verify_actions missing on operation")
             raise ValueError("Each action must contain an operation," \
                              " rank, and key")
 
         if len(action['key']) != 2:
+# Phyl
+            self.logger.info("PHYL*** key should be a tuple")
             self.logger.error("Error key should be tuple of (rank, idx)")
             raise ValueError("key should be a tuple of (rank, idx)")
 
@@ -156,6 +160,8 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
         if (('return_code' not in action) or
                 ('expected_value' not in action)):
             self.logger.error("Error: fetch operation was malformed")
+# Phyl
+            self.logger.info("PHYL*** fetch op was malformed")
             raise ValueError("Fetch operation malformed")
 
     def _iv_test_actions(self, testmsg, cli_host, actions):
@@ -316,6 +322,7 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
             self.logger.error("TEST FAILED: %s", str(exception))
 # Phyl
             self.logger.info("PHYL*** tests recorded ValueError")
+            self.logger.info("PHYL*** exception = {}".format(str(exception)))
 
         ########## Shutdown Servers ##########
 # Phyl
