@@ -174,6 +174,9 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
 
             self._verify_action(action)
 
+# Phyl
+            self.logger.info("PHYL*** looking at actions {}".format( \
+                    action['operation']))
             operation = action['operation']
             rank = int(action['rank'])
             key_rank = int(action['key'][0])
@@ -189,9 +192,17 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
                 command = "{!s} -o '{!s}' -r '{!s}' -k '{!s}:{!s}' -l '{!s}'" \
                     .format(command, operation, rank, key_rank, key_idx,
                             log_path)
+# Phyl
+                    self.logger.info("PHYL*** command = {}".format(command))
 
                 cli_rtn = self.launch_test(testmsg, '1', self.pass_env,
                                            cli=cli_host, cli_arg=command)
+# Phyl
+                self.logger.info("PHYL*** launching {}, 1, {}, {}, \
+                            {}".format(testmsg, self.pass_env, cli_host, \
+                                command))
+                self.logger.info("PHYL*** cli_rtn = {}".format(cli_rtn))
+
                 if cli_rtn != 0:
 # Phyl
                     self.logger.info("PHYL*** action {} raising ValueError".format(command))
