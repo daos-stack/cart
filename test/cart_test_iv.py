@@ -161,6 +161,8 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
     def _iv_test_actions(self, testmsg, cli_host, actions):
         #pylint: disable=too-many-locals
         """Go through each action and perform the test"""
+# Phyl
+        self.logger.info("PHYL*** actions = {}".format(actions))
         for action in actions:
             command = 'tests/iv_client'
 
@@ -185,6 +187,8 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
                 cli_rtn = self.launch_test(testmsg, '1', self.pass_env,
                                            cli=cli_host, cli_arg=command)
                 if cli_rtn != 0:
+# Phyl
+                    self.logger.info("PHYL*** action {} raising ValueError".format(command))
                     raise ValueError('Error code {!s} running command "{!s}"' \
                         .format(cli_rtn, command))
 
@@ -226,6 +230,8 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
                 cli_rtn = self.launch_test(testmsg, '1', self.pass_env,
                                            cli=cli_host, cli_arg=command)
                 if cli_rtn != 0:
+# Phyl
+                    self.logger.info("PHYL*** action {} raising ValueError".format(command))
                     raise ValueError('Error code {!s} running command "{!s}"' \
                             .format(cli_rtn, command))
 
@@ -236,6 +242,8 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
                 cli_rtn = self.launch_test(testmsg, '1', self.pass_env,
                                            cli=cli_host, cli_arg=command)
                 if cli_rtn != 0:
+# Phyl
+                    self.logger.info("PHYL*** action {} raising ValueError".format(command))
                     raise ValueError('Error code {!s} running command "{!s}"' \
                             .format(cli_rtn, command))
 
@@ -296,8 +304,12 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
         except ValueError as exception:
             failed = True
             self.logger.error("TEST FAILED: %s", str(exception))
+# Phyl
+            self.logger.info("PHYL*** tests recorded ValueError")
 
         ########## Shutdown Servers ##########
+# Phyl
+        self.logger.info("PHYL*** Tests completed. Shutting down servers")
 
         # Note: due to CART-408 issue, rank 0 needs to shutdown last
         # Request each server shut down gracefully
