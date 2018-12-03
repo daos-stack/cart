@@ -569,5 +569,7 @@ int main(int argc, char **argv)
 		fclose(log_file);
 
 	crt_finalize();
+    /* Phyl */
+    DBG_PRINT("PHYL*** iv_client.c returning rc = %d\n", rc);
 	return rc;
 }
