@@ -10,6 +10,10 @@ set -ex
 # A list of tests to run as a single instance on Jenkins
 JENKINS_TEST_LIST=(scripts/cart_echo_test.yml                   \
                    scripts/cart_echo_test_non_sep.yml           \
+                   scripts/cart_self_test.yml                   \
+                   scripts/cart_self_test_non_sep.yml           \
+                   scripts/cart_test_corpc_prefwd.yml           \
+                   scripts/cart_test_corpc_prefwd_non_sep.yml   \
                    scripts/cart_test_group.yml                  \
                    scripts/cart_test_group_non_sep.yml          \
                    scripts/cart_test_barrier.yml                \
@@ -24,14 +28,14 @@ JENKINS_TEST_LIST=(scripts/cart_echo_test.yml                   \
                    scripts/cart_rpc_test_non_sep.yml            \
                    scripts/cart_test_corpc_version.yml          \
                    scripts/cart_test_corpc_version_non_sep.yml  \
-                   scripts/cart_test_cart_ctl.yml               \
-                   scripts/cart_test_cart_ctl_non_sep.yml       \
-                   scripts/cart_test_iv.yml                     \
-                   scripts/cart_test_iv_non_sep.yml             \
                    scripts/cart_test_proto.yml                  \
                    scripts/cart_test_proto_non_sep.yml          \
                    scripts/cart_test_no_timeout.yml             \
                    scripts/cart_test_no_timeout_non_sep.yml)
+
+# Phyl -- add these back in after test run
+#                   scripts/cart_test_iv.yml                     \
+#                   scripts/cart_test_iv_non_sep.yml             \
 
 # shellcheck disable=SC1091
 if [ -f .localenv ]; then
@@ -140,8 +144,8 @@ rm -rf install/Linux/TESTING/testLogs/
 
 # shellcheck disable=SC2029
 # Phyl -- see if using same node as client works
-#if ! ssh "${HOSTPREFIX}"vm1 "set -ex
-if ! ssh "${HOSTPREFIX}${vm1}" "set -ex
+if ! ssh "${HOSTPREFIX}"vm1 "set -ex
+#if ! ssh "${HOSTPREFIX}${vm1}" "set -ex
 ulimit -c unlimited
 cd $DAOS_BASE
 
