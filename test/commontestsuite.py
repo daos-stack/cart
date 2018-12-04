@@ -109,7 +109,6 @@ class CommonTestSuite(unittest.TestCase):
 
         # The one node test passes both Client and Server args.
         # Otherwise passes only Client args.
-# Phyl -- if there is no server arg, just launch a client
         if not srvr_arg:
             # Launch the client in the foreground
             cmdstr = cmd + cli_cmdstr
@@ -117,7 +116,6 @@ class CommonTestSuite(unittest.TestCase):
             srv_cmdstr = " {!s} -N {!s} {!s}{!s} {!s} :".format(
                 server, NPROC, env, prefix, srvr_arg)
             # Launch server and client on the same node
-# Phyl -- if there is a server arg, lauch both server and client
             cmdstr = cmd + srv_cmdstr + cli_cmdstr
 
         procrtn = self.execute_cmd(testdesc, cmdstr)
@@ -127,8 +125,6 @@ class CommonTestSuite(unittest.TestCase):
         """Launch the server in the background"""
         server, srvr_arg = args
 
-# Phyl here the cmd is set with the server info and the executable like
-# tests/cart_echo_srv
         # Create the input string with server args
         (cmd, prefix) = self.add_prefix_logdir()
         cmdstr = "{!s} {!s} -N {!s} {!s}{!s} {!s}".format(
@@ -296,9 +292,6 @@ class CommonTestSuite(unittest.TestCase):
             prefix = " valgrind --tool=callgrind --callgrind-out-file=" + \
                      log_path + "/callgrind.%q{PMIX_ID}.out"
 
-# Phyl --  Specify the URI of the Open MPI server, or the name
-#          of the file (specified as file:filename) that contains that info
-#          Maybe look at DvmRunner
         if os.getenv('TR_USE_URI', ""):
             dvmfile = " --ompi-server file:%s " % os.getenv('TR_USE_URI')
         else:

@@ -144,14 +144,10 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
                 ('rank' not in action) or
                 ('key' not in action)):
             self.logger.error("Error happened during action check")
-# Phyl
-            self.logger.info("PHYL*** _verify_actions missing on operation")
             raise ValueError("Each action must contain an operation," \
                              " rank, and key")
 
         if len(action['key']) != 2:
-# Phyl
-            self.logger.info("PHYL*** key should be a tuple")
             self.logger.error("Error key should be tuple of (rank, idx)")
             raise ValueError("key should be a tuple of (rank, idx)")
 
@@ -160,23 +156,16 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
         if (('return_code' not in action) or
                 ('expected_value' not in action)):
             self.logger.error("Error: fetch operation was malformed")
-# Phyl
-            self.logger.info("PHYL*** fetch op was malformed")
             raise ValueError("Fetch operation malformed")
 
     def _iv_test_actions(self, testmsg, cli_host, actions):
         #pylint: disable=too-many-locals
         """Go through each action and perform the test"""
-# Phyl
-        self.logger.info("PHYL*** actions = {}".format(actions))
         for action in actions:
             command = 'tests/iv_client'
 
             self._verify_action(action)
 
-# Phyl
-            self.logger.info("PHYL*** looking at actions {}".format( \
-                    action['operation']))
             operation = action['operation']
             rank = int(action['rank'])
             key_rank = int(action['key'][0])
@@ -192,40 +181,22 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
                 command = "{!s} -o '{!s}' -r '{!s}' -k '{!s}:{!s}' -l '{!s}'" \
                     .format(command, operation, rank, key_rank, key_idx,
                             log_path)
-# Phyl
-                self.logger.info("PHYL*** command = {}".format(command))
-
                 cli_rtn = self.launch_test(testmsg, '1', self.pass_env,
                                            cli=cli_host, cli_arg=command)
-# Phyl
-                self.logger.info("PHYL*** launching {}, 1, {}, {}, \
-                            {}".format(testmsg, self.pass_env, cli_host, \
-                                command))
-                self.logger.info("PHYL*** cli_rtn = {}".format(cli_rtn))
 
                 if cli_rtn != 0:
-# Phyl
-                    self.logger.info("PHYL*** action {} raising ValueError".format(command))
                     raise ValueError('Error code {!s} running command "{!s}"' \
                         .format(cli_rtn, command))
 
                 # Read the result into test_result and remove the temp file
                 log_file = open(log_path)
-# Phyl
-                self.logger.info("PHYL*** calling json.load on {}".format(log_file))
                 test_result = json.load(log_file)
-# Phyl
-                self.logger.info("PHYL*** back from json.load on {}".format(log_file))
                 log_file.close()
                 os.close(log_fd)
                 os.remove(log_path)
 
                 # Parse return code and make sure it matches
                 if expected_rc != test_result["return_code"]:
-# Phyl
-                    self.logger.info("PHYL*** action expected_rc {}!= \
-                            test_result{} ValueError".format(expected_rc, \
-                            test_result["return_code"]))
                     raise ValueError("Fetch returned return code {!s} != " \
                                      "expected value {!s}".format(
                                          test_result["return_code"],
@@ -237,21 +208,15 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
 
                 # Check that returned key matches expected one
                 if not _check_key(key_rank, key_idx, test_result["key"]):
-# Phyl
-                    self.logger.info("PHYL*** _check_key raised ValueError")
                     raise ValueError("Fetch returned unexpected key")
 
                 # Check that returned value matches expected one
                 if not _check_value(action['expected_value'],
                                     test_result["value"]):
-# Phyl
-                    self.logger.info("PHYL*** _check_value raised ValueError")
                     raise ValueError("Fetch returned unexpected value")
 
             if "update" in operation:
                 if 'value' not in action:
-# Phyl
-                    self.logger.info("PHYL*** value not in action raised ValueError")
                     raise ValueError("Update operation requires value")
 
                 command = "{!s} -o '{!s}' -r '{!s}' -k '{!s}:{!s}' -v '{!s}'" \
@@ -261,8 +226,6 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
                 cli_rtn = self.launch_test(testmsg, '1', self.pass_env,
                                            cli=cli_host, cli_arg=command)
                 if cli_rtn != 0:
-# Phyl
-                    self.logger.info("PHYL*** action {} raising ValueError".format(command))
                     raise ValueError('Error code {!s} running command "{!s}"' \
                             .format(cli_rtn, command))
 
@@ -273,8 +236,6 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
                 cli_rtn = self.launch_test(testmsg, '1', self.pass_env,
                                            cli=cli_host, cli_arg=command)
                 if cli_rtn != 0:
-# Phyl
-                    self.logger.info("PHYL*** action {} raising ValueError".format(command))
                     raise ValueError('Error code {!s} running command "{!s}"' \
                             .format(cli_rtn, command))
 
@@ -335,13 +296,8 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
         except ValueError as exception:
             failed = True
             self.logger.error("TEST FAILED: %s", str(exception))
-# Phyl
-            self.logger.info("PHYL*** tests recorded ValueError")
-            self.logger.info("PHYL*** exception = {}".format(str(exception)))
 
         ########## Shutdown Servers ##########
-# Phyl
-        self.logger.info("PHYL*** Tests completed. Shutting down servers")
 
         # Note: due to CART-408 issue, rank 0 needs to shutdown last
         # Request each server shut down gracefully
@@ -386,7 +342,5 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
         ]
 
         status = self._iv_base_test(testmsg, 2, sample_actions)
-# Phyl
-        self.logger.info("PHYL*** status = {}".format(status))
         if status:
             self.fail("test_iv_base failed: %d " % status)
