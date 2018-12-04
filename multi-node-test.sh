@@ -144,8 +144,8 @@ rm -rf install/Linux/TESTING/testLogs/
 
 # shellcheck disable=SC2029
 # Phyl -- see if using same node as client works
-if ! ssh "${HOSTPREFIX}"vm1 "set -ex
 #if ! ssh "${HOSTPREFIX}${vm1}" "set -ex
+if ! ssh "${HOSTPREFIX}"vm1 "set -ex
 ulimit -c unlimited
 cd $DAOS_BASE
 
