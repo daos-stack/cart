@@ -92,7 +92,7 @@ pipeline {
         }
         stage('Unit Test') {
             parallel {
-                stage('Single Node') {/*
+                /*stage('Single Node') {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.centos:7'
