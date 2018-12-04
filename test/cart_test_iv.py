@@ -211,7 +211,11 @@ class TestIncastVariables(commontestsuite.CommonTestSuite):
 
                 # Read the result into test_result and remove the temp file
                 log_file = open(log_path)
+# Phyl
+                self.logger.info("PHYL*** calling json.load on {}".format(log_file))
                 test_result = json.load(log_file)
+# Phyl
+                self.logger.info("PHYL*** back from json.load on {}".format(log_file))
                 log_file.close()
                 os.close(log_fd)
                 os.remove(log_path)
