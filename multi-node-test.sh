@@ -147,7 +147,7 @@ cd $DAOS_BASE
 pushd install/Linux/TESTING
 if [ \"$1\" = \"2\" ]; then
     python3 test_runner config=scripts/config.json \\
-            script/test_list_two_nodes.yml || {
+            scripts/test_list_two_nodes.yml || {
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }
