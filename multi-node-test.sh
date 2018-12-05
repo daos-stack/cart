@@ -4,7 +4,7 @@
 
 set -ex
 # Phyl
-#set -ex -o pipefail
+set -ex -o pipefail
 
 # Phyl
 # A list of tests to run as a single instance on Jenkins
