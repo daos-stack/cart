@@ -42,6 +42,8 @@ set -x
 # A list of tests to run as a single instance on Jenkins
 JENKINS_TEST_LIST=(scripts/cart_echo_test.yml                   \
                    scripts/cart_echo_test_non_sep.yml           \
+                   scripts/cart_test_corpc_prefwd.yml           \
+                   scripts/cart_test_corpc_prefwd_non_sep.yml   \
                    scripts/cart_test_group.yml                  \
                    scripts/cart_test_group_non_sep.yml          \
                    scripts/cart_test_barrier.yml                \
@@ -52,8 +54,6 @@ JENKINS_TEST_LIST=(scripts/cart_echo_test.yml                   \
                    scripts/cart_test_rpc_error_non_sep.yml      \
                    scripts/cart_test_singleton.yml              \
                    scripts/cart_test_singleton_non_sep.yml      \
-                   scripts/cart_rpc_test.yml                    \
-                   scripts/cart_rpc_test_non_sep.yml            \
                    scripts/cart_test_corpc_version.yml          \
                    scripts/cart_test_corpc_version_non_sep.yml  \
                    scripts/cart_test_cart_ctl.yml               \
@@ -88,20 +88,6 @@ if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
 # Phyl -- I'm betting that the "@" means that the entire list is passed in
   if [ "$1" = "--config" ]; then
     echo "Using config file ../../../${2}"
-# Phyl -- this is getting FileNotFoundError: [Errno 2] No such file or
-# directory: '/var/lib/jenkins
-# Phyl -- [Two Node] Using config file
-# /var/lib/jenkins/workspace/daos-stack-org_cart_PR-8-YQDEPPTT3CAP6I63B7H3CDZP6YIALVL3C6P6CV4AM43TSOM4BFEQ@2/utils/utils/config.json
-# Phyl -- Now it's: [Two Node] Using config file
-# /var/lib/jenkins/workspace/daos-stack-org_cart_PR-8-YQDEPPTT3CAP6I63B7H3CDZP6YIALVL3C6P6CV4AM43TSOM4BFEQ@2/utils/utils/config.json
-# Phyl -- and now it's: [Two Node] TestRunner: start orte-dvm process
-#[Two Node] 
-#[Two Node] TestRunner: orte-dvm process wait
-#[Two Node] TestRunner: orte-dvm process started pid: 1074 
-#[Two Node] 
-#[Two Node] TestRunner: orte-dvm failed to start
-#[Two Node] TestRunner: orte-dvm rc: 255
-# Phyl -- Wull, yeah. It can't get to wolf-77 and 78, Duh!
     python3 test_runner --config=../../../"${2}" "${JENKINS_TEST_LIST[@]}"
   else
     python3 test_runner "${JENKINS_TEST_LIST[@]}"
