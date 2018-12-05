@@ -115,6 +115,32 @@ pipeline {
                         }
                     }
                 }
+                stage('Build on Leap') {
+                    agent {
+                        dockerfile {
+                            filename 'Dockerfile.leap:15'
+                            dir 'utils/docker'
+                            label 'docker_runner'
+                            additionalBuildArgs  '--build-arg NOBUILD=1 --build-arg UID=$(id -u)'
+                        }
+                    }
+                    steps {
+                        checkout scm
+                        sh '''git submodule update --init --recursive
+                              scons -c
+                              # scons -c is not perfect so get out the big hammer
+                              rm -rf _build.external-Linux install build
+                              SCONS_ARGS="--config=force --build-deps=yes USE_INSTALLED=all install"
+                              if ! scons $SCONS_ARGS; then
+                                  echo "$SCONS_ARGS failed"
+                                  rc=\${PIPESTATUS[0]}
+                                  cat config.log || true
+                                  exit \$rc
+                              fi'''
+                        stash name: 'Leap-install', includes: 'install/**'
+                        stash name: 'Leap-build-files', includes: '.build_vars-Linux.*, cart-linux.conf, .sconsign-Linux.dblite, .sconf-temp-Linux/**'
+                    }
+                }
             }
         }
         stage('Unit Test') {
