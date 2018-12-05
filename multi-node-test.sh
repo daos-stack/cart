@@ -129,6 +129,7 @@ if [ "$1" = "2" ]; then
     cat <<EOF > install/Linux/TESTING/scripts/config.json
 {
     "host_list": ["${HOSTPREFIX}${vm1}", "${HOSTPREFIX}${vm2}"],
+    "log_base_path": "$log_base_path",
     "use_daemon":"DvmRunner"
 }
 EOF
@@ -139,24 +140,31 @@ fi
 #if ! ssh "${HOSTPREFIX}${vm1}" "set -ex
 # Phyl --
 # Description file not found: scripts/test_list_two_nodes.yml
-if ! ssh "${HOSTPREFIX}"vm1 "set -ex
+if ! ssh "${HOSTPREFIX}$test_runner_vm" "set -ex
 ulimit -c unlimited
 cd $DAOS_BASE
-
 # now run it!
 pushd install/Linux/TESTING
 if [ \"$1\" = \"2\" ]; then
+    rm -rf $log_base_path/
     python3 test_runner config=scripts/config.json \\
-            scripts/test_list_two_nodes.yml || {
+            "${JENKINS_TEST_LIST[@]}" || {
+
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }
 fi
+popd
 exit \$rc"; then
     rc=${PIPESTATUS[0]}
 else
     rc=0
 fi
+
+hostname
+pwd
+scp -r
+"${HOSTPREFIX}$test_runner_vm:$DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
 
 {
     cat <<EOF
@@ -167,8 +175,9 @@ TestGroup:
     user_name: jenkins
 Tests:
 EOF
-    find install/Linux/TESTING/testLogs -name subtest_results.yml -print0 | \
-         xargs -0 cat
+    find install/Linux/TESTING/"$log_base_path" \
+        -name subtest_results.yml -print0 | xargs -0 cat
 } > results_1.yml
+cat results_1.yml
 
 exit "$rc"
