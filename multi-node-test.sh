@@ -2,11 +2,8 @@
 # Phyl -- with my changes
 # The original is in DAOS_INFO/CART/brians-multi-node-test.sh
 
-set -ex
-# Phyl
 set -ex -o pipefail
 
-# Phyl
 # A list of tests to run as a single instance on Jenkins
 JENKINS_TEST_LIST=(scripts/cart_echo_test.yml                   \
                    scripts/cart_echo_test_non_sep.yml           \
