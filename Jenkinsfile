@@ -61,7 +61,6 @@ pipeline {
                         sconsBuild clean: "_build.external-Linux"
                         stash name: 'CentOS-install', includes: 'install/**'
                         stash name: 'CentOS-build-vars', includes: '.build_vars-Linux.*'
-                        //stash name: 'CentOS-tests', includes: 'build/src/rdb/raft/src/tests_main, build/src/common/tests/btree_direct, build/src/common/tests/btree, src/common/tests/btree.sh, build/src/common/tests/sched, build/src/client/api/tests/eq_tests, src/vos/tests/evt_ctl.sh, build/src/vos/vea/tests/vea_ut, src/rdb/raft_tests/raft_tests.py'
                     }
                     post {
                         always {
@@ -86,6 +85,34 @@ pipeline {
                             githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'CentOS 7 Build',  context: 'build/centos7', status: 'ERROR'
                         }
                         */
+                    }
+                }
+                stage('Build on Ubuntu 18.04') {
+                    agent {
+                        dockerfile {
+                            filename 'Dockerfile.ubuntu:18.04'
+                            dir 'utils/docker'
+                            label 'docker_runner'
+                            additionalBuildArgs '$BUILDARGS'
+                        }
+                    }
+                    steps {
+                        sconsBuild clean: "_build.external-Linux"
+                        stash name: 'Ubuntu-install', includes: 'install/**'
+                        stash name: 'Ubuntu-build-vars', includes: '.build_vars-Linux.*'
+                    }
+                    post {
+                        always {
+                            recordIssues enabledForFailure: true,
+                                         aggregatingResults: true,
+                                         id: "analysis-ubuntu18.04",
+                                         tools: [
+                                             [tool: [$class: 'GnuMakeGcc']],
+                                             [tool: [$class: 'CppCheck']],
+                                         ],
+                                         filters: [excludeFile('.*\\/_build\\.external\\/.*'),
+                                                   excludeFile('_build\\.external\\/.*')]
+                        }
                     }
                 }
             }
