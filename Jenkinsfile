@@ -19,7 +19,7 @@ pipeline {
     }
 
     stages {
-        /*stage('Pre-build') {
+        stage('Pre-build') {
             parallel {
                 stage('checkpatch') {
                     agent {
@@ -42,7 +42,7 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
         stage('Build') {
             // abort other builds if/when one fails to avoid wasting time
             // and resources
