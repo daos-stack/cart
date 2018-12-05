@@ -19,30 +19,6 @@ pipeline {
     }
 
     stages {
-        stage('Pre-build') {
-            parallel {
-                stage('checkpatch') {
-                    agent {
-                        dockerfile {
-                            filename 'Dockerfile.centos:7'
-                            dir 'utils/docker'
-                            label 'docker_runner'
-                            additionalBuildArgs '$BUILDARGS'
-                        }
-                    }
-                    steps {
-                        checkPatch user: GITHUB_USER_USR,
-                                   password: GITHUB_USER_PSW,
-                                   ignored_files: "src/control/vendor/*"
-                    }
-                    post {
-                        always {
-                            archiveArtifacts artifacts: 'pylint.log', allowEmptyArchive: true
-                        }
-                    }
-                }
-            }
-        }
         stage('Build') {
             // abort other builds if/when one fails to avoid wasting time
             // and resources
@@ -74,78 +50,13 @@ pipeline {
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
                         }
-                        /* temporarily moved into stepResult due to JENKINS-39203
-                        success {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'CentOS 7 Build',  context: 'build/centos7', status: 'SUCCESS'
-                        }
-                        unstable {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'CentOS 7 Build',  context: 'build/centos7', status: 'FAILURE'
-                        }
-                        failure {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'CentOS 7 Build',  context: 'build/centos7', status: 'ERROR'
-                        }
-                        */
-                    }
-                }
-                stage('Build on Ubuntu 18.04') {
-                    agent {
-                        dockerfile {
-                            filename 'Dockerfile.ubuntu:18.04'
-                            dir 'utils/docker'
-                            label 'docker_runner'
-                            additionalBuildArgs '$BUILDARGS'
-                        }
-                    }
-                    steps {
-                        sconsBuild clean: "_build.external-Linux"
-                        stash name: 'Ubuntu-install', includes: 'install/**'
-                        stash name: 'Ubuntu-build-vars', includes: '.build_vars-Linux.*'
-                    }
-                    post {
-                        always {
-                            recordIssues enabledForFailure: true,
-                                         aggregatingResults: true,
-                                         id: "analysis-ubuntu18.04",
-                                         tools: [
-                                             [tool: [$class: 'GnuMakeGcc']],
-                                             [tool: [$class: 'CppCheck']],
-                                         ],
-                                         filters: [excludeFile('.*\\/_build\\.external\\/.*'),
-                                                   excludeFile('_build\\.external\\/.*')]
-                        }
-                    }
-                }
-                stage('Build on Leap') {
-                    agent {
-                        dockerfile {
-                            filename 'Dockerfile.leap:15'
-                            dir 'utils/docker'
-                            label 'docker_runner'
-                            additionalBuildArgs  '--build-arg NOBUILD=1 --build-arg UID=$(id -u)'
-                        }
-                    }
-                    steps {
-                        checkout scm
-                        sh '''git submodule update --init --recursive
-                              scons -c
-                              # scons -c is not perfect so get out the big hammer
-                              rm -rf _build.external-Linux install build
-                              SCONS_ARGS="--config=force --build-deps=yes USE_INSTALLED=all install"
-                              if ! scons $SCONS_ARGS; then
-                                  echo "$SCONS_ARGS failed"
-                                  rc=\${PIPESTATUS[0]}
-                                  cat config.log || true
-                                  exit \$rc
-                              fi'''
-                        stash name: 'Leap-install', includes: 'install/**'
-                        stash name: 'Leap-build-files', includes: '.build_vars-Linux.*, cart-linux.conf, .sconsign-Linux.dblite, .sconf-temp-Linux/**'
                     }
                 }
             }
         }
         stage('Unit Test') {
             parallel {
-                /*stage('Single Node') {
+                stage('Single Node') {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.centos:7'
@@ -164,7 +75,7 @@ pipeline {
                              archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output', allowEmptyArchive: true
                         }
                     }
-                }*/
+                }
                 stage('Two Node') {
                     agent {
                         label 'cluster_provisioner-2_nodes'
@@ -177,7 +88,7 @@ pipeline {
                     }
                     post {
                         always {
-                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**', allowEmptyArchive: true
+                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs-2_node/**', allowEmptyArchive: true
                         }
                     }
                 }
