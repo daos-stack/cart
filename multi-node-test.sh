@@ -52,22 +52,15 @@ trap 'echo "encountered an unchecked return code, exiting with error"' ERR
 # Phyl
 # I moved this up from where it was in the original
 # Phyl DAOS_BASE is /home/cart/cart or the /var/lib equiv.
+echo "DAOS_BASE before being set = ${DAOS_BASE}"
 echo "SL_OMPI_PREFIX = ${SL_OMPI_PREFIX}"
 DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
 echo "DAOS_BASE = ${DAOS_BASE}"
 
 echo "HOSTNAME=${HOSTNAME}"
 
-# Phyl
-# Brian said to use this instead of hard-coding vms 11 and 12 11/30/2018
-#first_vm=$((EXECUTOR_NUMBER+4)*2-1)
-# 12/3/2018 Brian changed this to the new one below
+# Use this instead of hard-coding vms to use
 if [ "$1" = "2" ]; then
-#    vm2="$(((${EXECUTOR_NUMBER:-0}+4)*2))"
-#    vm1="$((vm2-1))"
-#    vmrange="$vm1-$vm2"
-#    vm1="vm$vm1"
-#    vm2="vm$vm2"
     test_runner_vm=$((${EXECUTOR_NUMBER:-0}*3+7))
     vm1="$((test_runner_vm+1))"
     vm2="$((test_runner_vm+2))"
@@ -78,6 +71,7 @@ fi
 
 log_base_path="testLogs-${1}_node"
 
+# shellcheck disable=SC2154
 trap 'set +e
 i=5
 # due to flakiness on wolf-53, try this several times
@@ -91,6 +85,7 @@ while [ $i -gt 0 ]; do
         sleep 1
         let x+=1
     done
+    sudo sed -i -e \"/added by multi-node-test-$1.sh/d\" /etc/fstab
     sudo rmdir $DAOS_BASE || find $DAOS_BASE || true" 2>&1 | dshbak -c
     if [ ${PIPESTATUS[0]} = 0 ]; then
         i=0
@@ -101,7 +96,8 @@ done' EXIT
 # Phyl -- I moved this up.
 #DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
 # Phyl -- the following edits the /etc/fstab file
-if ! pdsh -R ssh -S -w "${HOSTPREFIX}"vm[1,$vmrange] "set -ex
+if ! pdsh -R ssh -S -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]"
+"set -ex
 ulimit -c unlimited
 sudo mkdir -p $DAOS_BASE
 sudo ed <<EOF /etc/fstab
@@ -110,7 +106,15 @@ $NFS_SERVER:$PWD $DAOS_BASE nfs defaults 0 0 # added by ftest.sh
 .
 wq
 EOF
-sudo mount $DAOS_BASE
+if ! sudo mount $DAOS_BASE; then
+    if [ \"\${HOSTNAME%%%%.*}\" = \"${HOSTPREFIX}$test_runner_vm\" ]; then
+        # could be already mounted from another test running in
+        # parallel # let's see what that rc is
+        echo \"mount rc: \${PIPESTATUS[0]}\" 
+    else
+        exit \${PIPESTATUS[0]}
+    fi
+fi
 
 # TODO: package this in to an RPM
 pip3 install --user tabulate
@@ -119,10 +123,6 @@ df -h" 2>&1 | dshbak -c; then
     echo "Cluster setup (i.e. provisioning) failed"
     exit 1
 fi
-
-echo "hit enter to continue"
-#read -r
-#exit 0
 
 # Phyl -- create the config file
 if [ "$1" = "2" ]; then
@@ -134,11 +134,11 @@ if [ "$1" = "2" ]; then
 EOF
 fi
 
-rm -rf install/Linux/TESTING/testLogs/
-
 # shellcheck disable=SC2029
 # Phyl -- see if using same node as client works
 #if ! ssh "${HOSTPREFIX}${vm1}" "set -ex
+# Phyl --
+# Description file not found: scripts/test_list_two_nodes.yml
 if ! ssh "${HOSTPREFIX}"vm1 "set -ex
 ulimit -c unlimited
 cd $DAOS_BASE
