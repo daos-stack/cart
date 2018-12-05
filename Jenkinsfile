@@ -56,14 +56,9 @@ pipeline {
         }
         stage('Unit Test') {
             parallel {
-                stage('Single Node') {
+                /*stage('Single Node') {
                     agent {
-                        dockerfile {
-                            filename 'Dockerfile.centos:7'
-                            dir 'utils/docker'
-                            label 'docker_runner'
-                            additionalBuildArgs '$BUILDARGS'
-                        }
+                        label 'single'
                     }
                     steps {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
@@ -75,7 +70,8 @@ pipeline {
                              archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output', allowEmptyArchive: true
                         }
                     }
-                }
+                }*/
+
                 stage('Two Node') {
                     agent {
                         label 'cluster_provisioner-2_nodes'

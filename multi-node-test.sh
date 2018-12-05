@@ -75,11 +75,8 @@ if [ "$1" = "2" ]; then
     vm1="vm$vm1"
     vm2="vm$vm2"
 fi
-# Phyl
 
-echo $vm1
-echo $vm2
-
+log_base_path="testLogs-${1}_node"
 
 trap 'set +e
 i=5
@@ -150,7 +147,7 @@ cd $DAOS_BASE
 pushd install/Linux/TESTING
 if [ \"$1\" = \"2\" ]; then
     python3 test_runner config=scripts/config.json \\
-        "${JENKINS_TEST_LIST[@]}" || {
+            script/test_list_two_nodes.yml || {
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }

@@ -1,4 +1,0 @@
-{ "host_list": ["wolf-18vm11", "wolf-18vm12"],
-  "use_daemon":"DvmRunner"
-}
-
