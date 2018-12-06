@@ -75,6 +75,7 @@ if [ "$1" = "2" ]; then
     vm1="$((test_runner_vm+1))"
     vm2="$((test_runner_vm+2))"
     vmrange="$vm1-$vm2"
+    test_runner_vm="vm$test_runner_vm"
     vm1="vm$vm1"
     vm2="vm$vm2"
 fi
