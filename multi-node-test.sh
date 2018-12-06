@@ -155,6 +155,10 @@ if [ \"$1\" = \"2\" ]; then
     }
 fi
 popd
+ls -ld install install/Linux install/Linux/TESTING >&2
+ls -l install/Linux/TESTING >&2
+df -h install/Linux/TESTING >&2
+ls -ltar
 exit \$rc"; then
     rc=${PIPESTATUS[0]}
 else
