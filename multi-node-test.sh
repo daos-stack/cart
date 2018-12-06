@@ -75,7 +75,9 @@ if [ "$1" = "2" ]; then
     vm1="$((test_runner_vm+1))"
     vm2="$((test_runner_vm+2))"
     vmrange="$vm1-$vm2"
-    test_runner_vm="vm$test_runner_vm"
+# Phyl -- Hack to let cart_iv tests run
+#    test_runner_vm="vm$test_runner_vm"
+    test_runner_vm="vm$vm1"
     vm1="vm$vm1"
     vm2="vm$vm2"
 fi
@@ -91,7 +93,9 @@ trap 'set +e
 i=5
 # due to flakiness on wolf-53, try this several times
 while [ $i -gt 0 ]; do
-    pdsh -R ssh -S -w ${HOSTPREFIX}vm[1,$vmrange] "set -x
+# Phyl -- changed this
+#    pdsh -R ssh -S -w ${HOSTPREFIX}vm[1,$vmrange] "set -x
+    pdsh -R ssh -S -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]" "set -x
     x=0
     while [ \$x -lt 30 ] &&
           grep $DAOS_BASE /proc/mounts &&
@@ -166,8 +170,7 @@ rm -rf install/Linux/TESTING/testLogs/
 # Phyl -- putting hack back in to run cart_iv tests
 #if ! ssh "${HOSTPREFIX}"vm1 "set -ex
 #if ! ssh "${HOSTPREFIX}${vm1}" "set -ex
-#if ! ssh "${HOSTPREFIX}$test_runner_vm" "set -ex
-if ! ssh "${HOSTPREFIX}${vm1}" "set -ex
+if ! ssh "${HOSTPREFIX}$test_runner_vm" "set -ex
 ulimit -c unlimited
 cd $DAOS_BASE
 
@@ -190,6 +193,7 @@ fi
 # Phyl -- Added this scp block
 hostname
 pwd
+# Phyl -- Again the hack to let cart_iv tests run
 scp -r "${HOSTPREFIX}$test_runner_vm:$DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
 
 {
