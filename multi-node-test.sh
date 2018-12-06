@@ -53,8 +53,6 @@ trap 'echo "encountered an unchecked return code, exiting with error"' ERR
 # Phyl
 # I moved this up from where it was in the original
 # Phyl DAOS_BASE is /home/cart/cart or the /var/lib equiv.
-# *** Try moving it back to original spot and see what happens since it is ''
-# here
 echo "SL_OMPI_PREFIX = ${SL_OMPI_PREFIX}"
 DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
 echo "DAOS_BASE = ${DAOS_BASE}"
@@ -75,9 +73,6 @@ if [ "$1" = "2" ]; then
     vm1="$((test_runner_vm+1))"
     vm2="$((test_runner_vm+2))"
     vmrange="$vm1-$vm2"
-# Phyl -- Hack to let cart_iv tests run
-#    test_runner_vm="vm$test_runner_vm"
-    test_runner_vm="vm$vm1"
     vm1="vm$vm1"
     vm2="vm$vm2"
 fi
@@ -86,16 +81,12 @@ fi
 echo $vm1
 echo $vm2
 
-# Phyl -- +1
-# shellcheck disable=SC2154
-# Phyl -- +1 sudo sed in the following block
+
 trap 'set +e
 i=5
 # due to flakiness on wolf-53, try this several times
 while [ $i -gt 0 ]; do
-# Phyl -- changed this
-#    pdsh -R ssh -S -w ${HOSTPREFIX}vm[1,$vmrange] "set -x
-    pdsh -R ssh -S -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]" "set -x
+    pdsh -R ssh -S -w ${HOSTPREFIX}vm[1,$vmrange] "set -x
     x=0
     while [ \$x -lt 30 ] &&
           grep $DAOS_BASE /proc/mounts &&
@@ -104,7 +95,6 @@ while [ $i -gt 0 ]; do
         sleep 1
         let x+=1
     done
-    sudo sed -i -e \"/added by multi-node-test-$1.sh/d\" /etc/fstab
     sudo rmdir $DAOS_BASE || find $DAOS_BASE || true" 2>&1 | dshbak -c
     if [ ${PIPESTATUS[0]} = 0 ]; then
         i=0
@@ -115,9 +105,7 @@ done' EXIT
 # Phyl -- I moved this up.
 #DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
 # Phyl -- the following edits the /etc/fstab file
-# Phyl -- changed 1
-#if ! pdsh -R ssh -S -w "${HOSTPREFIX}"vm[1,$vmrange] "set -ex
-if ! pdsh -R ssh -S -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]" "set -ex
+if ! pdsh -R ssh -S -w "${HOSTPREFIX}"vm[1,$vmrange] "set -ex
 ulimit -c unlimited
 sudo mkdir -p $DAOS_BASE
 sudo ed <<EOF /etc/fstab
@@ -126,17 +114,7 @@ $NFS_SERVER:$PWD $DAOS_BASE nfs defaults 0 0 # added by ftest.sh
 .
 wq
 EOF
-# Phyl -- added the mount block
-# sudo mount $DAOS_BASE
-if ! sudo mount $DAOS_BASE; then
-    if [ \"\${HOSTNAME%%%%.*}\" = \"${HOSTPREFIX}$test_runner_vm\" ]; then
-        # could be already mounted from another test running in
-        # parallel # let's see what that rc is
-        echo \"mount rc: \${PIPESTATUS[0]}\"
-    else
-        exit \${PIPESTATUS[0]}
-    fi
-fi
+sudo mount $DAOS_BASE
 
 # TODO: package this in to an RPM
 pip3 install --user tabulate
@@ -151,12 +129,10 @@ echo "hit enter to continue"
 #exit 0
 
 # Phyl -- create the config file
-# Phyl -- added log_base_path to next block
 if [ "$1" = "2" ]; then
     cat <<EOF > install/Linux/TESTING/scripts/config.json
 {
     "host_list": ["${HOSTPREFIX}${vm1}", "${HOSTPREFIX}${vm2}"],
-    "log_base_path": "$log_base_path",
     "use_daemon":"DvmRunner"
 }
 EOF
@@ -166,11 +142,8 @@ rm -rf install/Linux/TESTING/testLogs/
 
 # shellcheck disable=SC2029
 # Phyl -- see if using same node as client works
-# Phyl -- changed vm1 to test_runner_vm and added popd
-# Phyl -- putting hack back in to run cart_iv tests
 #if ! ssh "${HOSTPREFIX}"vm1 "set -ex
-#if ! ssh "${HOSTPREFIX}${vm1}" "set -ex
-if ! ssh "${HOSTPREFIX}$test_runner_vm" "set -ex
+if ! ssh "${HOSTPREFIX}${vm1}" "set -ex
 ulimit -c unlimited
 cd $DAOS_BASE
 
@@ -183,18 +156,11 @@ if [ \"$1\" = \"2\" ]; then
         echo \"Test exited with \$rc\"
     }
 fi
-popd
 exit \$rc"; then
     rc=${PIPESTATUS[0]}
 else
     rc=0
 fi
-
-# Phyl -- Added this scp block
-hostname
-pwd
-# Phyl -- Again the hack to let cart_iv tests run
-scp -r "${HOSTPREFIX}$test_runner_vm:$DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
 
 {
     cat <<EOF
@@ -208,7 +174,5 @@ EOF
     find install/Linux/TESTING/testLogs -name subtest_results.yml -print0 | \
          xargs -0 cat
 } > results_1.yml
-# Phyl -- +1
-cat results_1.yml
 
 exit "$rc"
