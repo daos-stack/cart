@@ -147,9 +147,9 @@ cd $DAOS_BASE
 pushd install/Linux/TESTING
 if [ \"$1\" = \"2\" ]; then
     rm -rf $log_base_path/
+    echo \"Calling python3\"
     python3 test_runner config=scripts/config.json \\
-            "${JENKINS_TEST_LIST[@]}" || {
-
+        "${JENKINS_TEST_LIST[@]}" || {
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }
@@ -167,8 +167,7 @@ fi
 
 hostname
 pwd
-scp -r
-"${HOSTPREFIX}$test_runner_vm:$DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
+scp -r "${HOSTPREFIX}$test_runner_vm:$DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
 
 {
     cat <<EOF
