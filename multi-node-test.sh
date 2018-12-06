@@ -7,6 +7,7 @@ set -ex
 #set -ex -o pipefail
 
 # Phyl
+echo "Starting the multi-node-test.sh script"
 # A list of tests to run as a single instance on Jenkins
 JENKINS_TEST_LIST=(scripts/cart_echo_test.yml                   \
                    scripts/cart_echo_test_non_sep.yml           \
