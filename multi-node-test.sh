@@ -121,7 +121,17 @@ $NFS_SERVER:$PWD $DAOS_BASE nfs defaults 0 0 # added by ftest.sh
 .
 wq
 EOF
-sudo mount $DAOS_BASE
+# Phyl -- added the mount block
+# sudo mount $DAOS_BASE
+if ! sudo mount $DAOS_BASE; then
+    if [ \"\${HOSTNAME%%%%.*}\" = \"${HOSTPREFIX}$test_runner_vm\" ]; then
+        # could be already mounted from another test running in
+        # parallel # let's see what that rc is
+        echo \"mount rc: \${PIPESTATUS[0]}\"
+    else
+        exit \${PIPESTATUS[0]}
+    fi
+fi
 
 # TODO: package this in to an RPM
 pip3 install --user tabulate
