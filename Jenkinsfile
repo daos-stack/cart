@@ -56,13 +56,13 @@ pipeline {
         }
         stage('Unit Test') {
             parallel {
-                stage('Single Node') {
+                /*stage('Single Node') {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.centos:7'
                             dir 'utils/docker'
                             label 'docker_runner'
-                            additionalBuildArgs  '--build-arg NOBUILD=1 --build-arg UID=$(id -u) --build-arg DONT_USE_RPMS=false'
+                            additionalBuildArgs '$BUILDARGS'
                         }
                     }
                     steps {
@@ -75,16 +75,16 @@ pipeline {
                              archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output', allowEmptyArchive: true
                         }
                     }
-                }
+                }*/
 
-                /*stage('Two Node') {
+                stage('Two Node') {
                     agent {
                         label 'cluster_provisioner-2_nodes'
                     }
                     steps {
                         echo "Starting Two-node runTest"
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: 'echo "calling bash"; bash -x ./multi-node-test.sh 2; echo "rc: $?"',
+                                script: 'bash -x ./multi-node-test.sh 2; echo "rc: $?"',
                                 junit_files: null
                     }
                     post {
@@ -92,7 +92,7 @@ pipeline {
                              archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs-2_node/**', allowEmptyArchive: true
                         }
                     }
-                }*/
+                }
             }
         }
     }
