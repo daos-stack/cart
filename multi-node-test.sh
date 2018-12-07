@@ -82,12 +82,12 @@ echo $vm1
 echo $vm2
 
 
+# Phyl -- get rid of vm1
+# pdsh -R ssh -S -w ${HOSTPREFIX}vm[1,$vmrange] "set -x
 trap 'set +e
 i=5
 # due to flakiness on wolf-53, try this several times
 while [ $i -gt 0 ]; do
-    # Phyl -- get rid ov vm1
-    # pdsh -R ssh -S -w ${HOSTPREFIX}vm[1,$vmrange] "set -x
     pdsh -R ssh -S -w ${HOSTPREFIX}vm[$vmrange] "set -x
     x=0
     while [ \$x -lt 30 ] &&
