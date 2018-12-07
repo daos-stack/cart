@@ -79,7 +79,7 @@ pipeline {
                     steps {
                         echo "Starting Two-node runTest"
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: 'bash -x ./multi-node-test.sh 2; echo "rc: $?"',
+                                script: 'echo "calling bash"; bash -x ./multi-node-test.sh 2; echo "rc: $?"',
                                 junit_files: null
                     }
                     post {
