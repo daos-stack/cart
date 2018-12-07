@@ -137,7 +137,7 @@ if [ "$1" = "2" ]; then
     cat <<EOF > install/Linux/TESTING/scripts/config.json
 {
     "host_list": ["${HOSTPREFIX}${vm1}", "${HOSTPREFIX}${vm2}"],
-    "log_base_path": "$log_base_path"
+    "log_base_path": "$log_base_path",
     "use_daemon":"DvmRunner"
 }
 EOF
