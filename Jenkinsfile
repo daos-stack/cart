@@ -1,6 +1,6 @@
 // To use a test branch (i.e. PR) until it lands to master
 // I.e. for testing library changes
-@Library(value="pipeline-lib@sconsBuild-clean") _
+@Library(value="pipeline-lib@debug") _
 
 pipeline {
     agent any
@@ -19,6 +19,41 @@ pipeline {
     }
 
     stages {
+        stage('Pre-build') {
+            parallel {
+                stage('checkpatch') {
+                    agent {
+                        dockerfile {
+                            filename 'Dockerfile.centos:7'
+                            dir 'utils/docker'
+                            label 'docker_runner'
+                            additionalBuildArgs '$BUILDARGS'
+                        }
+                    }
+                    steps {
+                        checkPatch user: GITHUB_USER_USR,
+                                   password: GITHUB_USER_PSW,
+                                   ignored_files: "src/control/vendor/*"
+                    }
+                    post {
+                        /* temporarily moved into stepResult due to JENKINS-39203
+                        success {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'checkpatch',  context: 'pre-build/checkpatch', status: 'SUCCESS'
+                        }
+                        unstable {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'checkpatch',  context: 'pre-build/checkpatch', status: 'FAILURE'
+                        }
+                        failure {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'checkpatch',  context: 'pre-build/checkpatch', status: 'ERROR'
+                        }
+                        */
+                        always {
+                            archiveArtifacts artifacts: 'pylint.log', allowEmptyArchive: true
+                        }
+                    }
+                }
+            }
+        }
         stage('Build') {
             // abort other builds if/when one fails to avoid wasting time
             // and resources
@@ -50,20 +85,72 @@ pipeline {
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
                         }
+                        /* temporarily moved into stepResult due to JENKINS-39203
+                        success {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'CentOS 7 Build',  context: 'build/centos7', status: 'SUCCESS'
+                        }
+                        unstable {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'CentOS 7 Build',  context: 'build/centos7', status: 'FAILURE'
+                        }
+                        failure {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'CentOS 7 Build',  context: 'build/centos7', status: 'ERROR'
+                        }
+                        */
                     }
                 }
-            }
-        }
-        stage('Unit Test') {
-            parallel {
-                /*stage('Single Node') {
+                stage('Build on Ubuntu 18.04') {
                     agent {
                         dockerfile {
-                            filename 'Dockerfile.centos:7'
+                            filename 'Dockerfile.ubuntu:18.04'
                             dir 'utils/docker'
                             label 'docker_runner'
                             additionalBuildArgs '$BUILDARGS'
                         }
+                    }
+                    steps {
+                        sh '''echo "Skipping Ubuntu 18 build due to https://jira.hpdd.intel.com/browse/CART-548"
+                              exit 0'''
+                        //sconsBuild clean: "_build.external-Linux"
+                    }
+                    post {
+                        always {
+                            recordIssues enabledForFailure: true,
+                                         aggregatingResults: true,
+                                         id: "analysis-ubuntu18",
+                                         tools: [
+                                             [tool: [$class: 'GnuMakeGcc']],
+                                             [tool: [$class: 'CppCheck']],
+                                         ],
+                                         filters: [excludeFile('.*\\/_build\\.external\\/.*'),
+                                                   excludeFile('_build\\.external\\/.*')]
+                        }
+                        /* temporarily moved into stepResult due to JENKINS-39203
+                        success {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Ubuntu 18 Build',  context: 'build/ubuntu18', status: 'SUCCESS'
+                        }
+                        unstable {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Ubuntu 18 Build',  context: 'build/ubuntu18', status: 'FAILURE'
+                        }
+                        failure {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Ubuntu 18 Build',  context: 'build/ubuntu18', status: 'ERROR'
+                        }
+                        */
+                    }
+                }
+            }
+        }
+        stage('Test') {
+            parallel {
+                /* stage('Single node') {
+                    agent {
+                        label 'single'
+                        // can this really run in docker?
+                        // dockerfile {
+                        //     filename 'Dockerfile.centos:7'
+                        //     dir 'utils/docker'
+                        //     label 'docker_runner'
+                        //     additionalBuildArgs '$BUILDARGS'
+                        // }
                     }
                     steps {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
@@ -76,20 +163,77 @@ pipeline {
                         }
                     }
                 }*/
-
-                stage('Two Node') {
+                stage('Two-node') {
                     agent {
                         label 'cluster_provisioner-2_nodes'
                     }
                     steps {
+                        echo "Starting Two-node"
+                        checkoutScm url: 'ssh://review.hpdd.intel.com:29418/exascale/jenkins',
+                                    checkoutDir: 'jenkins',
+                                    credentialsId: 'bf21c68b-9107-4a38-8077-e929e644996a'
+
+                        checkoutScm url: 'ssh://review.hpdd.intel.com:29418/coral/scony_python-junit',
+                                    checkoutDir: 'scony_python-junit',
+                                    credentialsId: 'bf21c68b-9107-4a38-8077-e929e644996a'
+
                         echo "Starting Two-node runTest"
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
                                 script: 'bash -x ./multi-node-test.sh 2; echo "rc: $?"',
-                                junit_files: null
+                                junit_files: "CART_2-node_junit.xml"
                     }
                     post {
+                        /* temporarily moved into runTest->stepResult due to JENKINS-39203
+                        success {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Functional daos_test',  context: 'test/functional_daos_test', status: 'SUCCESS'
+                        }
+                        unstable {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Functional daos_test',  context: 'test/functional_daos_test', status: 'FAILURE'
+                        }
+                        failure {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Functional daos_test',  context: 'test/functional_daos_test', status: 'ERROR'
+                        }
+                        */
                         always {
-                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs-2_node/**', allowEmptyArchive: true
+                            junit 'IOF_2-node_junit.xml'
+                            archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs-2_node/**'
+                        }
+                    }
+                }
+                stage('Five-node') {
+                    agent {
+                        label 'cluster_provisioner-5_nodes'
+                    }
+                    steps {
+                        echo "Starting Five-node"
+                        checkoutScm url: 'ssh://review.hpdd.intel.com:29418/exascale/jenkins',
+                                    checkoutDir: 'jenkins',
+                                    credentialsId: 'bf21c68b-9107-4a38-8077-e929e644996a'
+
+                        checkoutScm url: 'ssh://review.hpdd.intel.com:29418/coral/scony_python-junit',
+                                    checkoutDir: 'scony_python-junit',
+                                    credentialsId: 'bf21c68b-9107-4a38-8077-e929e644996a'
+
+                        echo "Starting Five-node runTest"
+                        runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
+                                script: 'bash -x ./multi-node-test.sh 5; echo "rc: $?"',
+                                junit_files: "CART_5-node_junit.xml"
+                    }
+                    post {
+                        /* temporarily moved into runTest->stepResult due to JENKINS-39203
+                        success {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Functional daos_test',  context: 'test/functional_daos_test', status: 'SUCCESS'
+                        }
+                        unstable {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Functional daos_test',  context: 'test/functional_daos_test', status: 'FAILURE'
+                        }
+                        failure {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Functional daos_test',  context: 'test/functional_daos_test', status: 'ERROR'
+                        }
+                        */
+                        always {
+                            junit 'IOF_5-node_junit.xml'
+                            archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs-5_node/**'
                         }
                     }
                 }
