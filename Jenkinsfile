@@ -58,7 +58,12 @@ pipeline {
             parallel {
                 stage('Single Node') {
                     agent {
-                        label 'single'
+                        dockerfile {
+                            filename 'Dockerfile.centos:7'
+                            dir 'utils/docker'
+                            label 'docker_runner'
+                            additionalBuildArgs  '--build-arg NOBUILD=1 --build-arg UID=$(id -u) --build-arg DONT_USE_RPMS=false'
+                        }
                     }
                     steps {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
