@@ -2,8 +2,11 @@
 # Phyl -- with my changes
 # The original is in DAOS_INFO/CART/brians-multi-node-test.sh
 
-set -ex -o pipefail
+set -ex
+# Phyl
+#set -ex -o pipefail
 
+# Phyl
 # A list of tests to run as a single instance on Jenkins
 JENKINS_TEST_LIST=(scripts/cart_echo_test.yml                   \
                    scripts/cart_echo_test_non_sep.yml           \
@@ -46,6 +49,16 @@ trap 'echo "encountered an unchecked return code, exiting with error"' ERR
 # shellcheck disable=SC1091
 . .build_vars-Linux.sh
 
+# shellcheck disable=SC2154
+# Phyl
+# I moved this up from where it was in the original
+# Phyl DAOS_BASE is /home/cart/cart or the /var/lib equiv.
+echo "SL_OMPI_PREFIX = ${SL_OMPI_PREFIX}"
+DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
+echo "DAOS_BASE = ${DAOS_BASE}"
+
+echo "HOSTNAME=${HOSTNAME}"
+
 # Phyl
 # Brian said to use this instead of hard-coding vms 11 and 12 11/30/2018
 #first_vm=$((EXECUTOR_NUMBER+4)*2-1)
@@ -60,24 +73,21 @@ if [ "$1" = "2" ]; then
     vm1="$((test_runner_vm+1))"
     vm2="$((test_runner_vm+2))"
     vmrange="$vm1-$vm2"
-# Phyl -- when CORCI-519 is fix add this line here:
-# test_runner_vm="vm$test_runner_vm"
     vm1="vm$vm1"
     vm2="vm$vm2"
 fi
-
 # Phyl
+
 echo $vm1
 echo $vm2
 
-log_base_path="testLogs-${1}_node"
 
 trap 'set +e
 i=5
 # due to flakiness on wolf-53, try this several times
 while [ $i -gt 0 ]; do
-    # when CORCI-519 gets fixed change to this line:
-    # pdsh -R ssh -S -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]"  "set -x
+    # Phyl -- get rid ov vm1
+    # pdsh -R ssh -S -w ${HOSTPREFIX}vm[1,$vmrange] "set -x
     pdsh -R ssh -S -w ${HOSTPREFIX}vm[$vmrange] "set -x
     x=0
     while [ \$x -lt 30 ] &&
@@ -94,8 +104,8 @@ while [ $i -gt 0 ]; do
     let i-=1
 done' EXIT
 
-# Phyl DAOS_BASE is /home/cart/cart or the /var/lib equiv.
-DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
+# Phyl -- I moved this up.
+#DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
 # Phyl -- the following edits the /etc/fstab file
 if ! pdsh -R ssh -S -w "${HOSTPREFIX}"vm[1,$vmrange] "set -ex
 ulimit -c unlimited
@@ -125,7 +135,6 @@ if [ "$1" = "2" ]; then
     cat <<EOF > install/Linux/TESTING/scripts/config.json
 {
     "host_list": ["${HOSTPREFIX}${vm1}", "${HOSTPREFIX}${vm2}"],
-    "log_base_path": "$log_base_path",
     "use_daemon":"DvmRunner"
 }
 EOF
@@ -134,9 +143,8 @@ fi
 rm -rf install/Linux/TESTING/testLogs/
 
 # shellcheck disable=SC2029
-# Phyl -- this is a hack to allow the cart_iv tests to run.  When
-# CORCI-519 is fixed change the next line to:
-# if ! ssh "${HOSTPREFIX}$test_runner_vm" "set -ex
+# Phyl -- see if using same node as client works
+#if ! ssh "${HOSTPREFIX}"vm1 "set -ex
 if ! ssh "${HOSTPREFIX}${vm1}" "set -ex
 ulimit -c unlimited
 cd $DAOS_BASE
@@ -144,7 +152,6 @@ cd $DAOS_BASE
 # now run it!
 pushd install/Linux/TESTING
 if [ \"$1\" = \"2\" ]; then
-    rm -rf $log_base_path/
     python3 test_runner config=scripts/config.json \\
         "${JENKINS_TEST_LIST[@]}" || {
         rc=\${PIPESTATUS[0]}
@@ -157,10 +164,6 @@ else
     rc=0
 fi
 
-hostname
-pwd
-scp -r "${HOSTPREFIX}$test_runner_vm:$DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
-
 {
     cat <<EOF
 TestGroup:
@@ -170,9 +173,8 @@ TestGroup:
     user_name: jenkins
 Tests:
 EOF
-    find install/Linux/TESTING/"$log_base_path" \
-         -name subtest_results.yml -print0 |  xargs -0 cat
+    find install/Linux/TESTING/testLogs -name subtest_results.yml -print0 | \
+         xargs -0 cat
 } > results_1.yml
-cat results_1.yml
 
 exit "$rc"
