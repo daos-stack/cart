@@ -6,8 +6,6 @@ set -ex
 # Phyl
 #set -ex -o pipefail
 
-# Phyl
-echo "Starting the multi-node-test.sh script"
 # A list of tests to run as a single instance on Jenkins
 JENKINS_TEST_LIST=(scripts/cart_echo_test.yml                   \
                    scripts/cart_echo_test_non_sep.yml           \
@@ -78,10 +76,10 @@ if [ "$1" = "2" ]; then
     vm2="vm$vm2"
 fi
 # Phyl
-
 echo $vm1
 echo $vm2
 
+log_base_path="testLogs-${1}_node"
 
 trap 'set +e
 i=5
@@ -134,6 +132,7 @@ if [ "$1" = "2" ]; then
     cat <<EOF > install/Linux/TESTING/scripts/config.json
 {
     "host_list": ["${HOSTPREFIX}${vm1}", "${HOSTPREFIX}${vm2}"],
+    "log_base_path": "$log_base_path",
     "use_daemon":"DvmRunner"
 }
 EOF
@@ -142,8 +141,9 @@ fi
 rm -rf install/Linux/TESTING/testLogs/
 
 # shellcheck disable=SC2029
-# Phyl -- see if using same node as client works
-#if ! ssh "${HOSTPREFIX}"vm1 "set -ex
+# Phyl -- this is a hack to allow the cart_iv tests to run.  When
+# CORCI-519 is fixed change the next line to:
+# if ! ssh "${HOSTPREFIX}$test_runner_vm" "set -ex
 if ! ssh "${HOSTPREFIX}${vm1}" "set -ex
 ulimit -c unlimited
 cd $DAOS_BASE
@@ -151,6 +151,7 @@ cd $DAOS_BASE
 # now run it!
 pushd install/Linux/TESTING
 if [ \"$1\" = \"2\" ]; then
+    rm -rf $log_base_path/
     python3 test_runner config=scripts/config.json \\
         "${JENKINS_TEST_LIST[@]}" || {
         rc=\${PIPESTATUS[0]}
@@ -163,6 +164,11 @@ else
     rc=0
 fi
 
+hostname
+pwd
+scp -r
+"${HOSTPREFIX}$test_runner_vm:$DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
+
 {
     cat <<EOF
 TestGroup:
@@ -172,8 +178,9 @@ TestGroup:
     user_name: jenkins
 Tests:
 EOF
-    find install/Linux/TESTING/testLogs -name subtest_results.yml -print0 | \
-         xargs -0 cat
+    find install/Linux/TESTING/"$log_base_path" \
+         -name subtest_results.yml -print0 |  xargs -0 cat
 } > results_1.yml
+cat results_1.yml
 
 exit "$rc"
