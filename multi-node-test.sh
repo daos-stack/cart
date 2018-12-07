@@ -2,38 +2,7 @@
 # Phyl -- with my changes
 # The original is in DAOS_INFO/CART/brians-multi-node-test.sh
 
-set -ex
-# Phyl
-#set -ex -o pipefail
-
-# Phyl
-# A list of tests to run as a single instance on Jenkins
-JENKINS_TEST_LIST=(scripts/cart_echo_test.yml                   \
-                   scripts/cart_echo_test_non_sep.yml           \
-                   scripts/cart_self_test.yml                   \
-                   scripts/cart_self_test_non_sep.yml           \
-                   scripts/cart_test_corpc_prefwd.yml           \
-                   scripts/cart_test_corpc_prefwd_non_sep.yml   \
-                   scripts/cart_test_group.yml                  \
-                   scripts/cart_test_group_non_sep.yml          \
-                   scripts/cart_test_barrier.yml                \
-                   scripts/cart_test_barrier_non_sep.yml        \
-                   scripts/cart_threaded_test.yml               \
-                   scripts/cart_threaded_test_non_sep.yml       \
-                   scripts/cart_test_rpc_error.yml              \
-                   scripts/cart_test_rpc_error_non_sep.yml      \
-                   scripts/cart_test_singleton.yml              \
-                   scripts/cart_test_singleton_non_sep.yml      \
-                   scripts/cart_rpc_test.yml                    \
-                   scripts/cart_rpc_test_non_sep.yml            \
-                   scripts/cart_test_corpc_version.yml          \
-                   scripts/cart_test_corpc_version_non_sep.yml  \
-                   scripts/cart_test_iv.yml                     \
-                   scripts/cart_test_iv_non_sep.yml             \
-                   scripts/cart_test_proto.yml                  \
-                   scripts/cart_test_proto_non_sep.yml          \
-                   scripts/cart_test_no_timeout.yml             \
-                   scripts/cart_test_no_timeout_non_sep.yml)
+set -ex -o pipefail
 
 # shellcheck disable=SC1091
 if [ -f .localenv ]; then
@@ -49,48 +18,37 @@ trap 'echo "encountered an unchecked return code, exiting with error"' ERR
 # shellcheck disable=SC1091
 . .build_vars-Linux.sh
 
-# shellcheck disable=SC2154
-# Phyl
-# I moved this up from where it was in the original
-# Phyl DAOS_BASE is /home/cart/cart or the /var/lib equiv.
-echo "SL_OMPI_PREFIX = ${SL_OMPI_PREFIX}"
-DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
-echo "DAOS_BASE = ${DAOS_BASE}"
-
 echo "HOSTNAME=${HOSTNAME}"
 
-# Phyl
-# Brian said to use this instead of hard-coding vms 11 and 12 11/30/2018
-#first_vm=$((EXECUTOR_NUMBER+4)*2-1)
-# 12/3/2018 Brian changed this to the new one below
 if [ "$1" = "2" ]; then
-#    vm2="$(((${EXECUTOR_NUMBER:-0}+4)*2))"
-#    vm1="$((vm2-1))"
-#    vmrange="$vm1-$vm2"
-#    vm1="vm$vm1"
-#    vm2="vm$vm2"
     test_runner_vm=$((${EXECUTOR_NUMBER:-0}*3+7))
     vm1="$((test_runner_vm+1))"
     vm2="$((test_runner_vm+2))"
     vmrange="$vm1-$vm2"
+    test_runner_vm="vm$test_runner_vm"
     vm1="vm$vm1"
     vm2="vm$vm2"
+elif [ "$1" = "5" ]; then
+    test_runner_vm="vm1"
+    vmrange="2-6"
 fi
 
-log_base_path="testLogs-${1}_node"
 # Phyl
 
 echo $vm1
 echo $vm2
 
+# Phyl
 
-# Phyl -- get rid of vm1
-# pdsh -R ssh -S -w ${HOSTPREFIX}vm[1,$vmrange] "set -x
+log_base_path="testLogs-${1}_node"
+
+rm -f results_1.yml IOF_[25]-node_junit.xml
+
 trap 'set +e
 i=5
 # due to flakiness on wolf-53, try this several times
 while [ $i -gt 0 ]; do
-    pdsh -R ssh -S -w ${HOSTPREFIX}vm[$vmrange] "set -x
+    pdsh -R ssh -S -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]" "set -x
     x=0
     while [ \$x -lt 30 ] &&
           grep $DAOS_BASE /proc/mounts &&
@@ -99,6 +57,7 @@ while [ $i -gt 0 ]; do
         sleep 1
         let x+=1
     done
+    sudo sed -i -e \"/added by multi-node-test-$1.sh/d\" /etc/fstab
     sudo rmdir $DAOS_BASE || find $DAOS_BASE || true" 2>&1 | dshbak -c
     if [ ${PIPESTATUS[0]} = 0 ]; then
         i=0
@@ -106,15 +65,13 @@ while [ $i -gt 0 ]; do
     let i-=1
 done' EXIT
 
-# Phyl -- I moved this up.
-#DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
-# Phyl -- the following edits the /etc/fstab file
-if ! pdsh -R ssh -S -w "${HOSTPREFIX}"vm[1,$vmrange] "set -ex
+DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
+if ! pdsh -R ssh -S -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]" "set -ex
 ulimit -c unlimited
 sudo mkdir -p $DAOS_BASE
 sudo ed <<EOF /etc/fstab
 \\\$a
-$NFS_SERVER:$PWD $DAOS_BASE nfs defaults 0 0 # added by ftest.sh
+$NFS_SERVER:$PWD $DAOS_BASE nfs defaults 0 0 # added by multi-node-test-$1.sh
 .
 wq
 EOF
@@ -128,39 +85,63 @@ df -h" 2>&1 | dshbak -c; then
     exit 1
 fi
 
-echo "hit enter to continue"
+#echo "hit enter to continue"
 #read -r
 #exit 0
 
-# Phyl -- create the config file
-if [ "$1" = "2" ]; then
-    cat <<EOF > install/Linux/TESTING/scripts/config.json
-{
-    "host_list": ["${HOSTPREFIX}${vm1}", "${HOSTPREFIX}${vm2}"],
-    "log_base_path": "$log_base_path",
-    "use_daemon":"DvmRunner"
-}
-EOF
-fi
-
-rm -rf install/Linux/TESTING/testLogs/
-
 # shellcheck disable=SC2029
-# Phyl -- see if using same node as client works
-#if ! ssh "${HOSTPREFIX}"vm1 "set -ex
-if ! ssh "${HOSTPREFIX}${vm1}" "set -ex
+if ! ssh "${HOSTPREFIX}$test_runner_vm" "set -ex
 ulimit -c unlimited
 cd $DAOS_BASE
 
 # now run it!
-pushd install/Linux/TESTING
+pushd install/Linux/TESTING/
 if [ \"$1\" = \"2\" ]; then
+    cat <<EOF > scripts/config.json
+{
+    \"should_be_host_list\": [\"${HOSTPREFIX}${vm1}\", \"${HOSTPREFIX}${vm2}\"],
+    \"host_list\": [\"${HOSTPREFIX}${test_runner_vm}\", \"${HOSTPREFIX}${vm1}\"],
+    \"use_daemon\": \"DvmRunner\",
+    \"log_base_path\": \"$log_base_path\"
+}
+EOF
+
     rm -rf $log_base_path/
     python3 test_runner config=scripts/config.json \\
-        "${JENKINS_TEST_LIST[@]}" || {
+        \$(ls scripts/*.yml) || {
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }
+    find $log_base_path/testRun -name subtest_results.yml \\
+         -exec grep -Hi fail {} \\;
+elif [ \"$1\" = \"5\" ]; then
+    cat <<EOF > scripts/iof_multi_five_node.cfg
+{
+    \"should_be_host_list\": [
+        \"${HOSTPREFIX}vm2\",
+        \"${HOSTPREFIX}vm3\",
+        \"${HOSTPREFIX}vm4\",
+        \"${HOSTPREFIX}vm5\",
+        \"${HOSTPREFIX}vm6\"
+    ],
+    \"host_list\": [\"${HOSTPREFIX}${test_runner_vm}\",
+        \"${HOSTPREFIX}vm2\",
+        \"${HOSTPREFIX}vm3\",
+        \"${HOSTPREFIX}vm4\",
+        \"${HOSTPREFIX}vm5\"
+    ],
+    \"use_daemon\": \"DvmRunner\",
+    \"log_base_path\": \"$log_base_path\"
+}
+EOF
+    rm -rf $log_base_path/
+    python3 test_runner config=scripts/iof_multi_five_node.cfg \\
+        \$(ls scripts/*.yml) || {
+        rc=\${PIPESTATUS[0]}
+        echo \"Test exited with \$rc\"
+    }
+    find $log_base_path/testRun -name subtest_results.yml \\
+         -exec grep -Hi fail {} \\;
 fi
 exit \$rc"; then
     rc=${PIPESTATUS[0]}
@@ -168,8 +149,7 @@ else
     rc=0
 fi
 
-scp -r ""${HOSTPREFIX}${vm1}":$DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
-
+scp -r "${HOSTPREFIX}$test_runner_vm:$DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
 {
     cat <<EOF
 TestGroup:
@@ -179,8 +159,12 @@ TestGroup:
     user_name: jenkins
 Tests:
 EOF
-    find install/Linux/TESTING/testLogs -name subtest_results.yml -print0 | \
-         xargs -0 cat
+    find install/Linux/TESTING/"$log_base_path" \
+         -name subtest_results.yml -print0 | xargs -0 cat
 } > results_1.yml
+cat results_1.yml
+
+PYTHONPATH=scony_python-junit/ jenkins/autotest_utils/results_to_junit.py
+ls -ltar
 
 exit "$rc"
