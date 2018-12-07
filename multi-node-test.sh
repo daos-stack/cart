@@ -76,6 +76,8 @@ if [ "$1" = "2" ]; then
     vm1="vm$vm1"
     vm2="vm$vm2"
 fi
+
+log_base_path="testLogs-${1}_node"
 # Phyl
 
 echo $vm1
@@ -135,6 +137,7 @@ if [ "$1" = "2" ]; then
     cat <<EOF > install/Linux/TESTING/scripts/config.json
 {
     "host_list": ["${HOSTPREFIX}${vm1}", "${HOSTPREFIX}${vm2}"],
+    "log_base_path": "$log_base_path"
     "use_daemon":"DvmRunner"
 }
 EOF
@@ -152,6 +155,7 @@ cd $DAOS_BASE
 # now run it!
 pushd install/Linux/TESTING
 if [ \"$1\" = \"2\" ]; then
+    rm -rf $log_base_path/
     python3 test_runner config=scripts/config.json \\
         "${JENKINS_TEST_LIST[@]}" || {
         rc=\${PIPESTATUS[0]}
@@ -163,6 +167,8 @@ exit \$rc"; then
 else
     rc=0
 fi
+
+scp -r ""${HOSTPREFIX}${vm1}":$DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
 
 {
     cat <<EOF
