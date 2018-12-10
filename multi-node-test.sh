@@ -38,14 +38,14 @@ i=5
 # due to flakiness on wolf-53, try this several times
 while [ $i -gt 0 ]; do
     pdsh -R ssh -S -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]" "set -x
-    # CART-558 - cart tests leave orte processes around
-    pgrep \(orte-dvm\|orted\)
-    pkill \(orte-dvm\|orted\)
     x=0
     while [ \$x -lt 30 ] &&
           grep $DAOS_BASE /proc/mounts &&
           ! sudo umount $DAOS_BASE; do
         ps axf
+        # CART-558 - cart tests leave orte processes around
+        pgrep -a \(orte-dvm\|orted\)
+        pkill \(orte-dvm\|orted\)
         sleep 1
         let x+=1
     done

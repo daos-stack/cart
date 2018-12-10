@@ -157,7 +157,8 @@ pipeline {
                                 script: '''if bash -x utils/run_test.sh; then
                                                echo "run_test.sh exited successfully with ${PIPESTATUS[0]}"
                                            else
-                                               echo "run_test.sh exited failure with ${PIPESTATUS[0]}"''',
+                                               echo "run_test.sh exited failure with ${PIPESTATUS[0]}"
+                                           fi''',
                               junit_files: null
                     }
                     post {
