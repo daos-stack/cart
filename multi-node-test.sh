@@ -1,6 +1,4 @@
 #!/bin/bash
-# Phyl -- with my changes
-# The original is in DAOS_INFO/CART/brians-multi-node-test.sh
 
 set -ex -o pipefail
 
@@ -18,8 +16,6 @@ trap 'echo "encountered an unchecked return code, exiting with error"' ERR
 # shellcheck disable=SC1091
 . .build_vars-Linux.sh
 
-echo "HOSTNAME=${HOSTNAME}"
-
 if [ "$1" = "2" ]; then
     test_runner_vm=$((${EXECUTOR_NUMBER:-0}*3+7))
     vm1="$((test_runner_vm+1))"
@@ -33,13 +29,6 @@ elif [ "$1" = "5" ]; then
     vmrange="2-6"
 fi
 
-# Phyl
-
-echo $vm1
-echo $vm2
-
-# Phyl
-
 log_base_path="testLogs-${1}_node"
 
 rm -f results_1.yml IOF_[25]-node_junit.xml
@@ -49,7 +38,8 @@ i=5
 # due to flakiness on wolf-53, try this several times
 while [ $i -gt 0 ]; do
     pdsh -R ssh -S -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]" "set -x
-    # cart tests leave orte processes around
+    # CART-558 - cart tests leave orte processes around
+    pgrep \(orte-dvm\|orted\)
     pkill \(orte-dvm\|orted\)
     x=0
     while [ \$x -lt 30 ] &&
