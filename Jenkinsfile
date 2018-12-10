@@ -141,7 +141,7 @@ pipeline {
         }
         stage('Test') {
             parallel {
-                /* stage('Single node') {
+                stage('Single node') {
                     agent {
                         label 'single'
                         // can this really run in docker?
@@ -154,15 +154,29 @@ pipeline {
                     }
                     steps {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: 'bash -x utils/run_test.sh && echo "run_test.sh exited successfully with ${PIPESTATUS[0]}" || echo "run_test.sh exited failure with ${PIPESTATUS[0]}"',
+                                script: '''if bash -x utils/run_test.sh; then
+                                               echo "run_test.sh exited successfully with ${PIPESTATUS[0]}"
+                                           else
+                                               echo "run_test.sh exited failure with ${PIPESTATUS[0]}"''',
                               junit_files: null
                     }
                     post {
+                        /* temporarily moved into runTest->stepResult due to JENKINS-39203
+                        success {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: env.STAGE_NAME,  context: 'test/functional_quick', status: 'SUCCESS'
+                        }
+                        unstable {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: env.STAGE_NAME,  context: 'test/functional_quick', status: 'FAILURE'
+                        }
+                        failure {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: env.STAGE_NAME,  context: 'test/functional_quick', status: 'ERROR'
+                        }
+                        */
                         always {
-                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output', allowEmptyArchive: true
+                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output'
                         }
                     }
-                }*/
+                }
                 stage('Two-node') {
                     agent {
                         label 'cluster_provisioner-2_nodes'
