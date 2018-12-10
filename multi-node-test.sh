@@ -44,8 +44,8 @@ JENKINS_TEST_LIST_3=(scripts/cart_test_group_tiers.yml)
 
 # A list of tests to run as a five node instance on Jenkins
 JENKINS_TEST_LIST_5=(scripts/cart_test_cart_ctl.yml      \
-                     scripts/cart_test_corpc_prefwd.pyml \
-                     scripts/cart_test_corpc_version.py  \
+                     scripts/cart_test_corpc_prefwd.yml  \
+                     scripts/cart_test_corpc_version.yml \
                      scripts/cart_test_barrier.yml)
 
 trap 'echo "encountered an unchecked return code, exiting with error"' ERR
