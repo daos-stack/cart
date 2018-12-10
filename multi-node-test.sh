@@ -11,6 +11,43 @@ fi
 HOSTPREFIX=${HOSTPREFIX-${HOSTNAME%%.*}}
 NFS_SERVER=${NFS_SERVER:-$HOSTPREFIX}
 
+# A list of tests to run as a two node instance on Jenkins
+JENKINS_TEST_LIST_2=(scripts/cart_echo_test.yml                   \
+                     scripts/cart_echo_test_non_sep.yml           \
+                     scripts/cart_self_test.yml                   \
+                     scripts/cart_self_test_non_sep.yml           \
+                     scripts/cart_test_corpc_prefwd.yml           \
+                     scripts/cart_test_corpc_prefwd_non_sep.yml   \
+                     scripts/cart_test_group.yml                  \
+                     scripts/cart_test_group_non_sep.yml          \
+                     scripts/cart_test_barrier.yml                \
+                     scripts/cart_test_barrier_non_sep.yml        \
+                     scripts/cart_threaded_test.yml               \
+                     scripts/cart_threaded_test_non_sep.yml       \
+                     scripts/cart_test_rpc_error.yml              \
+                     scripts/cart_test_rpc_error_non_sep.yml      \
+                     scripts/cart_test_singleton.yml              \
+                     scripts/cart_test_singleton_non_sep.yml      \
+                     scripts/cart_rpc_test.yml                    \
+                     scripts/cart_rpc_test_non_sep.yml            \
+                     scripts/cart_test_corpc_version.yml          \
+                     scripts/cart_test_corpc_version_non_sep.yml  \
+                     scripts/cart_test_iv.yml                     \
+                     scripts/cart_test_iv_non_sep.yml             \
+                     scripts/cart_test_proto.yml                  \
+                     scripts/cart_test_proto_non_sep.yml          \
+                     scripts/cart_test_no_timeout.yml             \
+                     scripts/cart_test_no_timeout_non_sep.yml)
+
+# A list of tests to run as a three node instance on Jenkins
+JENKINS_TEST_LIST_3=(scripts/cart_test_group_tiers.yml)
+
+# A list of tests to run as a five node instance on Jenkins
+JENKINS_TEST_LIST_5=(scripts/cart_test_cart_ctl.yml      \
+                     scripts/cart_test_corpc_prefwd.pyml \
+                     scripts/cart_test_corpc_version.py  \
+                     scripts/cart_test_barrier.yml)
+
 trap 'echo "encountered an unchecked return code, exiting with error"' ERR
 
 # shellcheck disable=SC1091
@@ -24,6 +61,9 @@ if [ "$1" = "2" ]; then
     test_runner_vm="vm$test_runner_vm"
     vm1="vm$vm1"
     vm2="vm$vm2"
+elif [ "$1" = "3" ]; then
+    test_runner_vm="vm1"
+    vmrange="2-4"
 elif [ "$1" = "5" ]; then
     test_runner_vm="vm1"
     vmrange="2-6"
@@ -88,8 +128,10 @@ cd $DAOS_BASE
 
 # now run it!
 pushd install/Linux/TESTING/
+# TODO: this needs DRYing out into a single block that can handle
+# any number of nodes
 if [ \"$1\" = \"2\" ]; then
-    cat <<EOF > scripts/config.json
+    cat <<EOF > scripts/cart_multi_two_node.cfg
 {
     \"should_be_host_list\": [\"${HOSTPREFIX}${vm1}\", \"${HOSTPREFIX}${vm2}\"],
     \"host_list\": [\"${HOSTPREFIX}${test_runner_vm}\", \"${HOSTPREFIX}${vm1}\"],
@@ -97,17 +139,40 @@ if [ \"$1\" = \"2\" ]; then
     \"log_base_path\": \"$log_base_path\"
 }
 EOF
-
     rm -rf $log_base_path/
-    python3 test_runner config=scripts/config.json \\
-        \$(ls scripts/*.yml) || {
+    python3 test_runner config=scripts/cart_multi_two_node.cfg \\
+        "${JENKINS_TEST_LIST_2[@]}" || {
+        rc=\${PIPESTATUS[0]}
+        echo \"Test exited with \$rc\"
+    }
+    find $log_base_path/testRun -name subtest_results.yml \\
+         -exec grep -Hi fail {} \\;
+elif [ \"$1\" = \"3\" ]; then
+    cat <<EOF > scripts/cart_multi_three_node.cfg
+{
+    \"should_be_host_list\": [
+        \"${HOSTPREFIX}vm2\",
+        \"${HOSTPREFIX}vm3\",
+        \"${HOSTPREFIX}vm4\"
+    ],
+    \"host_list\": [\"${HOSTPREFIX}${test_runner_vm}\",
+        \"${HOSTPREFIX}vm2\",
+        \"${HOSTPREFIX}vm3\"
+    ],
+    \"use_daemon\": \"DvmRunner\",
+    \"log_base_path\": \"$log_base_path\"
+}
+EOF
+    rm -rf $log_base_path/
+    python3 test_runner config=scripts/cart_multi_three_node.cfg \\
+        "${JENKINS_TEST_LIST_3[@]}" || {
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }
     find $log_base_path/testRun -name subtest_results.yml \\
          -exec grep -Hi fail {} \\;
 elif [ \"$1\" = \"5\" ]; then
-    cat <<EOF > scripts/iof_multi_five_node.cfg
+    cat <<EOF > scripts/cart_multi_five_node.cfg
 {
     \"should_be_host_list\": [
         \"${HOSTPREFIX}vm2\",
@@ -127,8 +192,8 @@ elif [ \"$1\" = \"5\" ]; then
 }
 EOF
     rm -rf $log_base_path/
-    python3 test_runner config=scripts/iof_multi_five_node.cfg \\
-        \$(ls scripts/*.yml) || {
+    python3 test_runner config=scripts/cart_multi_five_node.cfg \\
+        "${JENKINS_TEST_LIST_5[@]}" || {
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }
