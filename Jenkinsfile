@@ -152,8 +152,9 @@ pipeline {
                     }
                     steps {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: '''. ./build_vars-Linux.sh
-                                           pwd
+                                script: '''pwd
+                                           ls -l
+                                           . ./.build_vars-Linux.sh
                                            if [ ! -d $SL_PREFIX ]; then
                                                mkdir -p ${SL_PREFIX%/Linux}
                                                ln -s $SL_PREFIX/install
