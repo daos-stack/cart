@@ -152,7 +152,13 @@ pipeline {
                     }
                     steps {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: '''if bash -x utils/run_test.sh; then
+                                script: '''. ./build_vars-Linux.sh
+                                           pwd
+                                           if [ ! -d $SL_PREFIX ]; then
+                                               mkdir -p ${SL_PREFIX%/Linux}
+                                               ln -s $SL_PREFIX/install
+                                           fi
+                                           if bash -x utils/run_test.sh; then
                                                echo "run_test.sh exited successfully with ${PIPESTATUS[0]}"
                                            else
                                                echo "run_test.sh exited failure with ${PIPESTATUS[0]}"
