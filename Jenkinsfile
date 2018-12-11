@@ -108,9 +108,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sh '''echo "Skipping Ubuntu 18 build due to https://jira.hpdd.intel.com/browse/CART-548"
-                              exit 0'''
-                        //sconsBuild clean: "_build.external-Linux"
+                        sconsBuild clean: "_build.external-Linux"
                     }
                     post {
                         always {
@@ -133,6 +131,43 @@ pipeline {
                         }
                         failure {
                             githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Ubuntu 18 Build',  context: 'build/ubuntu18', status: 'ERROR'
+                        }
+                        */
+                    }
+                }
+                stage('Build on Leap 15') {
+                    agent {
+                        dockerfile {
+                            filename 'Dockerfile.leap:15'
+                            dir 'utils/docker'
+                            label 'docker_runner'
+                            additionalBuildArgs '$BUILDARGS'
+                        }
+                    }
+                    steps {
+                        sconsBuild clean: "_build.external-Linux"
+                    }
+                    post {
+                        always {
+                            recordIssues enabledForFailure: true,
+                                         aggregatingResults: true,
+                                         id: "analysis-leap15",
+                                         tools: [
+                                             [tool: [$class: 'GnuMakeGcc']],
+                                             [tool: [$class: 'CppCheck']],
+                                         ],
+                                         filters: [excludeFile('.*\\/_build\\.external\\/.*'),
+                                                   excludeFile('_build\\.external\\/.*')]
+                        }
+                        /* temporarily moved into stepResult due to JENKINS-39203
+                        success {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Leap 15 Build',  context: 'build/leap15', status: 'SUCCESS'
+                        }
+                        unstable {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Leap 15 Build',  context: 'build/leap15', status: 'FAILURE'
+                        }
+                        failure {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: 'Leap 15 Build',  context: 'build/leap15', status: 'ERROR'
                         }
                         */
                     }
