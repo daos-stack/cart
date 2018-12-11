@@ -85,8 +85,8 @@ while [ $i -gt 0 ]; do
           ! sudo umount $DAOS_BASE; do
         ps axf
         # CART-558 - cart tests leave orte processes around
-        pgrep -a \(orte-dvm\|orted\)
-        pkill \(orte-dvm\|orted\)
+        pgrep -a \(orte-dvm\|orted\|cart_ctl\)
+        pkill \(orte-dvm\|orted\|cart_ctl\)
         sleep 1
         let x+=1
     done
@@ -99,7 +99,8 @@ while [ $i -gt 0 ]; do
 done' EXIT
 
 DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
-if ! pdsh -R ssh -S -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]" "set -ex
+if ! pdsh -R ssh -S \
+          -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]" "set -ex
 ulimit -c unlimited
 sudo mkdir -p $DAOS_BASE
 sudo ed <<EOF /etc/fstab
@@ -134,8 +135,10 @@ pushd install/Linux/TESTING/
 if [ \"$1\" = \"2\" ]; then
     cat <<EOF > scripts/cart_multi_two_node.cfg
 {
-    \"should_be_host_list\": [\"${HOSTPREFIX}${vm1}\", \"${HOSTPREFIX}${vm2}\"],
-    \"host_list\": [\"${HOSTPREFIX}${test_runner_vm}\", \"${HOSTPREFIX}${vm1}\"],
+    \"with_test_runner_host_list\": [\"${HOSTPREFIX}${vm1}\",
+                                     \"${HOSTPREFIX}${vm2}\"],
+    \"host_list\": [\"${HOSTPREFIX}${test_runner_vm}\",
+                    \"${HOSTPREFIX}${vm1}\"],
     \"use_daemon\": \"DvmRunner\",
     \"log_base_path\": \"$log_base_path\"
 }
@@ -151,7 +154,7 @@ EOF
 elif [ \"$1\" = \"3\" ]; then
     cat <<EOF > scripts/cart_multi_three_node.cfg
 {
-    \"should_be_host_list\": [
+    \"with_test_runner_host_list\": [
         \"${HOSTPREFIX}vm2\",
         \"${HOSTPREFIX}vm3\",
         \"${HOSTPREFIX}vm4\"
@@ -175,7 +178,7 @@ EOF
 elif [ \"$1\" = \"5\" ]; then
     cat <<EOF > scripts/cart_multi_five_node.cfg
 {
-    \"should_be_host_list\": [
+    \"with_test_runner_host_list\": [
         \"${HOSTPREFIX}vm2\",
         \"${HOSTPREFIX}vm3\",
         \"${HOSTPREFIX}vm4\",
@@ -207,7 +210,8 @@ else
     rc=0
 fi
 
-scp -r "${HOSTPREFIX}$test_runner_vm:$DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
+scp -r "${HOSTPREFIX}$test_runner_vm:"\
+"$DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
 {
     cat <<EOF
 TestGroup:
