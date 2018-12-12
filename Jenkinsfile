@@ -236,7 +236,7 @@ pipeline {
                 stage('Build on Ubuntu 18.04 with Clang') {
                     agent {
                         dockerfile {
-                            filename 'Dockerfile.ubuntu:18.04-clang'
+                            filename 'Dockerfile.ubuntu:18.04'
                             dir 'utils/docker'
                             label 'docker_runner'
                             additionalBuildArgs '$BUILDARGS'
