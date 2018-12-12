@@ -77,7 +77,7 @@ trap 'set +e
 i=5
 # due to flakiness on wolf-53, try this several times
 while [ $i -gt 0 ]; do
-    pdsh -R ssh -S \
+    pdsh -R ssh -S
          -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]" "set -x
     x=0
     while [ \$x -lt 30 ] &&
@@ -145,7 +145,7 @@ if [ \"$1\" = \"2\" ]; then
 EOF
     rm -rf $log_base_path/
     python3 test_runner config=scripts/cart_multi_two_node.cfg \\
-        "${JENKINS_TEST_LIST_2[@]}" || {
+        \"${JENKINS_TEST_LIST_2[*]}\" || {
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }
@@ -169,7 +169,7 @@ elif [ \"$1\" = \"3\" ]; then
 EOF
     rm -rf $log_base_path/
     python3 test_runner config=scripts/cart_multi_three_node.cfg \\
-        "${JENKINS_TEST_LIST_3[@]}" || {
+        \"${JENKINS_TEST_LIST_3[*]}\" || {
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }
@@ -197,7 +197,7 @@ elif [ \"$1\" = \"5\" ]; then
 EOF
     rm -rf $log_base_path/
     python3 test_runner config=scripts/cart_multi_five_node.cfg \\
-        "${JENKINS_TEST_LIST_5[@]}" || {
+        \"${JENKINS_TEST_LIST_5[*]}\" || {
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }
@@ -210,8 +210,8 @@ else
     rc=0
 fi
 
-scp -r "${HOSTPREFIX}$test_runner_vm:"\
-"$DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
+scp -r "${HOSTPREFIX}$test_runner_vm:\
+$DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
 {
     cat <<EOF
 TestGroup:
