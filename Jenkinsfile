@@ -147,7 +147,7 @@ pipeline {
                                          aggregatingResults: true,
                                          id: "analysis-centos7-clang",
                                          tools: [
-                                             [tool: [$class: 'Clang (LLVM based)']],
+                                             [tool: [$class: 'Clang']],
                                              [tool: [$class: 'CppCheck']],
                                          ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
@@ -251,7 +251,7 @@ pipeline {
                                          aggregatingResults: true,
                                          id: "analysis-ubuntu18-clang",
                                          tools: [
-                                             [tool: [$class: 'Clang (LLVM based)']],
+                                             [tool: [$class: 'Clang']],
                                              [tool: [$class: 'CppCheck']],
                                          ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
@@ -355,7 +355,7 @@ pipeline {
                                          aggregatingResults: true,
                                          id: "analysis-leap15-clang",
                                          tools: [
-                                             [tool: [$class: 'Clang (LLVM based)']],
+                                             [tool: [$class: 'Clang']],
                                              [tool: [$class: 'CppCheck']],
                                          ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
