@@ -129,6 +129,7 @@ pipeline {
                     }
                 }
                 stage('Build on CentOS 7 with Clang') {
+                    when { branch 'master' }
                     agent {
                         dockerfile {
                             filename 'Dockerfile.centos:7'
@@ -181,6 +182,7 @@ pipeline {
                     }
                 }
                 stage('Build on Ubuntu 18.04') {
+                    when { branch 'master' }
                     agent {
                         dockerfile {
                             filename 'Dockerfile.ubuntu:18.04'
@@ -285,6 +287,7 @@ pipeline {
                     }
                 }
                 stage('Build on Leap 15') {
+                    when { branch 'master' }
                     agent {
                         dockerfile {
                             filename 'Dockerfile.leap:15'
@@ -337,6 +340,7 @@ pipeline {
                     }
                 }
                 stage('Build on Leap 15 with Clang') {
+                    when { branch 'master' }
                     agent {
                         dockerfile {
                             filename 'Dockerfile.leap:15'
@@ -355,6 +359,58 @@ pipeline {
                                          id: "analysis-leap15-clang",
                                          tools: [
                                              [tool: [$class: 'Clang']],
+                                             [tool: [$class: 'CppCheck']],
+                                         ],
+                                         filters: [excludeFile('.*\\/_build\\.external\\/.*'),
+                                                   excludeFile('_build\\.external\\/.*')]
+                            /* when JENKINS-39203 is resolved, can probably use stepResult
+                               here and remove the remaining post conditions
+                               stepResult name: env.STAGE_NAME,
+                                          context: 'build/' + env.STAGE_NAME,
+                                          result: ${currentBuild.currentResult}
+                            */
+                        }
+                        /* temporarily moved into stepResult due to JENKINS-39203
+                        success {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'build/' + env.STAGE_NAME,
+                                         status: 'SUCCESS'
+                        }
+                        unstable {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'build/' + env.STAGE_NAME,
+                                         status: 'FAILURE'
+                        }
+                        failure {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'build/' + env.STAGE_NAME,
+                                         status: 'ERROR'
+                        }
+                        */
+                    }
+                }
+                stage('Build on Leap 15 with Intel-C') {
+                    agent {
+                        dockerfile {
+                            filename 'Dockerfile.leap:15'
+                            dir 'utils/docker'
+                            label 'docker_runner'
+                            additionalBuildArgs '$BUILDARGS'
+                        }
+                    }
+                    steps {
+                        sconsBuild clean: "_build.external-Linux" //, COMPILER: "icc"
+                    }
+                    post {
+                        always {
+                            recordIssues enabledForFailure: true,
+                                         aggregatingResults: true,
+                                         id: "analysis-leap15-intelc",
+                                         tools: [
+                                             [tool: [$class: 'GnuMakeGcc']],
                                              [tool: [$class: 'CppCheck']],
                                          ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
