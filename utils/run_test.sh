@@ -72,6 +72,8 @@ else
   ./test_cart_lib.sh
 fi
 # Run the tests from the install TESTING directory
+# Phyl
+echo "$CART_TEST_MODE"
 if [ -z "$CART_TEST_MODE"  ]; then
   CART_TEST_MODE="native"
 fi
