@@ -21,61 +21,18 @@ ARG UID=1000
 # zypper install command so that the database is updated if/when the
 # installed packages list below is updated
 RUN zypper -n update
-RUN zypper --non-interactive  install -y \
-			git                 \
-			gcc                 \
-            gcc-c++             \
-			make                \
-			cmake               \
-            glibc-locale        \
-			libtool             \
-			autoconf            \
-			boost-devel         \
-			uuid-devel          \
-            libuuid-devel       \
-			libopenssl-devel    \
-			libevent-devel      \
-			libltdl7            \
-			librdmacm-utils     \
-			libcmocka0          \
-			libcmocka-devel     \
-            libfabric-devel     \
-			libibverbs          \
-			libcunit1           \
-			libnuma-devel       \
-			libaio-devel        \
-			libiscsi-devel      \
-			readline-devel      \
-			curl                \
-			doxygen             \
-			pandoc              \
-			flex                \
-			patch               \
-			nasm                \
-			yasm                \
-			graphviz            \
-			sg3_utils           \
-			mscgen              \
-			ninja               \
-			meson               \
-			bash                \
-			python-devel        \
-			python-pylint       \
-			python-PyYAML       \
-			python-paramiko     \
-            python-pip          \
-			python3             \
-			python3-pylint      \
-			python3-PyYAML      \
-			python3-paramiko    \
-			valgrind            \
-			rsync               \
-            which               \
-            vim                 \
-            libfabric-devel     \
-            python-setuptools   \
-            python3-setuptools  \
-            python-PyGithub
+RUN zypper --non-interactive install -y git gcc gcc-c++ make cmake            \
+                                        glibc-locale libtool autoconf         \
+                                        boost-devel uuid-devel libuuid-devel  \
+                                        libopenssl-devel libevent-devel       \
+                                        libltdl7 librdmacm-utils libcmocka0   \
+                                        libcmocka-devel libibverbs libcunit1  \
+                                        libnuma-devel libaio-devel            \
+                                        libiscsi-devel readline-devel curl    \
+                                        doxygen pandoc flex patch nasm yasm   \
+                                        graphviz sg3_utils mscgen ninja meson \
+                                        python-devel python3-devel valgrind   \
+                                        python2-pip rsync libyaml-devel
 
 RUN pip install --upgrade pip
 RUN pip install -U setuptools

@@ -319,7 +319,7 @@ crt_opc_lookup(struct crt_opc_map *map, crt_opcode_t opc, int locked)
 	unsigned int		 L2_idx;
 	unsigned int		 L3_idx;
 
-	D_DEBUG(DB_ALL, "looking up opcode: 0x%x\n", opc);
+	D_DEBUG(DB_ALL, "looking up opcode: %#x\n", opc);
 	L1_idx = opc >> 24;
 	L2_idx = (opc & CRT_PROTO_VER_MASK) >> 16;
 	L3_idx = opc & CRT_PROTO_COUNT_MASK;
@@ -720,6 +720,8 @@ static inline bool
 validate_base_opcode(crt_opcode_t base_opc)
 {
 	/* only the base opc bits could be set*/
+	if (base_opc == 0)
+		return false;
 	if (base_opc & ~CRT_PROTO_BASEOPC_MASK)
 		return false;
 	/* the base opc CRT_PROTO_BASEOPC_MASK is reserved for internal RPCs */
@@ -742,8 +744,7 @@ crt_proto_reg_L3(struct crt_opc_map_L3 *L3_map,
 	/* make sure array is big enough, realloc if necessary */
 	if (L3_map->L3_num_slots_total < cpf->cpf_count) {
 
-		D_REALLOC(info_array, L3_map->L3_map,
-			  sizeof(struct crt_opc_info)*cpf->cpf_count);
+		D_REALLOC_ARRAY(info_array, L3_map->L3_map, cpf->cpf_count);
 		if (info_array == NULL)
 			return -DER_NOMEM;
 		/* set new space to 0 */
@@ -779,8 +780,7 @@ get_L3_map(struct crt_opc_map_L2 *L2_map, struct crt_proto_format *cpf)
 	struct crt_opc_map_L3 *new_map;
 
 	if (L2_map->L2_num_slots_total < cpf->cpf_ver + 1) {
-		D_REALLOC(new_map, L2_map->L2_map,
-			  (cpf->cpf_ver + 1)*sizeof(struct crt_opc_map_L3));
+		D_REALLOC_ARRAY(new_map, L2_map->L2_map, (cpf->cpf_ver + 1));
 		if (new_map == NULL) {
 			D_ERROR("not enough memory.\n");
 			return NULL;
@@ -861,6 +861,17 @@ crt_proto_register_common(struct crt_proto_format *cpf)
 		return -DER_INVAL;
 	}
 
+	if (cpf->cpf_count == 0) {
+		D_ERROR("Invalid member RPC count %d\n",
+			cpf->cpf_count);
+		return -DER_INVAL;
+	}
+
+	if (cpf->cpf_prf == NULL) {
+		D_ERROR("prf can't be NULL\n");
+		return -DER_INVAL;
+	}
+
 	/* reg L1 */
 	rc = crt_proto_reg_L1(crt_gdata.cg_opc_map, cpf);
 	if (rc != 0)
@@ -885,7 +896,7 @@ crt_proto_register(struct crt_proto_format *cpf)
 
 	/* validate base_opc is in range */
 	if (!validate_base_opcode(cpf->cpf_base)) {
-		D_ERROR("Invalid base_opc: %x.\n", cpf->cpf_base);
+		D_ERROR("Invalid base_opc: %#x.\n", cpf->cpf_base);
 		return -DER_INVAL;
 	}
 
@@ -902,23 +913,12 @@ crt_proto_register_internal(struct crt_proto_format *cpf)
 
 	/* validate base_opc is in range */
 	if (cpf->cpf_base ^ CRT_PROTO_BASEOPC_MASK) {
-		D_ERROR("Invalid base_opc: %x.\n", cpf->cpf_base);
+		D_ERROR("Invalid base_opc: %#x.\n", cpf->cpf_base);
 		return -DER_INVAL;
 	}
 
 	return crt_proto_register_common(cpf);
 }
-
-struct crt_proto_query_in_t {
-	d_iov_t		pq_ver;
-	int		pq_ver_count;
-	crt_opcode_t	pq_base_opc;
-};
-
-struct crt_proto_query_out_t {
-	int	pq_ver;
-	int	pq_rc;
-};
 
 struct proto_query_t {
 	crt_proto_query_cb_t	 pq_user_cb;
@@ -929,7 +929,7 @@ static void
 proto_query_cb(const struct crt_cb_info *cb_info)
 {
 	crt_rpc_t			*rpc_req = cb_info->cci_rpc;
-	struct crt_proto_query_out_t	*rpc_req_output;
+	struct crt_proto_query_out	*rpc_req_output;
 	struct proto_query_t		*proto_query = cb_info->cci_arg;
 	struct crt_proto_query_cb_info	 user_cb_info;
 
@@ -957,7 +957,7 @@ crt_proto_query(crt_endpoint_t *tgt_ep, crt_opcode_t base_opc,
 {
 	crt_rpc_t			*rpc_req;
 	crt_context_t			 crt_ctx;
-	struct crt_proto_query_in_t	*rpc_req_input;
+	struct crt_proto_query_in	*rpc_req_input;
 	struct proto_query_t		*proto_query = NULL;
 	int				 rc = DER_SUCCESS;
 
@@ -1020,8 +1020,8 @@ crt_proto_query_local(crt_opcode_t base_opc, uint32_t ver)
 void
 crt_hdlr_proto_query(crt_rpc_t *rpc_req)
 {
-	struct crt_proto_query_in_t	*rpc_req_input;
-	struct crt_proto_query_out_t	*rpc_req_output;
+	struct crt_proto_query_in	*rpc_req_input;
+	struct crt_proto_query_out	*rpc_req_output;
 	uint32_t			*version_array;
 	int				 count;
 	int				 i;

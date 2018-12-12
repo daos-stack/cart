@@ -44,26 +44,6 @@
 
 #include "crt_internal.h"
 
-struct crt_lm_evict_in {
-	d_rank_t		clei_rank;
-	uint32_t		clei_ver;
-};
-
-struct crt_lm_evict_out {
-	int cleo_succeeded;
-	int cleo_rc;
-};
-
-struct crt_lm_memb_sample_in {
-	uint32_t		msi_ver;
-};
-
-struct crt_lm_memb_sample_out {
-	d_iov_t			mso_delta;
-	uint32_t		mso_ver;
-	int			mso_rc;
-};
-
 /* global data for liveness map management of the primary service group */
 struct lm_grp_srv_t {
 	/* ptr to the public primary service group structure */
@@ -667,9 +647,9 @@ struct sample_item {
 	d_rank_t	ri_rank;
 };
 
-/* unmark the pending sample flag in the PSR candidate list */
+/* unmark the pending sample flag for all entries in the PSR candidate list */
 static void
-lm_sample_flag_unmark(struct lm_grp_priv_t *lm_grp_priv, d_rank_t rank)
+lm_sample_flag_unmark(struct lm_grp_priv_t *lm_grp_priv)
 {
 	struct lm_psr_cand	*psr_cand;
 	int			 i;
@@ -678,10 +658,37 @@ lm_sample_flag_unmark(struct lm_grp_priv_t *lm_grp_priv, d_rank_t rank)
 	psr_cand = lm_grp_priv->lgp_psr_cand;
 	/* unmark all PSRs */
 	D_RWLOCK_WRLOCK(&lm_grp_priv->lgp_rwlock);
-	for (i = 0; i < lm_grp_priv->lgp_num_psr; i++)
+	for (i = 0; i < lm_grp_priv->lgp_num_psr; i++) {
 		psr_cand[i].pc_pending_sample = false;
+	}
 	lm_grp_priv->lgp_last_tried_index = -1;
-	lm_grp_priv->lgp_sampling = 0;
+	lm_grp_priv->lgp_sampling = false;
+	D_RWLOCK_UNLOCK(&lm_grp_priv->lgp_rwlock);
+}
+
+/* unmark the pending sample flag for rank in the PSR candidate list */
+static void
+lm_sample_flag_unmark_rank(struct lm_grp_priv_t *lm_grp_priv, d_rank_t rank)
+{
+	struct lm_psr_cand	*psr_cand;
+	int			 i;
+	bool			sampling = false;
+
+	D_ASSERT(lm_grp_priv != NULL);
+	psr_cand = lm_grp_priv->lgp_psr_cand;
+	/* unmark provided rank only */
+	D_RWLOCK_WRLOCK(&lm_grp_priv->lgp_rwlock);
+	for (i = 0; i < lm_grp_priv->lgp_num_psr; i++) {
+		if (psr_cand[i].pc_rank == rank) {
+			psr_cand[i].pc_pending_sample = false;
+		}
+		if (psr_cand[i].pc_pending_sample) {
+			sampling = true;
+		}
+	}
+	if (!sampling) {
+		lm_grp_priv->lgp_sampling = false;
+	}
 	D_RWLOCK_UNLOCK(&lm_grp_priv->lgp_rwlock);
 }
 
@@ -737,12 +744,12 @@ lm_sample_rpc_cb(const struct crt_cb_info *cb_info)
 	if (cb_info->cci_rc != 0) {
 		D_ERROR("rpc failed. opc: %#x, cci_rc: %d.\n",
 			rpc_req->cr_opc, cb_info->cci_rc);
-		D_GOTO(out, rc);
+		D_GOTO(out, rc = cb_info->cci_rc);
 	}
 	out_data = crt_reply_get(rpc_req);
 	if (out_data->mso_rc != 0) {
 		D_ERROR("sample RPC failed. rc %d\n", out_data->mso_rc);
-		D_GOTO(out, rc);
+		D_GOTO(out, rc = out_data->mso_rc);
 	}
 
 	/* compare the local version with the remote version */
@@ -754,7 +761,7 @@ lm_sample_rpc_cb(const struct crt_cb_info *cb_info)
 		out_data->mso_ver);
 	if (out_data->mso_ver == curr_ver) {
 		D_DEBUG(DB_TRACE, "Local version up to date.\n");
-		D_GOTO(out, rc);
+		D_GOTO(out, rc = -DER_MISC);
 	}
 
 	/* remote version is newer, apply the delta locally */
@@ -762,7 +769,7 @@ lm_sample_rpc_cb(const struct crt_cb_info *cb_info)
 	num_delta = out_data->mso_delta.iov_len/sizeof(d_rank_t);
 	if (num_delta == 0) {
 		D_ERROR("buffer empty.\n");
-		D_GOTO(out, rc);
+		D_GOTO(out, rc = -DER_INVAL);
 	}
 	D_ASSERT(num_delta == out_data->mso_ver - curr_ver);
 	delta = out_data->mso_delta.iov_buf;
@@ -777,15 +784,26 @@ lm_sample_rpc_cb(const struct crt_cb_info *cb_info)
 		D_RWLOCK_UNLOCK(&lm_grp_priv->lgp_rwlock);
 	}
 
-	lm_sample_flag_unmark(lm_grp_priv, rpc_req->cr_ep.ep_rank);
 	rc = lm_update_active_psr(lm_grp_priv);
 	if (rc != 0)
 		D_ERROR("lm_update_active_psr() failed. rc: %d\n", rc);
 
 out:
+
 	grp_priv = container_of(tgt_grp, struct crt_grp_priv, gp_pub);
 	/* addref in lm_sample_rpc() */
 	crt_grp_priv_decref(grp_priv);
+
+	/* Update the sampling list with the result so that new RPCs can be sent
+	 * correctly.  Note that on success all pending flags are cleared,
+	 * however for any other case only the target rank.
+	 */
+	if (rc == 0) {
+		lm_sample_flag_unmark(lm_grp_priv);
+	} else {
+		lm_sample_flag_unmark_rank(lm_grp_priv,
+					   rpc_req->cr_ep.ep_rank);
+	}
 
 	return;
 }
@@ -882,7 +900,7 @@ lm_uri_lookup_psr_cb(const struct crt_cb_info *cb_info)
 		D_GOTO(out, rc);
 	}
 	/* insert the uri into the address cache */
-	rc = crt_grp_lc_uri_insert_all(lm_grp_priv->lgp_grp, ul_in->ul_rank,
+	rc = crt_grp_lc_uri_insert_all(lm_grp_priv->lgp_grp, ul_in->ul_rank, 0,
 				       psr_phy_addr);
 	if (rc != 0) {
 		D_ERROR("crt_grp_lc_uri_insert failed, grp: %p, "
@@ -1110,8 +1128,9 @@ lm_grp_priv_destroy(struct lm_grp_priv_t *lm_grp_priv)
  *
  */
 static bool
-should_sample(struct lm_grp_priv_t *lm_grp_priv, d_rank_t tgt_rank,
-	      struct crt_rpc_priv *rpc_priv, d_rank_t *tgt_psr)
+should_sample(struct lm_grp_priv_t *lm_grp_priv,
+	      struct crt_rpc_priv *rpc_priv,
+	      d_rank_t *tgt_psr)
 {
 	int			 i;
 	int			 pending_count = 0;
@@ -1134,11 +1153,11 @@ should_sample(struct lm_grp_priv_t *lm_grp_priv, d_rank_t tgt_rank,
 	 */
 	if (rpc_priv->crp_pub.cr_opc != CRT_OPC_MEMB_SAMPLE &&
 	    lm_grp_priv->lgp_sampling) {
-		D_DEBUG(DB_TRACE, "should not resample. rpc_priv:%p opc: %#x\n",
-			rpc_priv, rpc_priv->crp_pub.cr_opc);
+		RPC_TRACE(DB_TRACE, rpc_priv,
+			  "should not resample.\n");
 		D_GOTO(out, ret);
 	}
-	lm_grp_priv->lgp_sampling = 1;
+	lm_grp_priv->lgp_sampling = true;
 	for (i = 0; i < lm_grp_priv->lgp_num_psr; i++) {
 		evicted = crt_rank_evicted(lm_grp_priv->lgp_grp,
 					   psr_cand[i].pc_rank);
@@ -1168,13 +1187,12 @@ should_sample(struct lm_grp_priv_t *lm_grp_priv, d_rank_t tgt_rank,
 
 	/* picked a live PSRs that hasn't been contacted */
 	if (pending_count < live_count) {
-		ret = true;
 		D_ASSERTF(picked_index != -1, "picked_index is -1.\n");
 		psr_cand[picked_index].pc_pending_sample = true;
 		lm_grp_priv->lgp_last_tried_index = picked_index;
 		D_DEBUG(DB_TRACE, "psr rank %d is selected.\n",
 			psr_cand[picked_index].pc_rank);
-		D_GOTO(out, ret);
+		D_GOTO(out, ret = true);
 	}
 
 	D_ASSERT(pending_count == live_count);
@@ -1206,7 +1224,6 @@ static void
 lm_membs_sample(crt_context_t ctx, crt_rpc_t *rpc, void *arg)
 {
 	crt_group_t			*tgt_grp;
-	d_rank_t			 tgt_rank;
 	d_rank_t			 tgt_psr = 0;
 	struct lm_grp_priv_t		*lm_grp_priv;
 	int				 rc = 0;
@@ -1214,7 +1231,6 @@ lm_membs_sample(crt_context_t ctx, crt_rpc_t *rpc, void *arg)
 
 	D_ASSERT(rpc != NULL);
 	tgt_grp = rpc->cr_ep.ep_grp;
-	tgt_rank = rpc->cr_ep.ep_rank;
 
 	/* return if the rpc target is the local primary service group */
 	if (tgt_grp == crt_lm_gdata.clg_lm_grp_srv.lgs_grp && crt_is_service())
@@ -1229,8 +1245,8 @@ lm_membs_sample(crt_context_t ctx, crt_rpc_t *rpc, void *arg)
 	D_ASSERT(lm_grp_priv != NULL);
 
 	rpc_priv = container_of(rpc, struct crt_rpc_priv, crp_pub);
-	D_DEBUG(DB_TRACE, "rpc_priv %p\n", rpc_priv);
-	if (!should_sample(lm_grp_priv, tgt_rank, rpc_priv, &tgt_psr))
+	RPC_TRACE(DB_TRACE, rpc_priv, "\n");
+	if (!should_sample(lm_grp_priv, rpc_priv, &tgt_psr))
 		return;
 	/* start a sample RPC */
 	rc = lm_sample_rpc(ctx, lm_grp_priv, tgt_psr);
@@ -1325,7 +1341,7 @@ lm_gdata_destroy(void)
 	return;
 }
 
-void
+int
 crt_lm_init(void)
 {
 	crt_group_t			*grp;
@@ -1334,7 +1350,7 @@ crt_lm_init(void)
 
 	if (!crt_initialized()) {
 		D_ERROR("CRT not initialized.\n");
-		return;
+		return -DER_INVAL;
 	}
 	/* this is the only place we need a grp_priv pointer, since we need to
 	 * retrieve the public struct pointer of the local primary group at
@@ -1350,25 +1366,32 @@ crt_lm_init(void)
 	crt_lm_gdata.clg_refcount++;
 	if (crt_lm_gdata.clg_refcount > 1) {
 		D_RWLOCK_UNLOCK(&crt_lm_gdata.clg_rwlock);
-		return;
+		return 0;
 	}
 	/* from here up to the unlock is only executed once per process */
 	if (crt_is_service()) {
 		rc = crt_lm_grp_init(grp);
 		if (rc != 0) {
 			D_ERROR("crt_lm_grp_init() failed, rc %d.\n", rc);
-			D_RWLOCK_UNLOCK(&crt_lm_gdata.clg_rwlock);
-			return;
+			D_GOTO(err_out, rc);
 		}
 		/* servers register callbacks to manage the liveness map */
 		crt_register_progress_cb(lm_prog_cb, grp);
 	}
-	D_RWLOCK_UNLOCK(&crt_lm_gdata.clg_rwlock);
+	D_GOTO(out, rc);
 
-	return;
+err_out:
+	crt_lm_gdata.clg_refcount--;
+	D_RWLOCK_UNLOCK(&crt_lm_gdata.clg_rwlock);
+	lm_gdata_destroy();
+	lm_gdata_init_once = PTHREAD_ONCE_INIT;
+	return rc;
+out:
+	D_RWLOCK_UNLOCK(&crt_lm_gdata.clg_rwlock);
+	return rc;
 }
 
-void
+int
 crt_lm_finalize(void)
 {
 	struct lm_grp_srv_t		*lm_grp_srv;
@@ -1376,13 +1399,13 @@ crt_lm_finalize(void)
 
 	if (crt_lm_gdata.clg_inited == 0) {
 		D_DEBUG(DB_TRACE, "cannot finalize before crt_lm_init().\n");
-		D_GOTO(out, rc);
+		D_GOTO(out, rc = -DER_INVAL);
 	}
 	D_RWLOCK_WRLOCK(&crt_lm_gdata.clg_rwlock);
 	crt_lm_gdata.clg_refcount--;
 	if (crt_lm_gdata.clg_refcount != 0) {
 		D_RWLOCK_UNLOCK(&crt_lm_gdata.clg_rwlock);
-		D_GOTO(out, rc);
+		D_GOTO(out, rc = 0);
 	}
 	if (crt_is_service()) {
 		lm_grp_srv = &crt_lm_gdata.clg_lm_grp_srv;
@@ -1397,7 +1420,7 @@ crt_lm_finalize(void)
 	lm_gdata_init_once = PTHREAD_ONCE_INIT;
 
 out:
-	return;
+	return rc;
 }
 
 int

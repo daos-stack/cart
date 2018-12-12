@@ -75,18 +75,23 @@ struct test_t {
 	int		 t_roomno;
 };
 
-struct test_t test_g = { .t_hold_time = 0, .t_ctx_num = 1,
-			     .t_roomno = 1082 };
+struct test_t test_g = { .t_hold_time = 0, .t_ctx_num = 1, .t_roomno = 1082 };
 
-CRT_RPC_PREP(test_ping_check,
-		/* input fields */
-	     ((uint32_t)	(age))
-	     ((uint32_t)	(days))
-	     ((d_string_t)	(name)),
-		/* output fields */
-	     ((int32_t)		(ret))
-	     ((uint32_t)	(room_no))
-	    );
+#define CRT_ISEQ_TEST_PING_CHECK /* input fields */		 \
+	((uint32_t)		(age)			CRT_VAR) \
+	((uint32_t)		(days)			CRT_VAR) \
+	((d_string_t)		(name)			CRT_VAR) \
+	((bool)			(bool_val)		CRT_VAR)
+
+#define CRT_OSEQ_TEST_PING_CHECK /* output fields */		 \
+	((int32_t)		(ret)			CRT_VAR) \
+	((uint32_t)		(room_no)		CRT_VAR) \
+	((uint32_t)		(bool_val)		CRT_VAR)
+
+CRT_RPC_DECLARE(test_ping_check,
+		CRT_ISEQ_TEST_PING_CHECK, CRT_OSEQ_TEST_PING_CHECK)
+CRT_RPC_DEFINE(test_ping_check,
+		CRT_ISEQ_TEST_PING_CHECK, CRT_OSEQ_TEST_PING_CHECK)
 
 static inline void
 test_sem_timedwait(sem_t *sem, int sec, int line_number)
@@ -116,14 +121,16 @@ test_checkin_handler(crt_rpc_t *rpc_req)
 
 	printf("tier1 test_server recv'd checkin, opc: %#x.\n",
 	       rpc_req->cr_opc);
-	printf("tier1 checkin input - age: %d, name: %s, days: %d.\n",
-	       e_req->age, e_req->name, e_req->days);
+	printf("tier1 checkin input - age: %d, name: %s, days: %d, "
+	       "bool_val %d.\n",
+	       e_req->age, e_req->name, e_req->days, e_req->bool_val);
 
 	e_reply = crt_reply_get(rpc_req);
 	D_ASSERTF(e_reply != NULL, "crt_reply_get() failed. e_reply: %p\n",
 		  e_reply);
 	e_reply->ret = 0;
 	e_reply->room_no = test_g.t_roomno++;
+	e_reply->bool_val = e_req->bool_val;
 	if (D_SHOULD_FAIL(5000)) {
 		e_reply->ret = -DER_MISC;
 		e_reply->room_no = -1;
@@ -141,9 +148,9 @@ test_checkin_handler(crt_rpc_t *rpc_req)
 void
 test_ping_delay_handler(crt_rpc_t *rpc_req)
 {
-	struct crt_test_ping_delay_req		*p_req;
-	struct crt_test_ping_delay_reply	*p_reply;
-	int					 rc = 0;
+	struct crt_test_ping_delay_in	*p_req;
+	struct crt_test_ping_delay_out	*p_reply;
+	int				 rc = 0;
 
 	/* CaRT internally already allocated the input/output buffer */
 	p_req = crt_req_get(rpc_req);
@@ -196,11 +203,13 @@ client_cb_common(const struct crt_cb_info *cb_info)
 			D_FREE(rpc_req_input->name);
 			break;
 		}
-		printf("%s checkin result - ret: %d, room_no: %d.\n",
+		printf("%s checkin result - ret: %d, room_no: %d, "
+		       "bool_val %d.\n",
 		       rpc_req_input->name, rpc_req_output->ret,
-		       rpc_req_output->room_no);
+		       rpc_req_output->room_no, rpc_req_output->bool_val);
 		D_FREE(rpc_req_input->name);
 		sem_post(&test_g.t_token_to_proceed);
+		D_ASSERT(rpc_req_output->bool_val == true);
 		break;
 	case TEST_OPC_SHUTDOWN:
 		test_g.t_complete = 1;
@@ -298,9 +307,9 @@ test_init(void)
 		D_ASSERTF(rc == 0, "crt_rpc_srv_register() failed. rc: %d\n",
 			  rc);
 
-		rc = crt_rpc_srv_register(TEST_OPC_PING_DELAY,
+		rc = CRT_RPC_SRV_REGISTER(TEST_OPC_PING_DELAY,
 					  CRT_RPC_FEAT_NO_TIMEOUT,
-					  &CQF_TEST_PING_DELAY,
+					  crt_test_ping_delay,
 					  test_ping_delay_handler);
 		D_ASSERTF(rc == 0, "crt_rpc_srv_register() failed. rc: %d\n",
 			  rc);
@@ -352,7 +361,7 @@ check_in(crt_group_t *remote_group, int rank)
 		buffer = NULL;
 	} else {
 		D_ALLOC(buffer, 256);
-		D_ERROR("not injecting fault.\n");
+		D_INFO("not injecting fault.\n");
 	}
 
 	D_ASSERTF(buffer != NULL, "Cannot allocate memory.\n");
@@ -360,10 +369,12 @@ check_in(crt_group_t *remote_group, int rank)
 	rpc_req_input->name = buffer;
 	rpc_req_input->age = 21;
 	rpc_req_input->days = 7;
+	rpc_req_input->bool_val = true;
 	D_DEBUG(DB_TEST, "client(rank %d) sending checkin rpc with tag "
-		"%d, name: %s, age: %d, days: %d.\n",
+		"%d, name: %s, age: %d, days: %d, bool_val %d.\n",
 		test_g.t_my_rank, server_ep.ep_tag, rpc_req_input->name,
-		rpc_req_input->age, rpc_req_input->days);
+		rpc_req_input->age, rpc_req_input->days,
+		rpc_req_input->bool_val);
 
 	/* send an rpc, print out reply */
 	rc = crt_req_send(rpc_req, client_cb_common, NULL);

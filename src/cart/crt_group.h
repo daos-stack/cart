@@ -66,6 +66,33 @@ struct crt_rank_map {
 /* (1 << CRT_LOOKUP_CACHE_BITS) is the number of buckets of lookup hash table */
 #define CRT_LOOKUP_CACHE_BITS	(4)
 
+
+#define RANK_LIST_REALLOC_SIZE 32
+#define CRT_NO_RANK 0xFFFFFFFF
+
+/* Node for keeping info about free index */
+struct free_index {
+	/* Index to store */
+	uint32_t	fi_index;
+	/* Link to next element */
+	d_list_t	fi_link;
+};
+
+/* Structure for keeping track of group membership
+ * This structure is temporary until dynamic group support is added
+ * for secondary groups as well. When that happens structure could
+ * get simplified
+ */
+struct crt_grp_membs {
+	/* list of free indices unused yet. Only used when pmix is disabled */
+	d_list_t	cgm_free_indices;
+	/* list of members */
+	d_rank_list_t	*cgm_list;
+	/* linear list of members. Only used when pmix is disabled */
+	d_rank_list_t	*cgm_linear_list;
+};
+
+
 struct crt_grp_priv {
 	d_list_t		 gp_link; /* link to crt_grp_list */
 	crt_group_t		 gp_pub; /* public grp handle */
@@ -73,7 +100,7 @@ struct crt_grp_priv {
 	 * member ranks, should be unique and sorted, each member is the rank
 	 * number within the primary group.
 	 */
-	d_rank_list_t		*gp_membs;
+	struct crt_grp_membs	gp_membs;
 	/*
 	 * the version number of membership list gp_membs, also the version
 	 * number of the failed rank list gp_pri_srv->ps_failed_ranks
@@ -120,7 +147,7 @@ struct crt_grp_priv {
 	/* PSR phy addr address in attached group */
 	crt_phy_addr_t		 gp_psr_phy_addr;
 	/* address lookup cache, only valid for primary group */
-	struct d_hash_table	 **gp_lookup_cache;
+	struct d_hash_table	 *gp_lookup_cache;
 	enum crt_grp_status	 gp_status; /* group status */
 	/* set of variables only valid in primary service groups */
 	uint32_t		 gp_primary:1, /* flag of primary group */
@@ -134,7 +161,7 @@ struct crt_grp_priv {
 	uint32_t		 gp_refcount;
 
 	/* rank map array, only needed for local primary group */
-	struct crt_rank_map	*gp_rank_map;
+	struct crt_rank_map	*gp_pmix_rank_map;
 	/* pmix errhdlr ref, used for PMIx_Deregister_event_handler */
 	size_t			 gp_errhdlr_ref;
 	/* Barrier information.  Only used in local service groups */
@@ -149,6 +176,165 @@ struct crt_grp_priv {
 
 	pthread_rwlock_t	 gp_rwlock; /* protect all fields above */
 };
+
+
+#define CRT_PMIX_ENABLED() \
+	(crt_gdata.cg_pmix_disabled == 0)
+
+/* TODO: Once secondary group support is implemented we will converge on
+ * using a single structure for membership lists
+ */
+static inline d_rank_list_t*
+grp_priv_get_membs(struct crt_grp_priv *priv)
+{
+	if (CRT_PMIX_ENABLED())
+		return priv->gp_membs.cgm_list;
+
+	return priv->gp_membs.cgm_linear_list;
+}
+
+static inline d_rank_list_t*
+grp_priv_get_live_ranks(struct crt_grp_priv *priv)
+{
+	/* When pmix is disabled, member list == live rank list  */
+	if (CRT_PMIX_ENABLED())
+		return priv->gp_live_ranks;
+
+	return priv->gp_membs.cgm_linear_list;
+}
+
+static inline d_rank_list_t*
+grp_priv_get_failed_ranks(struct crt_grp_priv *priv)
+{
+	return priv->gp_failed_ranks;
+}
+
+static inline d_rank_t
+grp_priv_get_primary_rank(struct crt_grp_priv *priv, d_rank_t rank)
+{
+	if (priv->gp_primary)
+		return rank;
+
+	if (CRT_PMIX_ENABLED()) {
+		D_ASSERT(rank < priv->gp_membs.cgm_list->rl_nr);
+
+		return priv->gp_membs.cgm_list->rl_ranks[rank];
+	}
+
+	D_ASSERT(rank < priv->gp_membs.cgm_linear_list->rl_nr);
+
+	/* NO PMIX, secondary group */
+	return priv->gp_membs.cgm_linear_list->rl_ranks[rank];
+}
+
+/*
+ * This call is currently called only when group is created.
+ * For PMIX enabled case, a list of members is provided and needs
+ * to be copied over to the membership list.
+ *
+ * For PMIX disabled case, the list should be NULL.
+ */
+static inline int
+grp_priv_set_membs(struct crt_grp_priv *priv, d_rank_list_t *list)
+{
+	if (CRT_PMIX_ENABLED())
+		return d_rank_list_dup_sort_uniq(&priv->gp_membs.cgm_list,
+						list);
+
+	/* PMIX disabled case */
+	if (!priv->gp_primary) {
+		/* For secondary groups we populate linear list */
+		return d_rank_list_dup_sort_uniq(&priv->gp_membs.cgm_linear_list,
+						list);
+	}
+
+	/* This case should be called with list == NULL */
+	D_ASSERT(list == NULL);
+
+	return 0;
+
+}
+
+static inline int
+grp_priv_copy_live_ranks(struct crt_grp_priv *priv, d_rank_list_t *list)
+{
+	return d_rank_list_dup(&priv->gp_live_ranks, list);
+}
+
+static inline int
+grp_priv_init_failed_ranks(struct crt_grp_priv *priv)
+{
+	int rc = 0;
+
+	priv->gp_failed_ranks = d_rank_list_alloc(0);
+	if (priv->gp_failed_ranks == NULL) {
+		D_ERROR("d_rank_list_alloc failed.\n");
+		rc = -DER_NOMEM;
+	}
+
+	return rc;
+}
+
+static inline int
+grp_priv_init_membs(struct crt_grp_priv *priv, int size)
+{
+	priv->gp_membs.cgm_list = d_rank_list_alloc(size);
+
+	if (!priv->gp_membs.cgm_list)
+		return -DER_NOMEM;
+
+	if (CRT_PMIX_ENABLED())
+		return 0;
+
+	D_INIT_LIST_HEAD(&priv->gp_membs.cgm_free_indices);
+	priv->gp_membs.cgm_linear_list = d_rank_list_alloc(0);
+
+	return 0;
+}
+
+static inline void
+grp_priv_fini_live_ranks(struct crt_grp_priv *priv)
+{
+	d_rank_list_free(priv->gp_live_ranks);
+}
+
+static inline void
+grp_priv_fini_failed_ranks(struct crt_grp_priv *priv)
+{
+	d_rank_list_free(priv->gp_failed_ranks);
+}
+
+static inline void
+grp_priv_fini_membs(struct crt_grp_priv *priv)
+{
+	struct free_index	*index;
+
+	if (priv->gp_membs.cgm_list != NULL)
+		d_rank_list_free(priv->gp_membs.cgm_list);
+
+	if (priv->gp_membs.cgm_linear_list != NULL)
+		d_rank_list_free(priv->gp_membs.cgm_linear_list);
+
+	if (CRT_PMIX_ENABLED())
+		return;
+
+	/* Secondary groups have no free indices list */
+	if (!priv->gp_primary)
+		return;
+
+	/* With PMIX disabled free index list needs to be freed */
+	while ((index = d_list_pop_entry(&priv->gp_membs.cgm_free_indices,
+				struct free_index, fi_link)) != NULL) {
+		D_FREE(index);
+	}
+}
+
+static inline void
+grp_priv_set_default_failed_ranks(struct crt_grp_priv *priv,
+				struct crt_grp_priv *def)
+{
+	priv->gp_failed_ranks = def->gp_failed_ranks;
+}
 
 /* lookup cache item for one target */
 struct crt_lookup_item {
@@ -200,7 +386,6 @@ void crt_hdlr_grp_destroy(crt_rpc_t *rpc_req);
 void crt_hdlr_uri_lookup(crt_rpc_t *rpc_req);
 int crt_grp_attach(crt_group_id_t srv_grpid, crt_group_t **attached_grp);
 int crt_grp_detach(crt_group_t *attached_grp);
-char *crt_get_tag_uri(const char *base_uri, uint32_t tag);
 int crt_grp_lc_lookup(struct crt_grp_priv *grp_priv, int ctx_idx,
 		      d_rank_t rank, uint32_t tag, crt_phy_addr_t *base_addr,
 		      hg_addr_t *hg_addr);
@@ -248,8 +433,6 @@ crt_ep_copy(crt_endpoint_t *dst_ep, crt_endpoint_t *src_ep)
 	dst_ep->ep_rank = src_ep->ep_rank;
 	dst_ep->ep_tag = src_ep->ep_tag;
 }
-
-void crt_li_destroy(struct crt_lookup_item *li);
 
 struct crt_lookup_item *crt_li_link2ptr(d_list_t *rlink);
 
@@ -364,7 +547,8 @@ bool
 crt_grp_id_identical(crt_group_id_t grp_id_1, crt_group_id_t grp_id_2);
 bool crt_grp_is_local(crt_group_t *grp);
 struct crt_grp_priv *crt_grp_pub2priv(crt_group_t *grp);
-int crt_grp_lc_uri_insert_all(crt_group_t *grp, d_rank_t rank, const char *uri);
+int crt_grp_lc_uri_insert_all(crt_group_t *grp, d_rank_t rank, int tag,
+			const char *uri);
 bool crt_rank_evicted(crt_group_t *grp, d_rank_t rank);
 int crt_grp_config_psr_load(struct crt_grp_priv *grp_priv, d_rank_t psr_rank);
 int crt_grp_psr_reload(struct crt_grp_priv *grp_priv);

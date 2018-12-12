@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2017 Intel Corporation
+/* Copyright (C) 2016-2018 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,8 +45,6 @@ static int run_echo_srver_tier2(void)
 {
 	int			rc;
 
-	echo_srv.do_shutdown = 0;
-
 	/* create progress thread */
 	rc = pthread_create(&echo_srv.progress_thread, NULL, progress_handler,
 			    NULL);
@@ -55,6 +53,7 @@ static int run_echo_srver_tier2(void)
 		goto out;
 	}
 
+	echo_srv.shutdown_by_self = 1;
 	/* ==================================== */
 	printf("main thread wait progress thread ...\n");
 	/* wait progress thread */
@@ -76,15 +75,15 @@ echo_srv_shutdown(crt_rpc_t *rpc_req)
 	assert(rpc_req->cr_input == NULL);
 	assert(rpc_req->cr_output == NULL);
 
-	echo_srv.do_shutdown = 1;
+	echo_srv.shutdown_by_client = 1;
 	printf("tier2 echo_srver set shutdown flag.\n");
 }
 
 int g_roomno = 2082;
 void echo_srv_checkin(crt_rpc_t *rpc_req)
 {
-	struct crt_echo_checkin_req *e_req;
-	struct crt_echo_checkin_reply *e_reply;
+	struct crt_echo_checkin_in *e_req;
+	struct crt_echo_checkin_out *e_reply;
 
 	/* CaRT internally already allocated the input/output buffer */
 	e_req = crt_req_get(rpc_req);

@@ -245,6 +245,16 @@ crt_init_opt(crt_group_id_t grpid, uint32_t flags, crt_init_options_t *opt)
 	}
 	D_ASSERT(gdata_init_flag == 1);
 
+	if ((flags & CRT_FLAG_BIT_PMIX_DISABLE) != 0) {
+		crt_gdata.cg_pmix_disabled = 1;
+
+		/* Liveness map only valid with PMIX enabled */
+		if (!(flags & CRT_FLAG_BIT_LM_DISABLE)) {
+			D_WARN("PMIX disabled. Disabling LM automatically\n");
+			flags |= CRT_FLAG_BIT_LM_DISABLE;
+		}
+	}
+
 	D_RWLOCK_WRLOCK(&crt_gdata.cg_rwlock);
 	if (crt_gdata.cg_inited == 0) {
 		/* feed a seed for pseudo-random number generator */
@@ -346,8 +356,14 @@ do_init:
 		D_ASSERT(crt_gdata.cg_opc_map_legacy != NULL);
 
 		crt_gdata.cg_inited = 1;
-		if ((flags & CRT_FLAG_BIT_LM_DISABLE) == 0)
-			crt_lm_init();
+		if ((flags & CRT_FLAG_BIT_LM_DISABLE) == 0) {
+			rc = crt_lm_init();
+			if (rc != 0) {
+				D_GOTO(cleanup, rc);
+			}
+		}
+
+
 	} else {
 		if (crt_gdata.cg_server == false && server == true) {
 			D_ERROR("CRT initialized as client, cannot set as "
@@ -368,8 +384,13 @@ cleanup:
 	}
 	if (crt_gdata.cg_grp_inited == 1)
 		crt_grp_fini();
-	if (crt_gdata.cg_opc_map != NULL)
+	if (crt_gdata.cg_opc_map != NULL) {
 		crt_opc_map_destroy(crt_gdata.cg_opc_map);
+	}
+	if (crt_gdata.cg_opc_map_legacy != NULL) {
+		crt_opc_map_destroy_legacy(crt_gdata.cg_opc_map_legacy);
+	}
+
 	crt_na_ofi_config_fini();
 
 unlock:
@@ -399,7 +420,8 @@ crt_plugin_fini(void)
 
 	D_ASSERT(crt_plugin_gdata.cpg_inited == 1);
 
-	crt_plugin_pmix_fini();
+	if (CRT_PMIX_ENABLED())
+		crt_plugin_pmix_fini();
 
 	while ((prog_cb_priv = d_list_pop_entry(&crt_plugin_gdata.cpg_prog_cbs,
 						struct crt_prog_cb_priv,

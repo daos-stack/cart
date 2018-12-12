@@ -437,154 +437,184 @@ crt_ep_abort(crt_endpoint_t *ep);
  *
  * public macros:
  *
- *     preparation group A:
- *         - CRT_RPC_PREP()
- *         - CRT_RPC_IN_FMT()
- *         - CRT_RPC_OUT_FMT()
- *
- *     preparation group B:
- *         - CRT_RPC_ARG_DESC()
- *         - CRT_RPC_REQ_FMT()
+ *     preparation:
+ *         - CRT_RPC_DECLARE()
+ *         - CRT_RPC_DEFINE()
  *
  *     registration:
  *         - CRT_RPC_REGISTER()
  *         - CRT_RPC_SRV_REGISTER()
  *
- * 1) To register an RPC using group A macros:
- *         CRT_RPC_PREP(my_first_rpc, list_of_inputs, list_of_outputs);
- *         CRT_RPC_REGISTER(opcode, flags, my_first_rpc);
+ * To register an RPC using macros:
+ *     CRT_RPC_DECLARE(my_rpc_name, input_fields, output_fields)
+ *     CRT_RPC_DEFINE(my_rpc_name, input_fields, output_fields)
+ *     CRT_RPC_REGISTER(opcode, flags, my_rpc_name);
  *
- *    The input/output structs can be accessed using the following pointers:
- *         struct my_first_rpc_in *rpc_in;
- *         struct my_first_rpc_out *rpc_out;
- *
- * 2) To register an RPC using group B macros:
- *         CRT_RPC_ARG_DESC(my_second_rpc_in, list_of_inputs);
- *         CRT_RPC_ARG_DESC(my_second_rpc_out, list_of_outputs);
- *         CRT_RPC_REQ_FMT(my_second_rpc, my_second_rpc_in, my_second_rpc_out);
- *         CRT_RPC_REGISTER(opcode, flags, my_second_rpc);
- *
- *    The input/output structs can be accessed using the following pointers:
- *         struct my_second_rpc_in  *rpc_in;
- *         struct my_second_rpc_out *rpc_out;
- *
- * 3) To register an RPC using group B macros and reuse the output definition of
- * my_first_rpc:
- *         CRT_RPC_ARG_DESC(my_third_rpc_in, list_of_inputs);
- *         CRT_RPC_REQ_FMT(my_third_rpc, my_third_rpc_in,
- *                         CRT_RPC_OUT_FMT(my_first_rpc));
- *         CRT_RPC_REGISTER(opcode, flags, my_third_rpc);
- *
- *    The input/output structs can be accessed using the following pointers:
- *         struct my_third_rpc_in    *rpc_in;
- *         struct my_first_rpc_out   *rpc_out;
+ * The input/output structs can be accessed using the following pointers:
+ *     struct my_rpc_name_in *rpc_in;
+ *     struct my_rpc_name_out *rpc_out;
  */
-
-#define CRT_GEN_GET_CMF_TYPE(field) BOOST_PP_SEQ_HEAD(field)
-
-#define CRT_GEN_FMT_ARR_ITEM(r, data, field)				\
-	BOOST_PP_CAT(&CMF_OF_, CRT_GEN_GET_CMF_TYPE(field)),
-
-#define CRT_GEN_FMT_ARR(fmt_arr_name, fields)				\
-	struct crt_msg_field *fmt_arr_name##_fmt[] = {			\
-		BOOST_PP_SEQ_FOR_EACH(CRT_GEN_FMT_ARR_ITEM, , fields)	\
-	};
-
-#define CRT_GEN_GET_TYPE(field) BOOST_PP_SEQ_HEAD(field)
-#define CRT_GEN_GET_NAME(field) BOOST_PP_SEQ_CAT(BOOST_PP_SEQ_TAIL(field))
-
-#define CRT_GEN_STRUCT_FIELD(r, data, field)				\
-	CRT_GEN_GET_TYPE(field) CRT_GEN_GET_NAME(field);		\
-
-#define CRT_GEN_STRUCT(struct_type_name, fields)			\
-	struct struct_type_name {					\
-		BOOST_PP_SEQ_FOR_EACH(CRT_GEN_STRUCT_FIELD, , fields)	\
-	};
-
-#define CRT_GEN_REQ_FMT(rpc_name)					\
-	struct crt_req_format CQF_##rpc_name =				\
-		DEFINE_CRT_REQ_FMT(#rpc_name, rpc_name##_in_fmt,	\
-				   rpc_name##_out_fmt);
-
 /**
  * Prepare struct types and format description for the input/output of an RPC.
  * Supported types in the fields_in/fields_out list can be found in
  * include/cart/types.h
  *
- *
  * Example usage:
- *     CRT_RPC_PREP(my_rpc, ((int32_t)		(mr_arg_1))
- *                          ((uint32_t)		(mr_arg_2))
- *                          ((d_rank_t)		(mr_rank))
- *                          ((d_rank_list_t)	(*mr_rank_list))
- *                          ((d_string_t)	(mr_name)),
- *                          ((int32_t)		(mr_ret)));
- *     CRT_RPC_REGISTER(opcode, flags, my_rpc);
  *
- *     these two macros above expand to:
+ * \#define CRT_ISEQ_MY_RPC
+ *     ((int32_t)       (mr_arg_1)     CRT_VAR)
+ *     ((uint32_t)      (mr_arg_2)     CRT_VAR)
+ *     ((d_rank_t)      (mr_rank)      CRT_VAR)
+ *     ((d_rank_list_t) (mr_rank_list) CRT_PTR)
+ *     ((uuid_t)        (mr_array)     CRT_ARRAY)
+ *     ((d_string_t)    (mr_name)      CRT_VAR)
  *
- *     struct crt_msg_field *my_rpc_in_fmt[] = {
- *             &CMF_INT,
- *             &CMF_UINT32,
- *             &CMF_RANK,
- *             &CMF_RANK_LIST,
- *             &CMF_STRING,
- *     };
+ * \#define CRT_OSEQ_MY_RPC
+ *     ((int32_t)       (mr_ret)       CRT_VAR)
  *
- *     struct crt_msg_field *my_rpc_out_fmt[] = {
- *             &CMF_INT,
- *     };
+ * CRT_RPC_DECLARE(my_rpc, CRT_ISEQ_MY_RPC, CRT_OSEQ_MY_RPC)
+ * CRT_RPC_REGISTER(opcode, flags, my_rpc);
  *
- *     struct my_rpc_in {
- *             int32_t		 mr_arg_1;
- *             uint32_t		 mr_arg_2;
- *             d_rank_t		 mr_rank;
- *             d_rank_list_t	*mr_rank_list;
- *             d_string_t	 mr_name;
- *     };
+ * these two macros above expands into:
  *
- *     struct my_rpc_out {
- *             int32_t		mr_ret;
- *     };
+ * struct my_rpc_in {
+ *     int32_t           mr_arg_1;
+ *     uint32_t          mr_arg_2;
+ *     d_rank_t          mr_rank;
+ *     d_rank_list_t    *mr_rank_list;
+ *     struct crt_array  mr_array;
+ *     d_string_t        mr_name;
+ * };
  *
- *     struct crt_req_format CQF_my_rpc_ =
- *             DEFINE_CRT_REQ_FMT("my_rpc", my_rpc_in_fmt, my_rpc_out_fmt);
+ * struct my_rpc_out {
+ *     int32_t           mr_ret;
+ * };
  *
- *     crt_register(opcode, flags, &CQF_my_rpc);
+ * crt_register(opcode, flags, &CQF_my_rpc);
  *
- * \param[in] rpc_name          name of the RPC.
- * \param[in] fields_in         list of fields in the RPC input. The list is in
- *                              the format of:
- *               ((type_1)(name_1)) ((type_2)(name_2)) ((type_3)(name_3)) ...
- *
- * \param[in] fields_out        list of fields in the RPC output. The list is in
- *                              the format of:
- *               ((type_1)(name_1)) ((type_2)(name_2)) ((type_3)(name_3)) ...
+ * the macros CRT_RPC_DEFINE(my_rpc, CRT_ISEQ_MY_RPC, CRT_OSEQ_MY_RPC) expands
+ * into internal RPC definition which will be used in RPC registration.
+ * The content of this macro expansion will be changed in the future.
  */
-#define CRT_RPC_PREP(rpc_name, fields_in, fields_out)			\
-	CRT_GEN_FMT_ARR(rpc_name##_in, fields_in)			\
-	CRT_GEN_STRUCT(rpc_name##_in, fields_in)			\
-	CRT_GEN_FMT_ARR(rpc_name##_out, fields_out)			\
-	CRT_GEN_STRUCT(rpc_name##_out, fields_out)			\
-	CRT_GEN_REQ_FMT(rpc_name)
+#define CRT_VAR   0
+#define CRT_PTR   1
+#define CRT_ARRAY 2
 
-#define CRT_RPC_ARG_DESC(type_name, fields)				\
-	CRT_GEN_FMT_ARR(type_name, fields)				\
-	CRT_GEN_STRUCT(type_name, fields)
+#define CRT_GEN_GET_TYPE(seq) BOOST_PP_SEQ_HEAD(seq)
+#define CRT_GEN_GET_NAME(seq) BOOST_PP_SEQ_ELEM(1, seq)
+#define CRT_GEN_GET_KIND(seq) BOOST_PP_SEQ_TAIL(BOOST_PP_SEQ_TAIL(seq))
 
-#define CRT_RPC_REQ_FMT(rpc_name, in_type_name, out_type_name)		\
-	struct crt_req_format CQF_##rpc_name =				\
-		DEFINE_CRT_REQ_FMT(#rpc_name, in_type_name##_fmt,	\
-				   out_type_name##_fmt);
+#define CRT_GEN_STRUCT_FIELD(r, data, seq)				\
+	BOOST_PP_IF(BOOST_PP_EQUAL(CRT_ARRAY, CRT_GEN_GET_KIND(seq)),	\
+		struct crt_array, CRT_GEN_GET_TYPE(seq))		\
+	BOOST_PP_IF(BOOST_PP_EQUAL(CRT_PTR, CRT_GEN_GET_KIND(seq)),	\
+		*CRT_GEN_GET_NAME(seq), CRT_GEN_GET_NAME(seq));
+
+#define CRT_GEN_STRUCT(struct_type_name, seq)				\
+	struct struct_type_name {					\
+		BOOST_PP_SEQ_FOR_EACH(CRT_GEN_STRUCT_FIELD, , seq)	\
+	};
+
+/* convert constructed name into proper name */
+#define crt_proc_struct BOOST_PP_RPAREN() BOOST_PP_CAT BOOST_PP_LPAREN() \
+	crt_proc_struct_,
+
+#define CRT_GEN_X(x) x
+#define CRT_GEN_X2(x) CRT_GEN_X BOOST_PP_LPAREN() crt_proc_##x BOOST_PP_RPAREN()
+#define CRT_GEN_GET_FUNC(seq) CRT_GEN_X2 BOOST_PP_SEQ_FIRST_N(1, seq)
+
+#define CRT_GEN_PROC_FIELD(r, ptr, seq)					\
+	BOOST_PP_IF(BOOST_PP_EQUAL(CRT_ARRAY, CRT_GEN_GET_KIND(seq)),	\
+	{								\
+		struct crt_array *array = &ptr->CRT_GEN_GET_NAME(seq);	\
+		void *array_ptr;					\
+		uint64_t i;						\
+		crt_proc_op_t proc_op;					\
+		rc = crt_proc_get_op(proc, &proc_op);			\
+		if (rc)							\
+			D_GOTO(out, rc);				\
+		/* process the count of array first */			\
+		rc = crt_proc_uint64_t(proc, &array->ca_count);		\
+		if (rc)							\
+			D_GOTO(out, rc);				\
+		if (array->ca_count == 0) {				\
+			rc = crt_proc_memcpy(proc, &array->ca_arrays,	\
+					     sizeof(array->ca_arrays));	\
+			if (rc)						\
+				D_GOTO(out, rc);			\
+			if (proc_op == CRT_PROC_DECODE)			\
+				array->ca_arrays = NULL;		\
+			goto next_field_##r;				\
+		}							\
+		if (proc_op == CRT_PROC_DECODE) {			\
+			D_ALLOC(array->ca_arrays, array->ca_count *	\
+				sizeof(CRT_GEN_GET_TYPE(seq)));		\
+			if (array->ca_arrays == NULL)			\
+				D_GOTO(out, rc = -DER_NOMEM);		\
+		}							\
+		/* process the elements of array */			\
+		array_ptr = array->ca_arrays;				\
+		for (i = 0; i < array->ca_count; i++) {			\
+			rc = CRT_GEN_GET_FUNC(seq)(proc, array_ptr);	\
+			if (rc)						\
+				D_GOTO(out, rc);			\
+			array_ptr = (char *)array_ptr +			\
+				    sizeof(CRT_GEN_GET_TYPE(seq));	\
+		}							\
+		if (proc_op == CRT_PROC_FREE)				\
+			D_FREE(array->ca_arrays);			\
+	}								\
+	next_field_##r:,						\
+	rc = CRT_GEN_GET_FUNC(seq)(proc, &ptr->CRT_GEN_GET_NAME(seq));	\
+	if (rc)								\
+		D_GOTO(out, rc);					\
+	)
+
+#define CRT_GEN_PROC(type_name, seq)					\
+	BOOST_PP_IF(BOOST_PP_SEQ_SIZE(seq),				\
+	static int crt_proc_struct_##type_name(crt_proc_t proc,		\
+					       struct type_name *ptr) {	\
+		int rc = 0;						\
+		BOOST_PP_SEQ_FOR_EACH(CRT_GEN_PROC_FIELD, ptr, seq)	\
+	out:								\
+		return rc;						\
+	}								\
+	static struct crt_msg_field CMF_##type_name = {			\
+		.cmf_flags = 0,)					\
+	BOOST_PP_COMMA_IF(BOOST_PP_SEQ_SIZE(seq))			\
+	BOOST_PP_IF(BOOST_PP_SEQ_SIZE(seq),				\
+		.cmf_size  = sizeof(struct type_name),)			\
+	BOOST_PP_COMMA_IF(BOOST_PP_SEQ_SIZE(seq))			\
+	BOOST_PP_IF(BOOST_PP_SEQ_SIZE(seq),				\
+		.cmf_proc  = (crt_proc_cb_t)crt_proc_struct_##type_name	\
+	};								\
+	static struct crt_msg_field *crt_##type_name##_fields[] =	\
+		{ &CMF_##type_name };,)
+
+#define CRT_RPC_DECLARE(rpc_name, fields_in, fields_out)		\
+	BOOST_PP_IF(BOOST_PP_SEQ_SIZE(fields_in),			\
+		CRT_GEN_STRUCT(rpc_name##_in, fields_in), )		\
+	BOOST_PP_IF(BOOST_PP_SEQ_SIZE(fields_out),			\
+		CRT_GEN_STRUCT(rpc_name##_out, fields_out), )		\
+	extern struct crt_req_format CQF_##rpc_name;
+
+#define CRT_RPC_DEFINE(rpc_name, fields_in, fields_out)			\
+	CRT_GEN_PROC(rpc_name##_in, fields_in)				\
+	CRT_GEN_PROC(rpc_name##_out, fields_out)			\
+	struct crt_req_format CQF_##rpc_name = DEFINE_CRT_REQ_FMT(	\
+		BOOST_PP_IF(BOOST_PP_SEQ_SIZE(fields_in),		\
+			crt_##rpc_name##_in_fields, NULL),		\
+		BOOST_PP_IF(BOOST_PP_SEQ_SIZE(fields_out),		\
+			crt_##rpc_name##_out_fields, NULL));
+
+#define CRT_RPC_CORPC_REGISTER(opcode, rpc_name, rpc_handler, co_ops)	\
+	crt_corpc_register(opcode, &CQF_##rpc_name, rpc_handler, co_ops)
 
 #define CRT_RPC_SRV_REGISTER(opcode, flags, rpc_name, rpc_handler)	\
 	crt_rpc_srv_register(opcode, flags, &CQF_##rpc_name, rpc_handler)
 
 #define CRT_RPC_REGISTER(opcode, flags, rpc_name)			\
 	crt_rpc_register(opcode, flags, &CQF_##rpc_name)
-
-#define CRT_RPC_IN_FMT(rpc_name)	rpc_name##_in_fmt
-#define CRT_RPC_OUT_FMT(rpc_name)	rpc_name##_out_fmt
 
 /**
  * Dynamically register an RPC with features at client-side.
@@ -681,6 +711,43 @@ crt_bulk_create(crt_context_t crt_ctx, d_sg_list_t *sgl,
 		crt_bulk_perm_t bulk_perm, crt_bulk_t *bulk_hdl);
 
 /**
+ * Bind bulk handle to local context, to associate the origin address of the
+ * local context to the bulk handle.
+ *
+ * It can be used to forward/share the bulk handle from one server to another
+ * server, in that case the origin address of the bulk handle can be serialized/
+ * de-serialized on-the-fly. The example usage:
+ * client sends a RPC request with a bulk handle embedded to server A,
+ * server A forward the client-side bulk handle to another server B.
+ * For that usage, client should call this API to bind the bulk handle with its
+ * local context before sending the RPC to server A. So when server B gets the
+ * de-serialized bulk handle forwarded by server A, the server B can know the
+ * client-side origin address to do the bulk transferring.
+ *
+ * Users should note that binding a bulk handle adds an extra overhead on
+ * serialization, therefore it is recommended to use it with care.
+ * When binding a bulk handle on origin, crt_bulk_bind_transfer() should be
+ * used since origin address information is embedded in the handle.
+ *
+ * \param[in] bulk_hdl		created bulk handle
+ * \param[in] crt_ctx		CRT transport context
+ *
+ * \return			DER_SUCCESS on success, negative value if error
+ */
+int
+crt_bulk_bind(crt_bulk_t bulk_hdl, crt_context_t crt_ctx);
+
+/**
+ * Add reference of the bulk handle.
+ *
+ * \param[in] bulk_hdl		bulk handle
+ *
+ * \return			DER_SUCCESS on success, negative value if error
+ */
+int
+crt_bulk_addref(crt_bulk_t bulk_hdl);
+
+/**
  * Access local bulk handle to retrieve the sgl (segment list) associated
  * with it.
  *
@@ -709,6 +776,11 @@ int
 crt_bulk_free(crt_bulk_t bulk_hdl);
 
 /**
+ * Decrease reference of the bulk handle.
+ */
+#define crt_bulk_decref(bulk_hdl)	crt_bulk_free(bulk_hdl)
+
+/**
  * Start a bulk transferring (inside an RPC handler).
  *
  * \param[in] bulk_desc        pointer to bulk transferring descriptor
@@ -725,6 +797,28 @@ crt_bulk_free(crt_bulk_t bulk_hdl);
 int
 crt_bulk_transfer(struct crt_bulk_desc *bulk_desc, crt_bulk_cb_t complete_cb,
 		  void *arg, crt_bulk_opid_t *opid);
+
+/**
+ * Start a bulk transferring by using the remote bulk handle bound address
+ * rather than the RPC's origin address. It can be used for the case that the
+ * origin address of bulk handle is different with RPC request, for example
+ * DAOS' bulk handle forwarding for server-side I/O dispatching.
+ *
+ * \param[in] bulk_desc        pointer to bulk transferring descriptor
+ *                             it is user's responsibility to allocate and free
+ *                             it. Can free it after the calling returns.
+ * \param[in] complete_cb      completion callback
+ * \param[in] arg              arguments for the \a complete_cb
+ * \param[out] opid            returned bulk opid which can be used to abort
+ *                             the bulk. It is optional, can pass in NULL if
+ *                             don't need it.
+ *
+ * \return                     DER_SUCCESS on success, negative value if error
+ */
+int
+crt_bulk_bind_transfer(struct crt_bulk_desc *bulk_desc,
+		       crt_bulk_cb_t complete_cb, void *arg,
+		       crt_bulk_opid_t *opid);
 
 /**
  * Get length (number of bytes) of data abstracted by bulk handle.
@@ -1322,7 +1416,7 @@ crt_proc_crt_bulk_t(crt_proc_t proc, crt_bulk_t *bulk_hdl);
  * \return                     DER_SUCCESS on success, negative value if error
  */
 int
-crt_proc_crt_string_t(crt_proc_t proc, d_string_t *data);
+crt_proc_d_string_t(crt_proc_t proc, d_string_t *data);
 
 /**
  * Generic processing routine.
@@ -1333,7 +1427,7 @@ crt_proc_crt_string_t(crt_proc_t proc, d_string_t *data);
  * \return                     DER_SUCCESS on success, negative value if error
  */
 int
-crt_proc_crt_const_string_t(crt_proc_t proc, d_const_string_t *data);
+crt_proc_d_const_string_t(crt_proc_t proc, d_const_string_t *data);
 
 /**
  * Generic processing routine.
@@ -1362,7 +1456,7 @@ crt_proc_uuid_t(crt_proc_t proc, uuid_t *data);
  *    function will internally free the memory when freeing the input or output.
  */
 int
-crt_proc_crt_rank_list_t(crt_proc_t proc, d_rank_list_t **data);
+crt_proc_d_rank_list_t(crt_proc_t proc, d_rank_list_t **data);
 
 /**
  * Generic processing routine.
@@ -1373,7 +1467,7 @@ crt_proc_crt_rank_list_t(crt_proc_t proc, d_rank_list_t **data);
  * \return                     DER_SUCCESS on success, negative value if error
  */
 int
-crt_proc_crt_iov_t(crt_proc_t proc, d_iov_t *data);
+crt_proc_d_iov_t(crt_proc_t proc, d_iov_t *data);
 
 /**
  * Local operation. Evict rank from the local membership list of grp.
@@ -1576,11 +1670,130 @@ int
 crt_proto_query(crt_endpoint_t *tgt_ep, crt_opcode_t base_opc,
 		uint32_t *ver, int count, crt_proto_query_cb_t cb, void *arg);
 
+
+/***
+ * Add rank to a group with provided information (uri or primary rank)
+ *
+ * \param[in] group             The group handle
+ * \param[in] rank              Rank to add information about
+ * \param[in] tag               Tag to add information about
+ * \param[in] info              Information details to add
+ *
+ * \return                      DER_SUCCESS on success, negative value on
+ *                              failure.
+ *
+ * \note                        This API is only available if PMIX is disabled.
+ *                              See CRT_FLAG_BIT_PMIX_DISABLE flag.
+ *
+ * \note                        Currently only primary group is supported
+ */
+int
+crt_group_node_add(crt_group_t *group, d_rank_t rank, int tag,
+		crt_node_info_t info);
+
+/**
+ * Set self rank. This API is only available when PMIX is disabled. See \a
+ * CRT_FLAG_BIT_PMIX_DISABLE for more details.
+ *
+ * \param[in] rank              Rank to set on self.
+ *
+ * \return                      DER_SUCCESS on success, negative value on
+ *                              failure.
+ */
+int
+crt_rank_self_set(d_rank_t rank);
+
+/**
+ * Retrieve URI of the requested rank:tag pair.
+ *
+ * \param[in] grp               Group identifier
+ * \param[in] rank              Rank to get uri for
+ * \param[in] tag               Tag to get uri for
+ * \param[out] uri              Returned uri string
+ *
+ * \note Returned uri string must be de-allocated by the user at some
+ * point once the information is no longer needed.
+ *
+ * \return                      DER_SUCCESS on success, negative value
+ *                              on failure.
+ */
+int
+crt_rank_uri_get(crt_group_t *grp, d_rank_t rank, int tag, char **uri);
+
+/**
+ * Remove specified rank from the group.
+ *
+ * \param[in] group             Group identifier
+ * \param[in] rank              Rank to remove
+ *
+ * \note This API is only available when PMIX is disabled. See
+ * CRT_FLAG_BIT_PMIX_DISABLE for more details.
+ */
+int
+crt_group_rank_remove(crt_group_t *group, d_rank_t rank);
+
+/**
+ * Retrieve uri of self for the specified tag.  The uri must be freed by the
+ * user using D_FREE().
+ *
+ * \param[in] tag               Tag to get uri for
+ * \param[out] uri              Returned uri string This is a NULL terminated
+ *                              string of size up to CRT_ADDR_STR_MAX_LEN
+ *                              (including the trailing NULL). Must be freed by
+ *                              the user.
+ *
+ * \return                      DER_SUCCESS on success, negative value
+ *                              on failure.
+ */
+int crt_self_uri_get(int tag, char **uri);
+
+
+/**
+ * Retrieve group information containing ranks and associated uris
+ *
+ * This call will allocate memory for buffers in passed \a grp_info.
+ * User is responsible for freeing the memory once not needed anymore.
+ *
+ * Returned data in \a grp_info can be passed to crt_group_info_set
+ * call in order to setup group on a different node.
+ *
+ * \param[in] group             Group identifier
+ * \param[in] grp_info          group info to be filled.
+ *
+ * \return                      DER_SUCCESS on success, negative value
+ *                              on failure.
+ */
+int crt_group_info_get(crt_group_t *group, d_iov_t *grp_info);
+
+/**
+ * Sets group info (nodes and associated uris) baesd on passed
+ * grp_info data. \a grp_info is to be retrieved via \a crt_group_info_get
+ * call.
+ *
+ * \param[in] grp_info          Group information to set
+ *
+ * \return                      DER_SUCCESS on success, negative value
+ *                              on failure.
+ */
+int crt_group_info_set(d_iov_t *grp_info);
+
+/**
+ * Retrieve list of ranks that belong to the specified gorup.
+ *
+ * \param[in] group             Group identifier
+ * \param[out] list             Rank list that gets filled with members
+ *
+ * \return                      DER_SUCCESS on success, negative value
+ *                              on failure
+ */
+int crt_group_ranks_get(crt_group_t *group, d_rank_list_t **list);
+
 #define crt_proc__Bool			crt_proc_bool
-#define crt_proc_crt_rank_t		crt_proc_uint32_t
+#define crt_proc_d_rank_t		crt_proc_uint32_t
 #define crt_proc_int			crt_proc_int32_t
-#define crt_proc_crt_group_id_t		crt_proc_crt_string_t
-#define crt_proc_crt_phy_addr_t		crt_proc_crt_string_t
+#define crt_proc_crt_status_t		crt_proc_int32_t
+#define crt_proc_crt_group_id_t		crt_proc_d_string_t
+#define crt_proc_crt_phy_addr_t		crt_proc_d_string_t
 
 /** @}
  */

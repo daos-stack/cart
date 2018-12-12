@@ -1,5 +1,5 @@
-#!/bin/sh
-# Copyright (C) 2016-2018 Intel Corporation
+#!python
+# Copyright (C) 2018 Intel Corporation
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -17,9 +17,9 @@
 #    code must carry prominent notices stating that the original code was
 #    changed and the date of the change.
 #
-#  4. All publications or advertising materials mentioning features or use of
-#     this software are asked, but not required, to acknowledge that it was
-#     developed by Intel Corporation and credit the contributors.
+# 4. All publications or advertising materials mentioning features or use of
+#    this software are asked, but not required, to acknowledge that it was
+#    developed by Intel Corporation and credit the contributors.
 #
 # 5. Neither the name of Intel Corporation, nor the name of any Contributor
 #    may be used to endorse or promote products derived from this software
@@ -35,45 +35,30 @@
 # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""Build swim src"""
 
-#set -x
+def scons():
+    """Scons function"""
+    Import('env', 'prereqs')
 
-if [ -d "utils" ]; then
-  . utils/setup_local.sh
-else
-  . ./setup_local.sh
-fi
+    env.AppendUnique(LIBPATH=[Dir('.')])
 
-# Check for symbol names in the library.  All symbol names should begin with a
-# the prefix crt_ however slightly different ways of testing are needed on OS X
-# and Linux.
-RC=0
-echo Checking for symbol names.
-if [ "$os" = "Darwin" ]
-then
-    nm -g "${SL_PREFIX}/lib/libcart.so" |
-        grep -v " U " |  grep -v " _crt"
-else
-    echo "checking libcart.so"
-    nm -g "${SL_PREFIX}/lib/libcart.so" |
-        grep -v " U " |  grep -v " w " |  grep -v " crt_" |
-        grep -v "D CMF_" | grep -v "D CQF_" |
-        grep -v "\bd_\w*_logfac\b" |
-        grep -v " D _edata" | grep -v " T _fini" | grep -v " T _init" |
-        grep -v " B __bss_start" | grep -v " B _end";
-    if [ $? -ne 1 ]; then RC=1; fi
-    echo "checking libgurt.so"
-    nm -g "${SL_PREFIX}/lib/libgurt.so" |
-        grep -v " U " |  grep -v " w " |  grep -v " d_" | grep -v " DB_" |
-        grep -v " D _edata" | grep -v " T _fini" | grep -v " T _init" |
-        grep -v " B __bss_start" | grep -v " B _end" |
-        grep -v " T chash_" | grep -v " B __drand48_seed";
-    if [ $? -ne 1 ]; then RC=1; fi
-fi
-if [ ${RC} -ne 0 ]
-then
-    echo Fail: Incorrect symbols exist
-    exit 1
-fi
-echo Pass: No incorrect symbols exist
-exit 0
+    denv = env.Clone()
+
+    libraries = ['gurt']
+
+    denv.AppendUnique(CPPPATH=['#/src/swim'])
+    denv.AppendUnique(LIBS=libraries)
+    denv.AppendUnique(RPATH=['$PREFIX/lib'])
+    denv.Append(CCFLAGS=['-D_USE_CART_'])
+
+    swim_targets = denv.SharedObject(Glob('*.c'))
+    swim = denv.SharedLibrary('libswim', swim_targets)
+    denv.Install('$PREFIX/lib/', swim)
+
+    Default(swim)
+
+    Export('swim_targets')
+
+if __name__ == "SCons.Script":
+    scons()

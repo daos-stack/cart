@@ -44,20 +44,7 @@
 /* CRT internal RPC format definitions */
 
 /* group create */
-static struct crt_msg_field *crt_grp_create_in_fields[] = {
-	&CMF_GRP_ID,		/* gc_grp_id */
-	&CMF_UINT64,		/* gc_int_grpid */
-	&CMF_RANK_LIST,		/* gc_membs */
-	&CMF_RANK,		/* gc_initiate_rank */
-};
-
-static struct crt_msg_field *crt_grp_create_out_fields[] = {
-	&CMF_INT,		/* gc_rc */
-};
-
-static struct crt_req_format CQF_CRT_GRP_CREATE =
-	DEFINE_CRT_REQ_FMT("CRT_GRP_CREATE", crt_grp_create_in_fields,
-			   crt_grp_create_out_fields);
+CRT_RPC_DEFINE(crt_grp_create, CRT_ISEQ_GRP_CREATE, CRT_OSEQ_GRP_CREATE)
 
 static struct crt_corpc_ops crt_grp_create_co_ops = {
 	.co_aggregate = crt_grp_create_corpc_aggregate,
@@ -65,18 +52,7 @@ static struct crt_corpc_ops crt_grp_create_co_ops = {
 };
 
 /* group destroy */
-static struct crt_msg_field *crt_grp_destroy_in_fields[] = {
-	&CMF_GRP_ID,		/* gd_grp_id */
-	&CMF_RANK,		/* gd_initiate_rank */
-};
-
-static struct crt_msg_field *crt_grp_destroy_out_fields[] = {
-	&CMF_INT,		/* gd_rc */
-};
-
-static struct crt_req_format CQF_CRT_GRP_DESTROY =
-	DEFINE_CRT_REQ_FMT("CRT_GRP_DESTROY", crt_grp_destroy_in_fields,
-			   crt_grp_destroy_out_fields);
+CRT_RPC_DEFINE(crt_grp_destroy, CRT_ISEQ_GRP_DESTROY, CRT_OSEQ_GRP_DESTROY)
 
 static struct crt_corpc_ops crt_grp_destroy_co_ops = {
 	.co_aggregate = crt_grp_destroy_corpc_aggregate,
@@ -84,203 +60,51 @@ static struct crt_corpc_ops crt_grp_destroy_co_ops = {
 };
 
 /* uri lookup */
-static struct crt_msg_field *crt_uri_lookup_in_fields[] = {
-	&CMF_GRP_ID,		/* ul_grp_id */
-	&CMF_RANK,		/* ul_rank */
-	&CMF_UINT32,		/* ul_tag */
-};
-
-static struct crt_msg_field *crt_uri_lookup_out_fields[] = {
-	&CMF_PHY_ADDR,		/* ul_uri */
-	&CMF_INT,		/* ul_rc */
-};
-
-static struct crt_req_format CQF_CRT_URI_LOOKUP =
-	DEFINE_CRT_REQ_FMT("CRT_URI_LOOKUP", crt_uri_lookup_in_fields,
-			   crt_uri_lookup_out_fields);
+CRT_RPC_DEFINE(crt_uri_lookup, CRT_ISEQ_URI_LOOKUP, CRT_OSEQ_URI_LOOKUP)
 
 /* for self-test service */
-static struct crt_msg_field *crt_st_send_id_field[] = {
-	&CMF_UINT64,
-};
+CRT_RPC_DEFINE(crt_st_send_id_reply_iov,
+		CRT_ISEQ_ST_SEND_ID, CRT_OSEQ_ST_REPLY_IOV)
 
-static struct crt_msg_field *crt_st_send_id_iov_field[] = {
-	&CMF_UINT64,
-	&CMF_IOVEC,
-};
+CRT_RPC_DEFINE(crt_st_send_iov_reply_empty,
+		CRT_ISEQ_ST_SEND_ID_IOV, CRT_OSEQ_ST_REPLY_EMPTY)
 
-static struct crt_msg_field *crt_st_send_id_iov_bulk_field[] = {
-	&CMF_UINT64,
-	&CMF_IOVEC,
-	&CMF_BULK,
-};
+CRT_RPC_DEFINE(crt_st_both_iov,
+		CRT_ISEQ_ST_SEND_ID_IOV, CRT_OSEQ_ST_REPLY_IOV)
 
-static struct crt_msg_field *crt_st_send_id_bulk_field[] = {
-	&CMF_UINT64,
-	&CMF_BULK,
-};
+CRT_RPC_DEFINE(crt_st_send_iov_reply_bulk,
+		CRT_ISEQ_ST_SEND_ID_IOV_BULK, CRT_OSEQ_ST_REPLY_EMPTY)
 
-static struct crt_msg_field *crt_st_reply_iov_field[] = {
-	&CMF_IOVEC,
-};
+CRT_RPC_DEFINE(crt_st_send_bulk_reply_iov,
+		CRT_ISEQ_ST_SEND_ID_BULK, CRT_OSEQ_ST_REPLY_IOV)
 
-static struct crt_msg_field *crt_st_open_session_field[] = {
-	&CMF_UINT32,
-	&CMF_UINT32,
-	&CMF_UINT32,
-	&CMF_UINT32,
-};
+CRT_RPC_DEFINE(crt_st_both_bulk,
+		CRT_ISEQ_ST_SEND_ID_BULK, CRT_OSEQ_ST_REPLY_EMPTY)
 
-static struct crt_msg_field *crt_st_session_id_field[] = {
-	&CMF_UINT64,
-};
+CRT_RPC_DEFINE(crt_st_open_session,
+		CRT_ISEQ_ST_SEND_SESSION, CRT_OSEQ_ST_REPLY_ID)
 
-static struct crt_msg_field *crt_st_start_field[] = {
-	&CMF_GRP_ID,
-	&CMF_IOVEC,
-	&CMF_UINT32,
-	&CMF_UINT32,
-	&CMF_UINT32,
-	&CMF_UINT32,
-	&CMF_UINT32,
-};
+CRT_RPC_DEFINE(crt_st_close_session,
+		CRT_ISEQ_ST_SEND_ID, CRT_OSEQ_ST_REPLY_EMPTY)
 
-static struct crt_msg_field *crt_st_start_reply_field[] = {
-	&CMF_INT,
-};
+CRT_RPC_DEFINE(crt_st_start, CRT_ISEQ_ST_START, CRT_OSEQ_ST_START)
 
-static struct crt_msg_field *crt_st_status_req_field[] = {
-	&CMF_BULK,
-};
+CRT_RPC_DEFINE(crt_st_status_req,
+		CRT_ISEQ_ST_STATUS_REQ, CRT_OSEQ_ST_STATUS_REQ)
 
-static struct crt_msg_field *crt_st_status_req_reply_field[] = {
-	&CMF_UINT64,
-	&CMF_UINT32,
-	&CMF_INT,
-};
+CRT_RPC_DEFINE(crt_iv_fetch, CRT_ISEQ_IV_FETCH, CRT_OSEQ_IV_FETCH)
 
-static struct crt_req_format CQF_CRT_SELF_TEST_SEND_EMPTY_REPLY_IOV =
-	DEFINE_CRT_REQ_FMT("CRT_SELF_TEST_SEND_EMPTY_REPLY_IOV",
-			   crt_st_send_id_field,
-			   crt_st_reply_iov_field);
+CRT_RPC_DEFINE(crt_iv_update, CRT_ISEQ_IV_UPDATE, CRT_OSEQ_IV_UPDATE)
 
-static struct crt_req_format CQF_CRT_SELF_TEST_SEND_IOV_REPLY_EMPTY =
-	DEFINE_CRT_REQ_FMT("CRT_SELF_TEST_SEND_IOV_REPLY_EMPTY",
-			   crt_st_send_id_iov_field,
-			   NULL);
-
-static struct crt_req_format CQF_CRT_SELF_TEST_BOTH_IOV =
-	DEFINE_CRT_REQ_FMT("CRT_SELF_TEST_BOTH_IOV",
-			   crt_st_send_id_iov_field,
-			   crt_st_reply_iov_field);
-
-static struct crt_req_format CQF_CRT_SELF_TEST_SEND_IOV_REPLY_BULK =
-	DEFINE_CRT_REQ_FMT("CRT_SELF_TEST_SEND_IOV_REPLY_BULK",
-			   crt_st_send_id_iov_bulk_field,
-			   NULL);
-
-static struct crt_req_format CQF_CRT_SELF_TEST_SEND_BULK_REPLY_IOV =
-	DEFINE_CRT_REQ_FMT("CRT_SELF_TEST_SEND_BULK_REPLY_IOV",
-			   crt_st_send_id_bulk_field,
-			   crt_st_reply_iov_field);
-
-static struct crt_req_format CQF_CRT_SELF_TEST_BOTH_BULK =
-	DEFINE_CRT_REQ_FMT("CRT_SELF_TEST_BOTH_BULK",
-			   crt_st_send_id_bulk_field,
-			   NULL);
-
-static struct crt_req_format CQF_CRT_SELF_TEST_OPEN_SESSION =
-	DEFINE_CRT_REQ_FMT("CRT_SELF_TEST_OPEN_SESSION",
-			   crt_st_open_session_field,
-			   crt_st_session_id_field);
-
-static struct crt_req_format CQF_CRT_SELF_TEST_CLOSE_SESSION =
-	DEFINE_CRT_REQ_FMT("CRT_SELF_TEST_CLOSE_SESSION",
-			   crt_st_session_id_field,
-			   NULL);
-
-static struct crt_req_format CQF_CRT_SELF_TEST_START =
-	DEFINE_CRT_REQ_FMT("CRT_SELF_TEST_START",
-			   crt_st_start_field,
-			   crt_st_start_reply_field);
-
-static struct crt_req_format CQF_CRT_SELF_TEST_STATUS_REQ =
-	DEFINE_CRT_REQ_FMT("CRT_SELF_TEST_STATUS_REQ",
-			   crt_st_status_req_field,
-			   crt_st_status_req_reply_field);
-
-
-
-static struct crt_msg_field *crt_iv_fetch_in_fields[] = {
-	&CMF_IOVEC, /* crt_ivns_id */
-	&CMF_IOVEC, /* key */
-	&CMF_BULK, /* iv_value_bulk */
-	&CMF_INT, /* class_id */
-	&CMF_RANK, /* root_rank */
-};
-
-static struct crt_msg_field *crt_iv_fetch_out_fields[] = {
-	&CMF_INT, /* TODO: int for now */
-};
-
-static struct crt_msg_field *crt_iv_update_in_fields[] = {
-	&CMF_IOVEC, /* crt_ivns_id */
-	&CMF_IOVEC, /* key */
-	&CMF_IOVEC, /* iov_sync_type */
-	&CMF_BULK, /* iv_value_bulk */
-	&CMF_RANK, /* root_node */
-	&CMF_RANK, /* caller_node */
-	&CMF_UINT32, /* class_id */
-	&CMF_UINT32, /* padding */
-};
-
-static struct crt_msg_field *crt_iv_update_out_fields[] = {
-	&CMF_UINT64, /* rc */
-};
-
-
-static struct crt_msg_field *crt_iv_sync_in_fields[] = {
-	&CMF_IOVEC, /* crt_ivns_id */
-	&CMF_IOVEC, /* key */
-	&CMF_IOVEC, /* iov_sync_type */
-	&CMF_BULK, /* iv_value_bulk */
-	&CMF_UINT32, /* class_id */
-};
-
-static struct crt_msg_field *crt_iv_sync_out_fields[] = {
-	&CMF_INT,
-};
+CRT_RPC_DEFINE(crt_iv_sync, CRT_ISEQ_IV_SYNC, CRT_OSEQ_IV_SYNC)
 
 static struct crt_corpc_ops crt_iv_sync_co_ops = {
 	.co_aggregate = crt_iv_sync_corpc_aggregate,
 	.co_pre_forward = NULL,
 };
 
-
-static struct crt_req_format CQF_CRT_IV_SYNC =
-	DEFINE_CRT_REQ_FMT("CRT_IV_SYNC", crt_iv_sync_in_fields,
-			crt_iv_sync_out_fields);
-
-static struct crt_req_format CQF_CRT_IV_FETCH =
-	DEFINE_CRT_REQ_FMT("CRT_IV_FETCH", crt_iv_fetch_in_fields,
-			crt_iv_fetch_out_fields);
-
-static struct crt_req_format CQF_CRT_IV_UPDATE =
-	DEFINE_CRT_REQ_FMT("CRT_IV_UPDATE", crt_iv_update_in_fields,
-			crt_iv_update_out_fields);
-
 /* barrier */
-static struct crt_msg_field *crt_barrier_in_fields[] = {
-	&CMF_INT,		/* enter_num */
-};
-
-static struct crt_msg_field *crt_barrier_out_fields[] = {
-	&CMF_INT,		/* barrier_rc */
-};
-
-static struct crt_req_format CQF_CRT_BARRIER =
-	DEFINE_CRT_REQ_FMT("CRT_BARRIER", crt_barrier_in_fields,
-			   crt_barrier_out_fields);
+CRT_RPC_DEFINE(crt_barrier, CRT_ISEQ_BARRIER, CRT_OSEQ_BARRIER)
 
 static struct crt_corpc_ops crt_barrier_corpc_ops = {
 	.co_aggregate = crt_hdlr_barrier_aggregate,
@@ -288,89 +112,20 @@ static struct crt_corpc_ops crt_barrier_corpc_ops = {
 };
 
 /* for broadcasting RAS notifications on rank failures */
-struct crt_msg_field *crt_lm_evict_in_fields[] = {
-	&CMF_RANK,		/* failed rank */
-	&CMF_UINT32,		/* version number */
-};
+CRT_RPC_DEFINE(crt_lm_evict, CRT_ISEQ_LM_EVICT, CRT_OSEQ_LM_EVICT)
 
-struct crt_msg_field *crt_lm_evict_out_fields[] = {
-	&CMF_INT,		/* var for the aggregation function */
-	&CMF_INT,		/* return value */
-};
+CRT_RPC_DEFINE(crt_lm_memb_sample,
+		CRT_ISEQ_LM_MEMB_SAMPLE, CRT_OSEQ_LM_MEMB_SAMPLE)
 
-static struct crt_req_format CQF_CRT_LM_EVICT =
-	DEFINE_CRT_REQ_FMT("CRT_LM_EVICT",
-			   crt_lm_evict_in_fields,
-			   crt_lm_evict_out_fields);
+/* !! All of three following RPC definition should have the same input fields !!
+ * All of them are verified in one function:
+ * int verify_ctl_in_args(struct crt_ctl_ep_ls_in *in_args)
+ */
+CRT_RPC_DEFINE(crt_ctl_ep_ls,    CRT_ISEQ_CTL, CRT_OSEQ_CTL_EP_LS)
+CRT_RPC_DEFINE(crt_ctl_get_host, CRT_ISEQ_CTL, CRT_OSEQ_CTL_GET_HOST)
+CRT_RPC_DEFINE(crt_ctl_get_pid,  CRT_ISEQ_CTL, CRT_OSEQ_CTL_GET_PID)
 
-struct crt_msg_field *crt_lm_memb_sample_in_fields[] = {
-	&CMF_UINT32,		/* client version NO. */
-};
-
-struct crt_msg_field *crt_lm_memb_sample_out_fields[] = {
-	&CMF_IOVEC,	/* delta between the client's membership list and the
-			 * service rank's membership list
-			 */
-	&CMF_UINT32,	/* server membership list version number */
-	&CMF_INT,	/* return value */
-};
-
-static struct crt_req_format CQF_CRT_LM_MEMB_SAMPLE =
-	DEFINE_CRT_REQ_FMT("CRT_LM_MEMB_SAMPLE",
-			   crt_lm_memb_sample_in_fields,
-			   crt_lm_memb_sample_out_fields);
-
-struct crt_msg_field *crt_ctl_in_fields[] = {
-	&CMF_GRP_ID,
-	&CMF_RANK,
-};
-
-struct crt_msg_field *crt_ctl_ls_out_fields[] = {
-	&CMF_IOVEC,		/* concatenated addr str */
-	&CMF_INT,		/* num of contexts */
-	&CMF_INT,		/* return value */
-};
-
-struct crt_msg_field *crt_ctl_get_host_out_fields[] = {
-	&CMF_IOVEC,		/* hostname string */
-	&CMF_INT,		/* return code */
-};
-
-struct crt_msg_field *crt_ctl_get_pid_out_fields[] = {
-	&CMF_INT,		/* pid */
-	&CMF_INT,		/* return code */
-};
-
-static struct crt_req_format CQF_CRT_CTL_LS =
-	DEFINE_CRT_REQ_FMT("CRT_CTL_LS",
-			    crt_ctl_in_fields,
-			    crt_ctl_ls_out_fields);
-
-static struct crt_req_format CQF_CRT_CTL_GET_HOSTNAME =
-	DEFINE_CRT_REQ_FMT("CRT_CTL_GET_HOSTNAME",
-			    crt_ctl_in_fields,
-			    crt_ctl_get_host_out_fields);
-
-static struct crt_req_format CQF_CRT_CTL_GET_PID =
-	DEFINE_CRT_REQ_FMT("CRT_CTL_GET_PID",
-			    crt_ctl_in_fields,
-			    crt_ctl_get_pid_out_fields);
-
-struct crt_msg_field *crt_proto_query_in_fields[] = {
-	&CMF_IOVEC,		/* version array */
-	&CMF_INT,		/* num of enlemtns in version array */
-	&CMF_UINT32,		/* base opcode */
-};
-
-struct crt_msg_field *crt_proto_query_out_fields[] = {
-	&CMF_UINT32,		/* version */
-	&CMF_INT,		/* return value */
-};
-
-static struct crt_req_format CQF_CRT_PROTO_QUERY =
-	DEFINE_CRT_REQ_FMT("CRT_PROTO_QUERY",
-			   crt_proto_query_in_fields,
-			   crt_proto_query_out_fields);
+CRT_RPC_DEFINE(crt_proto_query, CRT_ISEQ_PROTO_QUERY, CRT_OSEQ_PROTO_QUERY)
 
 /* Define for crt_internal_rpcs[] array population below.
  * See CRT_INTERNAL_RPCS_LIST macro definition
@@ -442,8 +197,9 @@ crt_rpc_priv_alloc(crt_opcode_t opc, struct crt_rpc_priv **priv_allocated,
 	rpc_priv->crp_forward = forward;
 	*priv_allocated = rpc_priv;
 
-	D_DEBUG(DB_NET, "rpc_priv %p (opc: %#x), allocated.\n",
-		rpc_priv, rpc_priv->crp_opc_info->coi_opc);
+	RPC_TRACE(DB_TRACE, rpc_priv, "(opc: %#x rpc_pub: %p) allocated.\n",
+		  rpc_priv->crp_opc_info->coi_opc,
+		  &rpc_priv->crp_pub);
 
 out:
 	return rc;
@@ -498,9 +254,10 @@ crt_req_create_internal(crt_context_t crt_ctx, crt_endpoint_t *tgt_ep,
 	if (tgt_ep != NULL)
 		crt_rpc_priv_set_ep(rpc_priv, tgt_ep);
 
-	rc = crt_rpc_priv_init(rpc_priv, crt_ctx, opc, false /* srv_flag */);
+	rc = crt_rpc_priv_init(rpc_priv, crt_ctx, false /* srv_flag */);
 	if (rc != 0) {
-		D_ERROR("crt_rpc_priv_init, rc: %d, opc: %#x.\n", rc, opc);
+		RPC_ERROR(rpc_priv,
+			  "crt_rpc_priv_init, rc: %d, opc: %#x\n", rc, opc);
 		crt_rpc_priv_free(rpc_priv);
 		D_GOTO(out, rc);
 	}
@@ -533,10 +290,13 @@ static int check_ep(crt_endpoint_t *tgt_ep)
 			D_GOTO(out, rc = -DER_INVAL);
 		}
 	}
-	if (tgt_ep->ep_rank >= grp_priv->gp_size) {
-		D_ERROR("invalid parameter, rank %d, group_size: %d.\n",
-			tgt_ep->ep_rank, grp_priv->gp_size);
-		D_GOTO(out, rc = -DER_INVAL);
+
+	if (CRT_PMIX_ENABLED()) {
+		if (tgt_ep->ep_rank >= grp_priv->gp_size) {
+			D_ERROR("invalid parameter, rank %d, group_size: %d.\n",
+				tgt_ep->ep_rank, grp_priv->gp_size);
+			D_GOTO(out, rc = -DER_INVAL);
+		}
 	}
 
 out:
@@ -588,7 +348,7 @@ crt_req_set_endpoint(crt_rpc_t *req, crt_endpoint_t *tgt_ep)
 
 	rpc_priv = container_of(req, struct crt_rpc_priv, crp_pub);
 	if (rpc_priv->crp_have_ep == 1) {
-		D_ERROR("target endpoint already set.\n");
+		RPC_ERROR(rpc_priv, "target endpoint already set\n");
 		D_GOTO(out, rc = -DER_INVAL);
 	}
 
@@ -598,8 +358,8 @@ crt_req_set_endpoint(crt_rpc_t *req, crt_endpoint_t *tgt_ep)
 
 	crt_rpc_priv_set_ep(rpc_priv, tgt_ep);
 
-	D_DEBUG(DB_NET, "rpc_priv %p ep modified %u.%u.\n",
-		rpc_priv, req->cr_ep.ep_rank, req->cr_ep.ep_tag);
+	RPC_TRACE(DB_NET, rpc_priv, "ep set %u.%u.\n",
+		  req->cr_ep.ep_rank, req->cr_ep.ep_tag);
 
 out:
 	return rc;
@@ -627,7 +387,6 @@ out:
 void
 crt_req_destroy(struct crt_rpc_priv *rpc_priv)
 {
-	int rc;
 
 	if (rpc_priv->crp_reply_pending == 1) {
 		D_WARN("no reply sent for rpc_priv %p (opc: %#x).\n",
@@ -639,11 +398,7 @@ crt_req_destroy(struct crt_rpc_priv *rpc_priv)
 		crt_hg_reply_error_send(rpc_priv, -DER_NOREPLY);
 	}
 
-	rc = crt_hg_req_destroy(rpc_priv);
-	if (rc != 0)
-		D_ERROR("crt_hg_req_destroy failed, rc: %d, "
-			"rpc_priv %p(opc: %#x).\n",
-			rc, rpc_priv, rpc_priv->crp_pub.cr_opc);
+	crt_hg_req_destroy(rpc_priv);
 }
 
 int
@@ -699,16 +454,14 @@ crt_req_hg_addr_lookup_cb(hg_addr_t hg_addr, void *arg)
 	tag = rpc_priv->crp_pub.cr_ep.ep_tag;
 
 	if (rpc_priv->crp_state == RPC_STATE_FWD_UNREACH) {
-		D_ERROR("rpc_priv %p, opc: %#x with status of FWD_UNREACH.\n",
-			rpc_priv, rpc_priv->crp_pub.cr_opc);
+		RPC_ERROR(rpc_priv,
+			  "opc: %#x with status of FWD_UNREACH\n",
+			  rpc_priv->crp_pub.cr_opc);
 		D_GOTO(unreach, rc);
 	}
 
-	if (rpc_priv->crp_pub.cr_ep.ep_grp == NULL)
-		grp_priv = crt_gdata.cg_grp->gg_srv_pri_grp;
-	else
-		grp_priv = container_of(rpc_priv->crp_pub.cr_ep.ep_grp,
-					struct crt_grp_priv, gp_pub);
+	grp_priv = crt_grp_pub2priv(rpc_priv->crp_pub.cr_ep.ep_grp);
+
 	crt_ctx = rpc_priv->crp_pub.cr_ctx;
 	ctx_idx = crt_ctx->cc_idx;
 
@@ -722,13 +475,14 @@ crt_req_hg_addr_lookup_cb(hg_addr_t hg_addr, void *arg)
 	rpc_priv->crp_hg_addr = hg_addr;
 	rc = crt_req_send_internal(rpc_priv);
 	if (rc != 0) {
-		D_ERROR("crt_req_send_internal() failed, rc %d, rpc_priv: %p, "
-			"opc: %#x.\n", rc, rpc_priv, rpc_priv->crp_pub.cr_opc);
+		RPC_ERROR(rpc_priv,
+			  "crt_req_send_internal() failed, rc %d\n",
+			  rc);
 		D_GOTO(out, rc);
 	}
 out:
 	if (rc != 0) {
-		crt_context_req_untrack(&rpc_priv->crp_pub);
+		crt_context_req_untrack(rpc_priv);
 		crt_rpc_complete(rpc_priv, rc);
 
 		/* Corresponds to cleanup in crt_hg_req_send_cb() */
@@ -772,24 +526,24 @@ crt_req_uri_lookup_retry(struct crt_grp_priv *grp_priv,
 
 	rc = crt_grp_psr_reload(grp_priv);
 	if (rc != 0) {
-		D_ERROR("rpc_priv %p(opc: %#x), crt_grp_psr_reload(grp %s) "
-			"failed, rc: %d.\n", rpc_priv, rpc_pub->cr_opc,
-			grp_priv->gp_pub.cg_grpid, rc);
+		RPC_ERROR(rpc_priv,
+			  "crt_grp_psr_reload(grp %s) failed, rc: %d\n",
+			  grp_priv->gp_pub.cg_grpid, rc);
 		D_GOTO(out, rc);
 	}
 
 	crt_ctx = rpc_pub->cr_ctx;
 
 	D_MUTEX_LOCK(&crt_ctx->cc_mutex);
-	if (!crt_req_timedout(rpc_pub))
-		crt_req_timeout_untrack(rpc_pub);
+	if (!crt_req_timedout(rpc_priv))
+		crt_req_timeout_untrack(rpc_priv);
 	rpc_priv->crp_timeout_ts = crt_get_timeout(rpc_priv);
-	rc = crt_req_timeout_track(rpc_pub);
+	rc = crt_req_timeout_track(rpc_priv);
 	D_MUTEX_UNLOCK(&crt_ctx->cc_mutex);
 	if (rc != 0) {
-		D_ERROR("rpc_priv %p(opc: %#x), crt_req_timeout_track "
-			"failed, rc: %d.\n", rpc_priv, rpc_pub->cr_opc,
-			rc);
+		RPC_ERROR(rpc_priv,
+			  "crt_req_timeout_track failed, rc: %d\n",
+			  rc);
 		D_GOTO(out, rc);
 	}
 
@@ -801,7 +555,7 @@ out:
 }
 
 static void
-crt_req_uri_lookup_psr_cb(const struct crt_cb_info *cb_info)
+crt_req_uri_lookup_by_rpc_cb(const struct crt_cb_info *cb_info)
 {
 	d_rank_t			 rank;
 	uint32_t			 tag;
@@ -821,18 +575,15 @@ crt_req_uri_lookup_psr_cb(const struct crt_cb_info *cb_info)
 	tgt_ep = &rpc_priv->crp_pub.cr_ep;
 	rank = tgt_ep->ep_rank;
 	tag = tgt_ep->ep_tag;
-	if (tgt_ep->ep_grp == NULL)
-		grp_priv = crt_gdata.cg_grp->gg_srv_pri_grp;
-	else
-		grp_priv = container_of(tgt_ep->ep_grp, struct crt_grp_priv,
-					gp_pub);
+
+	grp_priv = crt_grp_pub2priv(tgt_ep->ep_grp);
+
 	crt_ctx = rpc_priv->crp_pub.cr_ctx;
 
 	if (cb_info->cci_rc != 0) {
-		D_ERROR("rpc_priv %p(opc: %#x), failed cci_rc: %d.\n",
-			container_of(cb_info->cci_rpc, struct crt_rpc_priv,
-				     crp_pub),
-			cb_info->cci_rpc->cr_opc, cb_info->cci_rc);
+		RPC_ERROR(rpc_priv,
+			  "failed cci_rc: %d\n",
+			  cb_info->cci_rc);
 		if (cb_info->cci_rc == -DER_OOG)
 			D_GOTO(out, rc = -DER_OOG);
 
@@ -872,56 +623,50 @@ crt_req_uri_lookup_psr_cb(const struct crt_cb_info *cb_info)
 	}
 out:
 	if (rc != 0) {
-		crt_context_req_untrack(&rpc_priv->crp_pub);
+		crt_context_req_untrack(rpc_priv);
 		crt_rpc_complete(rpc_priv, rc);
 		RPC_DECREF(rpc_priv); /* destroy */
 	}
 
 	if (!ul_retried && rpc_priv->crp_ul_req != NULL) {
-		/* addref in crt_req_uri_lookup_psr */
+		/* addref in crt_req_uri_lookup_by_rpc */
 		RPC_PUB_DECREF(rpc_priv->crp_ul_req);
 		rpc_priv->crp_ul_req = NULL;
 	}
-	/* addref in crt_req_uri_lookup_psr */
+	/* addref in crt_req_uri_lookup_by_rpc */
 	RPC_DECREF(rpc_priv);
 }
 
-/*
- * Contact the PSR to obtain the URI of the target rank which rpc_priv is trying
- * to communicate to
- */
-int
-crt_req_uri_lookup_psr(struct crt_rpc_priv *rpc_priv, crt_cb_t complete_cb,
-		       void *arg)
+static int
+crt_req_uri_lookup_by_rpc(struct crt_rpc_priv *rpc_priv, crt_cb_t complete_cb,
+			  void *arg, d_rank_t rank, uint32_t tag)
 {
 	crt_rpc_t			*ul_req;
-	crt_endpoint_t			*tgt_ep;
-	crt_endpoint_t			 psr_ep = {0};
+	crt_endpoint_t			*orig_tgt_ep;
+	crt_endpoint_t			 ul_tgt_ep = {0};
 	struct crt_grp_priv		*grp_priv;
 	struct crt_uri_lookup_in	*ul_in;
 	struct crt_uri_lookup_out	*ul_out;
 	int				 rc = 0;
 
-	tgt_ep = &rpc_priv->crp_pub.cr_ep;
-	if (tgt_ep->ep_grp == NULL)
-		grp_priv = crt_gdata.cg_grp->gg_srv_pri_grp;
-	else
-		grp_priv = container_of(tgt_ep->ep_grp, struct crt_grp_priv,
-					gp_pub);
+	orig_tgt_ep = &rpc_priv->crp_pub.cr_ep;
 
-	psr_ep.ep_grp = tgt_ep->ep_grp;
-	psr_ep.ep_rank = grp_priv->gp_psr_rank;
+	grp_priv = crt_grp_pub2priv(orig_tgt_ep->ep_grp);
 
-	rc = crt_req_create(rpc_priv->crp_pub.cr_ctx, &psr_ep,
+	ul_tgt_ep.ep_grp = orig_tgt_ep->ep_grp;
+	ul_tgt_ep.ep_rank = rank;
+	ul_tgt_ep.ep_tag = tag;
+
+	rc = crt_req_create(rpc_priv->crp_pub.cr_ctx, &ul_tgt_ep,
 			    CRT_OPC_URI_LOOKUP, &ul_req);
 	if (rc != 0) {
 		D_ERROR("crt_req_create URI_LOOKUP failed, rc: %d opc: %#x.\n",
 			rc, rpc_priv->crp_pub.cr_opc);
 		D_GOTO(out, rc);
 	}
-	/* decref in crt_req_uri_lookup_psr_cb */
+	/* decref in crt_req_uri_lookup_by_rpc_cb */
 	RPC_PUB_ADDREF(ul_req);
-	/* decref in crt_req_uri_lookup_psr_cb */
+	/* decref in crt_req_uri_lookup_by_rpc_cb */
 	RPC_ADDREF(rpc_priv);
 	rpc_priv->crp_ul_req = ul_req;
 	ul_in = crt_req_get(ul_req);
@@ -932,15 +677,43 @@ crt_req_uri_lookup_psr(struct crt_rpc_priv *rpc_priv, crt_cb_t complete_cb,
 	ul_in->ul_tag = rpc_priv->crp_pub.cr_ep.ep_tag;
 	rc = crt_req_send(ul_req, complete_cb, arg);
 	if (rc != 0) {
-		D_ERROR("URI_LOOKUP (to group %s rank %d through PSR %d) "
+		D_ERROR("URI_LOOKUP (for group %s rank %d through rank %d) "
 			"request send failed, rc: %d opc: %#x.\n",
-			ul_in->ul_grp_id, ul_in->ul_rank, psr_ep.ep_rank,
+			ul_in->ul_grp_id, ul_in->ul_rank, ul_tgt_ep.ep_rank,
 			rc, rpc_priv->crp_pub.cr_opc);
 		RPC_PUB_DECREF(ul_req); /* rollback addref above */
 		RPC_DECREF(rpc_priv); /* rollback addref above */
 	}
 
 out:
+	return rc;
+}
+
+/*
+ * Contact the PSR to obtain the URI of the target rank which rpc_priv is trying
+ * to communicate to
+ */
+int
+crt_req_uri_lookup_psr(struct crt_rpc_priv *rpc_priv, crt_cb_t complete_cb,
+		       void *arg)
+{
+	crt_endpoint_t			*tgt_ep;
+	struct crt_grp_priv		*grp_priv;
+	int				 rc = 0;
+
+	tgt_ep = &rpc_priv->crp_pub.cr_ep;
+	grp_priv = crt_grp_pub2priv(tgt_ep->ep_grp);
+
+	/* The uri lookup RPC will be sent to the same group as rpc_priv's
+	 * target group
+	 */
+	rc = crt_req_uri_lookup_by_rpc(rpc_priv, complete_cb, arg,
+				       grp_priv->gp_psr_rank, 0);
+	if (rc != 0)
+		RPC_ERROR(rpc_priv, "URI_LOOKUP (for group %s rank %d through "
+			  "psr %d) failed, rc: %d.\n", tgt_ep->ep_grp->cg_grpid,
+			  tgt_ep->ep_rank, grp_priv->gp_psr_rank, rc);
+
 	return rc;
 }
 
@@ -959,11 +732,8 @@ crt_req_ep_lc_lookup(struct crt_rpc_priv *rpc_priv, crt_phy_addr_t *base_addr)
 	ctx = req->cr_ctx;
 	tgt_ep = &req->cr_ep;
 
-	if (tgt_ep->ep_grp == NULL)
-		grp_priv = crt_gdata.cg_grp->gg_srv_pri_grp;
-	else
-		grp_priv = container_of(tgt_ep->ep_grp, struct crt_grp_priv,
-					gp_pub);
+	grp_priv = crt_grp_pub2priv(tgt_ep->ep_grp);
+
 	rc = crt_grp_lc_lookup(grp_priv, ctx->cc_idx,
 			       tgt_ep->ep_rank, tgt_ep->ep_tag, base_addr,
 			       &rpc_priv->crp_hg_addr);
@@ -1049,20 +819,20 @@ static int
 crt_req_uri_lookup(struct crt_rpc_priv *rpc_priv)
 {
 	d_rank_t		 rank;
+	uint32_t		 tag;
 	crt_endpoint_t		*tgt_ep;
 	struct crt_grp_priv	*grp_priv;
 	struct crt_grp_priv	*default_grp_priv;
-	crt_group_id_t		 grp_id;
 	char			*uri = NULL;
+	crt_group_id_t		 grp_id;
 	struct crt_context	*crt_ctx;
+	d_rank_list_t		*membs;
+	bool			 naked_free = false;
 	int			 rc = 0;
 
 	tgt_ep = &rpc_priv->crp_pub.cr_ep;
-	if (tgt_ep->ep_grp == NULL)
-		grp_priv = crt_gdata.cg_grp->gg_srv_pri_grp;
-	else
-		grp_priv = container_of(tgt_ep->ep_grp, struct crt_grp_priv,
-					gp_pub);
+
+	grp_priv = crt_grp_pub2priv(tgt_ep->ep_grp);
 	D_ASSERT(grp_priv != NULL);
 
 	default_grp_priv = crt_grp_pub2priv(NULL);
@@ -1071,10 +841,11 @@ crt_req_uri_lookup(struct crt_rpc_priv *rpc_priv)
 	/* this is a remote group, contact the PSR */
 	if (grp_priv->gp_local == 0) {
 		/* send an RPC to the PSR */
-		D_DEBUG(DB_NET, "Querying PSR to find out target "
-			"NA Address.\n");
-		rc = crt_req_uri_lookup_psr(rpc_priv, crt_req_uri_lookup_psr_cb,
-					rpc_priv);
+		RPC_TRACE(DB_NET, rpc_priv,
+			  "Querying PSR to find out target NA Address.\n");
+		rc = crt_req_uri_lookup_psr(rpc_priv,
+					    crt_req_uri_lookup_by_rpc_cb,
+					    rpc_priv);
 		if (rc != 0) {
 			rpc_priv->crp_state = RPC_STATE_INITED;
 			D_ERROR("crt_grp_uri_lookup_psr() failed, rc %d.\n",
@@ -1086,17 +857,24 @@ crt_req_uri_lookup(struct crt_rpc_priv *rpc_priv)
 	/* this is a local group */
 	crt_ctx = rpc_priv->crp_pub.cr_ctx;
 	rank = tgt_ep->ep_rank;
+	tag = tgt_ep->ep_tag;
+	membs = grp_priv_get_membs(grp_priv);
 	if (grp_priv->gp_primary == 0)
-		rank = grp_priv->gp_membs->rl_ranks[rank];
+		rank = membs->rl_ranks[rank];
 
 	if (crt_req_is_self(rpc_priv)) {
 		/* rpc is sent to self */
-		uri = strndup(crt_gdata.cg_addr, CRT_ADDR_STR_MAX_LEN);
-		if (uri == NULL) {
-			D_ERROR("strndup failed.\n");
-			D_GOTO(out, rc = -DER_NOMEM);
+		rc = crt_self_uri_get(tag, &uri);
+		if (rc != DER_SUCCESS) {
+			D_ERROR("crt_self_uri_get(tag: %d) failed, "
+				"rc %d\n", tag, rc);
+			D_GOTO(out, rc);
 		}
-	} else {
+	} else if (tag == 0) {
+		/* If pmix is disabled - return error at this point */
+		if (!CRT_PMIX_ENABLED())
+			D_GOTO(out, rc = -DER_INVAL);
+
 		/* lookup through PMIx */
 		grp_id = default_grp_priv->gp_pub.cg_grpid;
 		rc = crt_pmix_uri_lookup(grp_id, rank, &uri);
@@ -1104,9 +882,24 @@ crt_req_uri_lookup(struct crt_rpc_priv *rpc_priv)
 			D_ERROR("crt_pmix_uri_lookup() failed, rc %d.\n", rc);
 			D_GOTO(out, rc);
 		}
+		naked_free = true;
+	} else {
+
+		RPC_TRACE(DB_NET, rpc_priv,
+			  "Querying rank %d tag 0 for target NA address\n",
+			  rank);
+		rc = crt_req_uri_lookup_by_rpc(rpc_priv,
+					       crt_req_uri_lookup_by_rpc_cb,
+					       rpc_priv, rank, 0);
+		if (rc != 0) {
+			rpc_priv->crp_state = RPC_STATE_INITED;
+			D_ERROR("crt_req_uri_lookup_by_rpc(), rc: %d.\n", rc);
+		}
+		D_GOTO(out, rc);
 	}
+
 	rc = crt_grp_lc_uri_insert(default_grp_priv, crt_ctx->cc_idx,
-				   rank, 0, uri);
+			rank, tag, uri);
 	if (rc != 0) {
 		D_ERROR("crt_grp_lc_uri_insert() failed, rc %d\n", rc);
 		D_GOTO(out, rc);
@@ -1125,8 +918,12 @@ crt_req_uri_lookup(struct crt_rpc_priv *rpc_priv)
 		D_GOTO(out, rc);
 	}
 out:
-	if (uri != NULL)
-		free(uri);
+	if (naked_free) {
+		if (uri)
+			free(uri);
+	} else {
+		D_FREE(uri);
+	}
 
 	return rc;
 }
@@ -1177,14 +974,13 @@ crt_req_send_immediately(struct crt_rpc_priv *rpc_priv)
 	/* set state ahead to avoid race with completion cb */
 	rpc_priv->crp_state = RPC_STATE_REQ_SENT;
 	rc = crt_hg_req_send(rpc_priv);
-	if (rc != DER_SUCCESS)
-		D_ERROR("crt_hg_req_send failed, rc: %d, rpc_priv: %p,"
-			"opc: %#x.\n", rc, rpc_priv, req->cr_opc);
-
+	if (rc != DER_SUCCESS) {
+		RPC_ERROR(rpc_priv,
+			  "crt_hg_req_send failed, rc: %d\n",
+			  rc);
+	}
 out:
-	if (rc != 0)
-		D_ERROR("crt_req_send_immediately failed, rc: %d, rpc_priv: %p,"
-			" opc: %#x.\n", rc, rpc_priv, req->cr_opc);
+
 	return rc;
 }
 
@@ -1249,8 +1045,9 @@ crt_req_send_internal(struct crt_rpc_priv *rpc_priv)
 		rc = crt_req_send_immediately(rpc_priv);
 		break;
 	default:
-		D_ERROR("bad rpc state: %#x, rpc_priv %p,  opc: %#x.\n",
-			rpc_priv->crp_state, rpc_priv, req->cr_opc);
+		RPC_ERROR(rpc_priv,
+			  "bad rpc state: %#x\n",
+			  rpc_priv->crp_state);
 		rc = -DER_PROTO;
 		break;
 	}
@@ -1298,7 +1095,7 @@ crt_req_send(crt_rpc_t *req, crt_cb_t complete_cb, void *arg)
 	rpc_priv->crp_arg = arg;
 
 	if (rpc_priv->crp_coll) {
-		rc = crt_corpc_req_hdlr(req);
+		rc = crt_corpc_req_hdlr(rpc_priv);
 		if (rc != 0)
 			D_ERROR("crt_corpc_req_hdlr failed, "
 				"rc: %d,opc: %#x.\n", rc, req->cr_opc);
@@ -1311,9 +1108,9 @@ crt_req_send(crt_rpc_t *req, crt_cb_t complete_cb, void *arg)
 		}
 	}
 
-	D_DEBUG(DB_NET, "rpc_priv %p submitted.\n", rpc_priv);
+	RPC_TRACE(DB_TRACE, rpc_priv, "submitted.\n");
 
-	rc = crt_context_req_track(req);
+	rc = crt_context_req_track(rpc_priv);
 	if (rc == CRT_REQ_TRACK_IN_INFLIGHQ) {
 		/* tracked in crt_ep_inflight::epi_req_q */
 		rc = crt_req_send_internal(rpc_priv);
@@ -1321,7 +1118,7 @@ crt_req_send(crt_rpc_t *req, crt_cb_t complete_cb, void *arg)
 			D_ERROR("crt_req_send_internal() failed, "
 				"rc %d, opc: %#x\n",
 				rc, rpc_priv->crp_pub.cr_opc);
-			crt_context_req_untrack(req);
+			crt_context_req_untrack(rpc_priv);
 		}
 	} else if (rc == CRT_REQ_TRACK_IN_WAITQ) {
 		/* queued in crt_hg_context::dhc_req_q */
@@ -1383,7 +1180,7 @@ out:
 int
 crt_req_abort(crt_rpc_t *req)
 {
-	struct crt_rpc_priv	*rpc_priv = NULL;
+	struct crt_rpc_priv	*rpc_priv;
 	int			rc = 0;
 
 	if (req == NULL) {
@@ -1394,15 +1191,14 @@ crt_req_abort(crt_rpc_t *req)
 	rpc_priv = container_of(req, struct crt_rpc_priv, crp_pub);
 
 	if (rpc_priv->crp_state == RPC_STATE_FWD_UNREACH) {
-		D_DEBUG(DB_NET,
-			"req (rpc_priv %p, opc: %#x) failed to send, no need to abort.\n",
-			rpc_priv, req->cr_opc);
+		RPC_TRACE(DB_NET, rpc_priv,
+			  "failed to send, no need to abort.\n");
 		D_GOTO(out, 0);
 	}
 
-	if (crt_req_aborted(req)) {
-		D_DEBUG(DB_NET, "req (rpc_priv %p, opc: %#x) aborted, need not "
-			"abort again.\n", rpc_priv, req->cr_opc);
+	if (rpc_priv->crp_state == RPC_STATE_CANCELED) {
+		RPC_TRACE(DB_NET, rpc_priv,
+			  "aborted, need not abort again.\n");
 		D_GOTO(out, rc);
 	}
 
@@ -1413,66 +1209,6 @@ crt_req_abort(crt_rpc_t *req)
 	}
 
 out:
-	return rc;
-}
-
-static void
-crt_cb_common(const struct crt_cb_info *cb_info)
-{
-	*(int *)cb_info->cci_arg = 1;
-}
-
-/**
- * Send rpc synchronously
- *
- * \param[IN] rpc	point to CRT request.
- * \param[IN] timeout	timeout (Micro-seconds) to wait, if
- *                      timeout <= 0, it will wait infinitely.
- * \return		0 if rpc return successfully.
- * \return		negative errno if sending fails or timeout.
- */
-int
-crt_req_send_sync(crt_rpc_t *rpc, uint64_t timeout)
-{
-	uint64_t now;
-	uint64_t end;
-	int rc;
-	int complete = 0;
-
-	/* Send request */
-	rc = crt_req_send(rpc, crt_cb_common, &complete);
-	if (rc != 0)
-		return rc;
-
-	/* Check if we are lucky */
-	if (complete)
-		return 0;
-
-	timeout = timeout ? timeout : CRT_DEFAULT_TIMEOUT_US;
-	/* Wait the request to be completed in timeout milliseconds */
-	end = d_timeus_secdiff(0) + timeout;
-
-	while (1) {
-		uint64_t interval = 1000; /* microseconds */
-
-		rc = crt_progress(rpc->cr_ctx, interval, NULL, NULL);
-		if (rc != 0 && rc != -DER_TIMEDOUT) {
-			D_ERROR("crt_progress failed rc: %d.\n", rc);
-			break;
-		}
-
-		if (complete) {
-			rc = 0;
-			break;
-		}
-
-		now = d_timeus_secdiff(0);
-		if (now >= end) {
-			rc = -DER_TIMEDOUT;
-			break;
-		}
-	}
-
 	return rc;
 }
 
@@ -1528,14 +1264,11 @@ crt_rpc_inout_buff_init(struct crt_rpc_priv *rpc_priv)
 
 int
 crt_rpc_priv_init(struct crt_rpc_priv *rpc_priv, crt_context_t crt_ctx,
-		  crt_opcode_t opc, bool srv_flag)
+		  bool srv_flag)
 {
+	crt_opcode_t opc = rpc_priv->crp_opc_info->coi_opc;
+	struct crt_context *ctx = crt_ctx;
 	int rc;
-	struct crt_context *ctx;
-
-	D_ASSERT(rpc_priv != NULL);
-
-	ctx = crt_ctx;
 
 	rc = D_SPIN_INIT(&rpc_priv->crp_lock, PTHREAD_PROCESS_PRIVATE);
 	if (rc != 0)
@@ -1640,8 +1373,7 @@ timeout_bp_node_enter(struct d_binheap *h, struct d_binheap_node *e)
 
 	rpc_priv = container_of(e, struct crt_rpc_priv, crp_timeout_bp_node);
 
-	D_DEBUG(DB_NET, "rpc_priv %p (opc %#x) entering the timeout binheap.\n",
-		rpc_priv, rpc_priv->crp_pub.cr_opc);
+	RPC_TRACE(DB_NET, rpc_priv, "entering the timeout binheap.\n");
 
 	return 0;
 }
@@ -1656,8 +1388,7 @@ timeout_bp_node_exit(struct d_binheap *h, struct d_binheap_node *e)
 
 	rpc_priv = container_of(e, struct crt_rpc_priv, crp_timeout_bp_node);
 
-	D_DEBUG(DB_NET, "rpc_priv %p (opc %#x) exiting the timeout binheap.\n",
-		rpc_priv, rpc_priv->crp_pub.cr_opc);
+	RPC_TRACE(DB_NET, rpc_priv, "exiting the timeout binheap.\n");
 
 	return 0;
 }

@@ -1040,16 +1040,13 @@ send_reply:
 static int status_req_bulk_put_cb(const struct crt_bulk_cb_info *cb_info)
 {
 	char hostname[1024] = {0};
-	struct crt_st_status_req_reply	*res =
-		(struct crt_st_status_req_reply *)cb_info->bci_arg;
+	struct crt_st_status_req_out	*res = cb_info->bci_arg;
 	int				 ret;
 
 	res->num_remaining = 0;
 	res->test_duration_ns =
 		d_timediff_ns(&g_data->time_start, &g_data->time_stop);
 	gethostname(hostname, 1024);
-	fprintf(stderr, "host %s finished self_test duration %f S.\n",
-		hostname, (long long int)res->test_duration_ns/1e9);
 	res->status = CRT_ST_STATUS_TEST_COMPLETE;
 
 	if (cb_info->bci_rc != 0) {
@@ -1077,7 +1074,7 @@ void
 crt_self_test_status_req_handler(crt_rpc_t *rpc_req)
 {
 	crt_bulk_t			*bulk_hdl_in;
-	struct crt_st_status_req_reply	*res;
+	struct crt_st_status_req_out	*res;
 	int				 ret;
 
 	/*
