@@ -23,8 +23,8 @@ ARG DONT_USE_RPMS=true
 RUN yum clean metadata
 
 # Install basic tools
-RUN yum install -y epel-release
-RUN yum install -y git gcc gcc-c++ make cmake golang libtool scons boost-devel   \
+RUN yum -y install epel-release
+RUN yum -y install git gcc gcc-c++ make cmake golang libtool scons boost-devel   \
                    libuuid-devel openssl-devel libevent-devel libtool-ltdl-devel \
                    libcmocka libcmocka-devel readline-devel                      \
                    doxygen pandoc flex patch nasm yasm ninja-build meson         \
@@ -33,11 +33,10 @@ RUN yum install -y git gcc gcc-c++ make cmake golang libtool scons boost-devel  
                    numactl-devel doxygen graphviz pylint python2-pygithub        \
                    python34 python34-pylint python34-PyYAML.x86_64 PyYAML.x86_64 \
                    python2-paramiko python34-paramiko valgrind rsync
-# Phyl
-RUN yum install -y libyaml-devel file shellCheck yum-plugin-copr
-RUN yum copr -y enable jhli/ipmctl
-RUN yum copr -y enable jhli/safeclib
-RUN yum install -y libsafec libipmctl-devel
+                   libyaml-devel file shellCheck yum-plugin-copr
+RUN yum -y copr enable jhli/ipmctl
+RUN yum -y copr enable jhli/safeclib
+RUN yum -y install libsafec libipmctl-devel
 
 # Add CaRT user
 ENV USER cart
