@@ -457,6 +457,54 @@ pipeline {
                             additionalBuildArgs '$BUILDARGS'
                         }
                     }
+                    environment {
+                        CART_TEST_MODE = 'native'
+                    }
+                    steps {
+                        runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
+                                script: '''pwd
+                                           ls -l
+                                           . ./.build_vars-Linux.sh
+                                           if [ ! -d $SL_PREFIX ]; then
+                                               mkdir -p ${SL_PREFIX%/Linux}
+                                               ln -s $SL_PREFIX/install
+                                           fi
+                                           if bash -x utils/run_test.sh; then
+                                               echo "run_test.sh exited successfully with ${PIPESTATUS[0]}"
+                                           else
+                                               echo "run_test.sh exited failure with ${PIPESTATUS[0]}"
+                                           fi''',
+                              junit_files: null
+                    }
+                    post {
+                        /* temporarily moved into runTest->stepResult due to JENKINS-39203
+                        success {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: env.STAGE_NAME,  context: 'test/functional_quick', status: 'SUCCESS'
+                        }
+                        unstable {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: env.STAGE_NAME,  context: 'test/functional_quick', status: 'FAILURE'
+                        }
+                        failure {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status', description: env.STAGE_NAME,  context: 'test/functional_quick', status: 'ERROR'
+                        }
+                        */
+                        always {
+                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output'
+                        }
+                    }
+                }
+                stage('Single-node-valgrind') {
+                    agent {
+                        dockerfile {
+                            filename 'Dockerfile.centos:7'
+                            dir 'utils/docker'
+                            label 'docker_runner'
+                            additionalBuildArgs '$BUILDARGS'
+                        }
+                    }
+                    environment {
+                        CART_TEST_MODE = 'memcheck'
+                    }
                     steps {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
                                 script: '''pwd
