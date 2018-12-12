@@ -34,6 +34,7 @@ RUN zypper --non-interactive install -y git gcc gcc-c++ make cmake            \
                                         python-devel python3-devel valgrind   \
                                         python2-pip rsync libyaml-devel clang
 
+RUN ls -l /scratch
 RUN tar -O /tmp -xzf /scratch/intel_parallel_studio/parallel_studio_xe_2018_update2_composer_edition_for_cpp_online.tgz &&                                                      \
     cd parallel_studio_xe_2018_update2_composer_edition_for_cpp_online &&       \
     ./install.sh --SHARED_INSTALL                                               \
