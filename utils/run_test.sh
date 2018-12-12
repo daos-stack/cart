@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Copyright (C) 2016-2018 Intel Corporation
 # All rights reserved.
 #
@@ -84,7 +84,7 @@ fi
 if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
   echo "Nothing to do yet, wish we could fail some tests"
   scons utest
- cd ${TESTDIR}
+ pushd ${TESTDIR}
 # Phyl -- I'm betting that the "@" means that the entire list is passed in
   if [ "$1" = "--config" ]; then
     echo "Using config file ../../../${2}"
@@ -92,17 +92,17 @@ if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
   else
     python3 test_runner "${JENKINS_TEST_LIST[@]}"
   fi
-  cd -
+  popd
 fi
 
 if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
   echo "Nothing to do yet"
   scons utest --utest-mode=memcheck
   export TR_USE_VALGRIND=memcheck
-  cd ${TESTDIR}
+  pushd ${TESTDIR}
   python3 test_runner "${JENKINS_TEST_LIST[@]}"
 
-  cd -
+  popd
   RESULTS="valgrind_results"
   if [[ ! -e ${RESULTS} ]]; then mkdir ${RESULTS}; fi
 
