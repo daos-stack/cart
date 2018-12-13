@@ -71,9 +71,10 @@ if [ -d "utils" ]; then
 else
   ./test_cart_lib.sh
 fi
-# Run the tests from the install TESTING directory
-# Phyl
+
 echo "$CART_TEST_MODE"
+# Possible CART_TEST_MODEs are native, memcheck, all. The default is native
+# which does not use valgrind.
 if [ -z "$CART_TEST_MODE"  ]; then
   CART_TEST_MODE="native"
 fi
@@ -87,7 +88,6 @@ if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
   echo "Nothing to do yet, wish we could fail some tests"
   scons utest
  cd ${TESTDIR}
-# Phyl -- I'm betting that the "@" means that the entire list is passed in
   if [ "$1" = "--config" ]; then
     echo "Using config file ../../../${2}"
     python3 test_runner --config=../../../"${2}" "${JENKINS_TEST_LIST[@]}"
