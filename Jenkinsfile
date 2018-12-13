@@ -403,7 +403,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external-Linux" //, COMPILER: "icc"
+                        sconsBuild clean: "_build.external-Linux", COMPILER: "icc"
                     }
                     post {
                         always {
