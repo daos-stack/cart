@@ -398,7 +398,8 @@ pipeline {
                             filename 'Dockerfile.leap:15'
                             dir 'utils/docker'
                             label 'docker_runner'
-                            additionalBuildArgs '$BUILDARGS -v /scratch:/scratch'
+                            additionalBuildArgs '$BUILDARGS'
+                            args '-v /opt:/opt'
                         }
                     }
                     steps {
