@@ -80,8 +80,8 @@ pipeline {
                 }
             }
         }
-        stage('Test') {
-                stage('Single-node') {
+        stage('Single-node') {
+                //stage('Single-node') {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.centos:7'
@@ -143,8 +143,9 @@ pipeline {
                         }
                         */
                     }
-                }
-                stage('Single-node-valgrind') {
+                //}
+            }
+            stage('Single-node-valgrind') {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.centos:7'
@@ -206,7 +207,6 @@ pipeline {
                         }
                         */
                     }
-                }
-        }
+            }
     }
 }
