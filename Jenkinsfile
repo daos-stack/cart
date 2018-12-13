@@ -411,7 +411,7 @@ pipeline {
                                          aggregatingResults: true,
                                          id: "analysis-leap15-intelc",
                                          tools: [
-                                             [tool: [$class: 'GnuMakeGcc']],
+                                             [tool: [$class: 'Intel']],
                                              [tool: [$class: 'CppCheck']],
                                          ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
