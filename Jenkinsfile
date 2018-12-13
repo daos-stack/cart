@@ -2,6 +2,8 @@
 // I.e. for testing library changes
 @Library(value="pipeline-lib@debug") _
 
+def arch="-Linux"
+
 pipeline {
     agent any
 
@@ -11,7 +13,6 @@ pipeline {
         BAHTTP_PROXY = "${env.HTTP_PROXY ? '--build-arg HTTPS_PROXY="' + env.HTTPS_PROXY + '" --build-arg https_proxy="' + env.HTTPS_PROXY + '"' : ''}"
         UID=sh(script: "id -u", returnStdout: true)
         BUILDARGS = "--build-arg NOBUILD=1 --build-arg UID=$env.UID $env.BAHTTP_PROXY $env.BAHTTPS_PROXY"
-        ARCH="-Linux"
     }
 
     options {
@@ -85,9 +86,9 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external" + $ARCH
+                        sconsBuild clean: "_build.external${arch}"
                         stash name: 'CentOS-install', includes: 'install/**'
-                        stash name: 'CentOS-build-vars', includes: '.build_vars' + $ARCH + '.*'
+                        stash name: 'CentOS-build-vars', includes: ".build_vars${arch}.*"
                     }
                     post {
                         /* when JENKINS-39203 is resolved, can probably use stepResult
@@ -142,7 +143,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external" + $ARCH, COMPILER: "clang"
+                        sconsBuild clean: "_build.external${arch}", COMPILER: "clang"
                     }
                     post {
                         /* when JENKINS-39203 is resolved, can probably use stepResult
@@ -197,7 +198,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external" + $ARCH
+                        sconsBuild clean: "_build.external${arch}"
                     }
                     post {
                         /* when JENKINS-39203 is resolved, can probably use stepResult
@@ -251,7 +252,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external" + $ARCH, COMPILER: "clang"
+                        sconsBuild clean: "_build.external${arch}", COMPILER: "clang"
                     }
                     post {
                         /* when JENKINS-39203 is resolved, can probably use stepResult
@@ -306,7 +307,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external" + $ARCH
+                        sconsBuild clean: "_build.external${arch}"
                     }
                     post {
                         /* when JENKINS-39203 is resolved, can probably use stepResult
@@ -361,7 +362,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external" + $ARCH, COMPILER: "clang"
+                        sconsBuild clean: "_build.external${arch}", COMPILER: "clang"
                     }
                     post {
                         /* when JENKINS-39203 is resolved, can probably use stepResult
@@ -416,7 +417,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external" + $ARCH, COMPILER: "icc"
+                        sconsBuild clean: "_build.external${arch}", COMPILER: "icc"
                     }
                     post {
                         /* when JENKINS-39203 is resolved, can probably use stepResult
@@ -479,7 +480,10 @@ pipeline {
                                            ls -l
                                            . ./.build_vars-Linux.sh
                                            if [ ! -d $SL_PREFIX ]; then
-                                               mkdir -p ${SL_PREFIX%/Linux}
+                                               mkdir -p ${SL_PREFIX%/Linux} || {
+                                                   ls -l /var/lib/ /var/lib/jenkins || true
+                                                   exit 1
+                                               }
                                                ln -s $SL_PREFIX/install
                                            fi
                                            if bash -x utils/run_test.sh; then
