@@ -466,7 +466,10 @@ pipeline {
                                            ls -l
                                            . ./.build_vars-Linux.sh
                                            if [ ! -d $SL_PREFIX ]; then
-                                               mkdir -p ${SL_PREFIX%/Linux}
+                                               mkdir -p ${SL_PREFIX%/Linux} || {
+                                                 ls -l /var/lib/ /var/lib/jenkins || true 
+                                                 exit 1
+                                               }
                                                ln -s $SL_PREFIX/install
                                            fi
                                            if bash -x utils/run_test.sh; then
