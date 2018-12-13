@@ -81,7 +81,7 @@ pipeline {
             }
         }
         stage('Test') {
-            parallel {
+            //parallel {
                 stage('Single-node') {
                     agent {
                         dockerfile {
@@ -208,7 +208,7 @@ pipeline {
                         */
                     }
                 }
-            }
+            //}
         }
     }
 }
