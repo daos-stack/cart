@@ -77,7 +77,7 @@ trap 'set +e
 i=5
 # due to flakiness on wolf-53, try this several times
 while [ $i -gt 0 ]; do
-    pdsh -R ssh -S \
+    pdsh -R ssh -S \\
          -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]" "set -x
     x=0
     while [ \$x -lt 30 ] &&
@@ -99,7 +99,7 @@ while [ $i -gt 0 ]; do
 done' EXIT
 
 DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
-if ! pdsh -R ssh -S \
+if ! pdsh -R ssh -S \\
           -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]" "set -ex
 ulimit -c unlimited
 sudo mkdir -p $DAOS_BASE
