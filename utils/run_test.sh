@@ -39,6 +39,7 @@
 set -e
 set -x
 
+# shellcheck disable=SC2039
 # A list of tests to run as a single instance on Jenkins
 JENKINS_TEST_LIST=(scripts/cart_echo_test.yml                   \
                    scripts/cart_echo_test_non_sep.yml           \
@@ -103,7 +104,7 @@ if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
   echo "Nothing to do yet"
   scons utest --utest-mode=memcheck
   export TR_USE_VALGRIND=memcheck
-  cd ${TESTDIR}
+  cd ${TESTDIR} || exit
   python3 test_runner "${JENKINS_TEST_LIST["*"]}"
 
   cd -
