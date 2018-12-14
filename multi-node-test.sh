@@ -145,7 +145,7 @@ if [ \"$1\" = \"2\" ]; then
 EOF
     rm -rf $log_base_path/
     python3 test_runner config=scripts/cart_multi_two_node.cfg \\
-        "${JENKINS_TEST_LIST_2[@]}" || {
+        "${JENKINS_TEST_LIST_2["@"]}" || {
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }
