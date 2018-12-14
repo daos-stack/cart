@@ -84,27 +84,30 @@ if [ -n "$COMP_PREFIX"  ]; then
 else
   TESTDIR="install/Linux/TESTING"
 fi
+# shellcheck disable=SC2039
 if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
   echo "Nothing to do yet, wish we could fail some tests"
   scons utest
  cd ${TESTDIR}
   if [ "$1" = "--config" ]; then
     echo "Using config file ../../../${2}"
-    python3 test_runner --config=../../../"${2}" "${JENKINS_TEST_LIST[@]}"
+    python3 test_runner --config=../../../"${2}" "${JENKINS_TEST_LIST["*"]}"
   else
-    python3 test_runner "${JENKINS_TEST_LIST[@]}"
+    python3 test_runner "${JENKINS_TEST_LIST["*"]}"
   fi
   cd -
 fi
 
+# shellcheck disable=SC2039
 if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
   echo "Nothing to do yet"
   scons utest --utest-mode=memcheck
   export TR_USE_VALGRIND=memcheck
   cd ${TESTDIR}
-  python3 test_runner "${JENKINS_TEST_LIST[@]}"
+  python3 test_runner "${JENKINS_TEST_LIST["*"]}"
 
   cd -
+# shellcheck disable=SC2039
   RESULTS="valgrind_results"
   if [[ ! -e ${RESULTS} ]]; then mkdir ${RESULTS}; fi
 
