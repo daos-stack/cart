@@ -146,7 +146,8 @@ if [ \"$1\" = \"2\" ]; then
 EOF
     rm -rf $log_base_path/
     python3 test_runner config=scripts/cart_multi_two_node.cfg \\
-        \"${JENKINS_TEST_LIST_2[@]}\" || {
+        # @ changed to * for SC2145
+        \"${JENKINS_TEST_LIST_2[*]}\" || {
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }
@@ -170,7 +171,8 @@ elif [ \"$1\" = \"3\" ]; then
 EOF
     rm -rf $log_base_path/
     python3 test_runner config=scripts/cart_multi_three_node.cfg \\
-        \"${JENKINS_TEST_LIST_3[@]}\" || {
+        # @ changed to * for SC2145
+        \"${JENKINS_TEST_LIST_3[*]}\" || {
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }
@@ -198,7 +200,8 @@ elif [ \"$1\" = \"5\" ]; then
 EOF
     rm -rf $log_base_path/
     python3 test_runner config=scripts/cart_multi_five_node.cfg \\
-        \"${JENKINS_TEST_LIST_5[@]}\" || {
+        # @ changed to * for SC2145
+        \"${JENKINS_TEST_LIST_5[*]}\" || {
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }

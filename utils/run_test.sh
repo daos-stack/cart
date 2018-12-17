@@ -89,12 +89,15 @@ fi
 if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
   echo "Nothing to do yet, wish we could fail some tests"
   scons utest
- cd ${TESTDIR}
+  # Added || exit to placate SC2203
+  cd ${TESTDIR} || exit
   if [ "$1" = "--config" ]; then
     echo "Using config file ../../../${2}"
-    python3 test_runner --config=../../../"${2}" "${JENKINS_TEST_LIST[@]}"
+    # @ changed to * for SC2145
+    python3 test_runner --config=../../../"${2}" "${JENKINS_TEST_LIST[*]}"
   else
-    python3 test_runner "${JENKINS_TEST_LIST[@]}"
+    # @ changed to * for SC2145
+    python3 test_runner "${JENKINS_TEST_LIST[*]}"
   fi
   cd -
 fi
@@ -104,8 +107,10 @@ if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
   echo "Nothing to do yet"
   scons utest --utest-mode=memcheck
   export TR_USE_VALGRIND=memcheck
-  cd ${TESTDIR}
-  python3 test_runner "${JENKINS_TEST_LIST[@]}"
+  # Added || exit to placate SC2203
+  cd ${TESTDIR} || exit
+  # @ changed to * for SC2145
+  python3 test_runner "${JENKINS_TEST_LIST[*]}"
 
   cd -
 # shellcheck disable=SC2039
