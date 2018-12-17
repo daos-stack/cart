@@ -77,8 +77,7 @@ trap 'set +e
 i=5
 # due to flakiness on wolf-53, try this several times
 while [ $i -gt 0 ]; do
-    # Phyl SC1004 switched \ to \\
-    pdsh -R ssh -S \\
+    pdsh -R ssh -S 
          -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]" "set -x
     x=0
     while [ \$x -lt 30 ] &&
@@ -214,7 +213,7 @@ else
     rc=0
 fi
 
-scp -r \"${HOSTPREFIX}$test_runner_vm:\"\
+scp -r "${HOSTPREFIX}$test_runner_vm:" \
 "$DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
 {
     cat <<EOF
