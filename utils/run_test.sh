@@ -94,10 +94,10 @@ if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
   if [ "$1" = "--config" ]; then
     echo "Using config file ../../../${2}"
     # @ changed to * for SC2145
-    python3 test_runner --config=../../../"${2}" "${JENKINS_TEST_LIST[*]}"
+    python3 test_runner --config=../../../"${2}" "${JENKINS_TEST_LIST[@]}"
   else
     # @ changed to * for SC2145
-    python3 test_runner "${JENKINS_TEST_LIST[*]}"
+    python3 test_runner "${JENKINS_TEST_LIST[@]}"
   fi
   cd -
 fi
@@ -109,12 +109,11 @@ if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
   export TR_USE_VALGRIND=memcheck
   # Added || exit to placate SC2203
   cd ${TESTDIR} || exit
-  # @ changed to * for SC2145
-  python3 test_runner "${JENKINS_TEST_LIST[*]}"
+  python3 test_runner "${JENKINS_TEST_LIST[@]}"
 
   cd -
-# shellcheck disable=SC2039
   RESULTS="valgrind_results"
+# shellcheck disable=SC2039
   if [[ ! -e ${RESULTS} ]]; then mkdir ${RESULTS}; fi
 
   # Recursive copy to results, including all directories and matching files,

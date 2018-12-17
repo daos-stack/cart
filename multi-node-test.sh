@@ -215,6 +215,7 @@ else
 fi
 
 scp -r "${HOSTPREFIX}$test_runner_vm:" \
+# shellcheck disable=SC2039
 "$DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
 {
     cat <<EOF
