@@ -211,7 +211,7 @@ else
     rc=0
 fi
 
-scp -r "${HOSTPREFIX}$test_runner_vm:"\
+scp -r \"${HOSTPREFIX}$test_runner_vm:\"\
 "$DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
 {
     cat <<EOF

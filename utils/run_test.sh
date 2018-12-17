@@ -92,9 +92,9 @@ if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
  cd ${TESTDIR}
   if [ "$1" = "--config" ]; then
     echo "Using config file ../../../${2}"
-    python3 test_runner --config=../../../"${2}" "${JENKINS_TEST_LIST["*"]}"
+    python3 test_runner --config=../../../"${2}" "${JENKINS_TEST_LIST[@]}"
   else
-    python3 test_runner "${JENKINS_TEST_LIST["*"]}"
+    python3 test_runner "${JENKINS_TEST_LIST[@]}"
   fi
   cd -
 fi
@@ -104,8 +104,8 @@ if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
   echo "Nothing to do yet"
   scons utest --utest-mode=memcheck
   export TR_USE_VALGRIND=memcheck
-  cd ${TESTDIR} 
-  python3 test_runner "${JENKINS_TEST_LIST["*"]}"
+  cd ${TESTDIR}
+  python3 test_runner "${JENKINS_TEST_LIST[@]}"
 
   cd -
 # shellcheck disable=SC2039
