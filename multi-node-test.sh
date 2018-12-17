@@ -73,11 +73,12 @@ log_base_path="testLogs-${1}_node"
 
 rm -f results_1.yml IOF_[25]-node_junit.xml
 
+# shellcheck disable=SC1004
 trap 'set +e
 i=5
 # due to flakiness on wolf-53, try this several times
 while [ $i -gt 0 ]; do
-    pdsh -R ssh -S
+    pdsh -R ssh -S \
          -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]" "set -x
     x=0
     while [ \$x -lt 30 ] &&
