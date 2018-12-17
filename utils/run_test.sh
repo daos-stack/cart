@@ -104,7 +104,7 @@ if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
   echo "Nothing to do yet"
   scons utest --utest-mode=memcheck
   export TR_USE_VALGRIND=memcheck
-  cd ${TESTDIR} || exit
+  cd ${TESTDIR} 
   python3 test_runner "${JENKINS_TEST_LIST["*"]}"
 
   cd -
