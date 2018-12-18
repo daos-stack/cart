@@ -74,6 +74,7 @@ log_base_path="testLogs-${1}_node"
 rm -f results_1.yml IOF_[25]-node_junit.xml
 
 # shellcheck disable=SC1004
+# shellcheck disable=SC2154
 trap 'set +e
 i=5
 # due to flakiness on wolf-53, try this several times
@@ -147,7 +148,7 @@ EOF
     rm -rf $log_base_path/
     python3 test_runner config=scripts/cart_multi_two_node.cfg \\
         # @ changed to * for SC2145
-        \"${JENKINS_TEST_LIST_2[*]}\" || {
+        ${JENKINS_TEST_LIST_2[*]} || {
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }
@@ -172,7 +173,7 @@ EOF
     rm -rf $log_base_path/
     python3 test_runner config=scripts/cart_multi_three_node.cfg \\
         # @ changed to * for SC2145
-        \"${JENKINS_TEST_LIST_3[*]}\" || {
+        ${JENKINS_TEST_LIST_3[*]} || {
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }
@@ -201,7 +202,7 @@ EOF
     rm -rf $log_base_path/
     python3 test_runner config=scripts/cart_multi_five_node.cfg \\
         # @ changed to * for SC2145
-        \"${JENKINS_TEST_LIST_5[*]}\" || {
+        ${JENKINS_TEST_LIST_5[*]} || {
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }
