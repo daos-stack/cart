@@ -35,7 +35,7 @@ RUN pip install -U setuptools
 RUN pip install -U wheel
 Run pip install scons==3.0.1
 
-RUN zypper install -y rsync valgrind
+RUN zypper install -y rsync valgrind man-db
 
 # Add CaRT user
 ENV USER cart
