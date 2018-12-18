@@ -1,14 +1,13 @@
 #
-## Copyright 2018, Intel Corporation
-##
-## 'recipe' for Docker to build an image of Leap-based
-## environment for building the DAOS project.
-##
+# Copyright 2018, Intel Corporation
+#
+# 'recipe' for Docker to build an image of Leap-based
+# environment for building the DAOS project.
+#
 
-## FROM opensuse:leap
-
+# Pull base image
 FROM opensuse/leap:15.0
-MAINTAINER TBD
+MAINTAINER Johann Lombardi <johann.lombardi@intel.com>
 
 # Build arguments can be set via -build-arg
 # set NOBUILD to disable git clone & build
@@ -21,23 +20,22 @@ ARG UID=1000
 # zypper install command so that the database is updated if/when the
 # installed packages list below is updated
 RUN zypper -n update
-RUN zypper --non-interactive install -y git gcc gcc-c++ make cmake            \
-                                        glibc-locale libtool autoconf         \
-                                        boost-devel uuid-devel libuuid-devel  \
-                                        libopenssl-devel libevent-devel       \
-                                        libltdl7 librdmacm-utils libcmocka0   \
-                                        libcmocka-devel libibverbs libcunit1  \
-                                        libnuma-devel libaio-devel            \
-                                        libiscsi-devel readline-devel curl    \
-                                        doxygen pandoc flex patch nasm yasm   \
-                                        graphviz sg3_utils mscgen ninja meson \
-                                        python-devel python3-devel valgrind   \
-                                        python2-pip rsync libyaml-devel clang
+RUN zypper install -y                                        \
+           git gcc gcc-c++ make cmake go libtool boost-devel \
+           libuuid-devel libopenssl-devel libevent-devel     \
+           libltdl7 libcmocka-devel readline-devel           \
+           doxygen pandoc flex patch nasm yasm ninja meson   \
+           libcunit1 libaio-devel clang sg3_utils            \
+           libiscsi-devel libnuma-devel graphviz             \
+           libyaml-devel                                     \
+           mscgen python2-pip curl which
 
 RUN pip install --upgrade pip
 RUN pip install -U setuptools
 RUN pip install -U wheel
 Run pip install scons==3.0.1
+
+RUN zypper install -y rsync valgrind
 
 # Add CaRT user
 ENV USER cart
