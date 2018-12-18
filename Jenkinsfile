@@ -19,6 +19,56 @@ pipeline {
     }
 
     stages {
+        stage('Pre-build') {
+            parallel {
+                stage('checkpatch') {
+                    agent {
+                        dockerfile {
+                            filename 'Dockerfile.centos:7'
+                            dir 'utils/docker'
+                            label 'docker_runner'
+                            additionalBuildArgs '$BUILDARGS'
+                        }
+                    }
+                    steps {
+                        checkPatch user: GITHUB_USER_USR,
+                                   password: GITHUB_USER_PSW,
+                                   ignored_files: "src/control/vendor/*"
+                    }
+                    post {
+                        always {
+                            archiveArtifacts artifacts: 'pylint.log', allowEmptyArchive: true
+                            /* when JENKINS-39203 is resolved, can probably use stepResult
+                               here and remove the remaining post conditions
+                               stepResult name: env.STAGE_NAME,
+                                          context: 'build/' + env.STAGE_NAME,
+                                          result: ${currentBuild.currentResult}
+                            */
+                        }
+                        /* temporarily moved into stepResult due to JENKINS-39203
+                        success {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'pre-build/' + env.STAGE_NAME,
+                                         status: 'SUCCESS'
+                        }
+                        unstable {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'pre-build/' + env.STAGE_NAME,
+                                         status: 'FAILURE'
+                        }
+                        failure {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'pre-build/' + env.STAGE_NAME,
+                                         status: 'ERROR'
+                        }
+                        */
+                    }
+                }
+            }
+        }
         stage('Build') {
             // abort other builds if/when one fails to avoid wasting time
             // and resources
@@ -82,56 +132,113 @@ pipeline {
         }
         stage('Test') {
             parallel {
-                stage('Two-node') {
+                stage('Single-node tests') {
                     agent {
-                        label 'cluster_provisioner-2_nodes'
+                        dockerfile {
+                            filename 'Dockerfile.centos:7'
+                            dir 'utils/docker'
+                            label 'docker_runner'
+                            additionalBuildArgs '$BUILDARGS'
+                        }
                     }
-                    steps {
-                        echo "Starting Two-node"
-                        checkoutScm url: 'ssh://review.hpdd.intel.com:29418/exascale/jenkins',
-                                    checkoutDir: 'jenkins',
-                                    credentialsId: 'bf21c68b-9107-4a38-8077-e929e644996a'
-
-                        checkoutScm url: 'ssh://review.hpdd.intel.com:29418/coral/scony_python-junit',
-                                    checkoutDir: 'scony_python-junit',
-                                    credentialsId: 'bf21c68b-9107-4a38-8077-e929e644996a'
-
-                        echo "Starting Two-node runTest"
-                        runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: 'bash -x ./multi-node-test.sh 2; echo "rc: $?"',
-                                junit_files: "CART_2-node_junit.xml"
-                    }
-                    post {
-                        always {
-                            junit 'CART_2-node_junit.xml'
-                            archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs-2_node/**'
-                            /* when JENKINS-39203 is resolved, can probably use stepResult
-                               here and remove the remaining post conditions
-                               stepResult name: env.STAGE_NAME,
-                                          context: 'build/' + env.STAGE_NAME,
-                                          result: ${currentBuild.currentResult}
-                            */
+                    stages {
+                        stage('Single-node') {
+                            environment {
+                                CART_TEST_MODE = 'native'
+                            }
+                            steps {
+                                runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
+                                        script: '''pwd
+                                                ls -l
+                                                . ./.build_vars-Linux.sh
+                                                if [ ! -d $SL_PREFIX ]; then
+                                                    mkdir -p ${SL_PREFIX%/Linux} || {
+                                                    ls -l /var/lib/ /var/lib/jenkins || true
+                                                    exit 1
+                                                    }
+                                                    ln -s $SL_PREFIX/install
+                                                fi
+                                                if bash -x utils/run_test.sh; then
+                                                    echo "run_test.sh exited successfully with ${PIPESTATUS[0]}"
+                                                else
+                                                    echo "run_test.sh exited failure with ${PIPESTATUS[0]}"
+                                                fi''',
+                                        junit_files: null
+                            }
+                            post {
+                                /* temporarily moved into runTest->stepResult due to JENKINS-39203
+                                success {
+                                    githubNotify credentialsId: 'daos-jenkins-commit-status', description: env.STAGE_NAME,  context: 'test/functional_quick', status: 'SUCCESS'
+                                }
+                                unstable {
+                                    githubNotify credentialsId: 'daos-jenkins-commit-status', description: env.STAGE_NAME,  context: 'test/functional_quick', status: 'FAILURE'
+                                }
+                                failure {
+                                    githubNotify credentialsId: 'daos-jenkins-commit-status', description: env.STAGE_NAME,  context: 'test/functional_quick', status: 'ERROR'
+                                }
+                                */
+                                always {
+                                    mkdir install/Linux/TESTING/testLogs/non_valgrind
+                                    mv install/Linux/TESTING/testLogs install/Linux/TESTING/testLogs/non_valgrind
+                                    archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/non_valgrind/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output'
+                                }
+                            }
                         }
-                        /* temporarily moved into runTest->stepResult due to JENKINS-39203
-                        success {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status',
-                                         description: env.STAGE_NAME,
-                                         context: 'test/' + env.STAGE_NAME,
-                                         status: 'SUCCESS'
+                        stage('Single-node-valgrind') {
+                            environment {
+                                CART_TEST_MODE = 'memcheck'
+                            }
+                            steps {
+                                runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
+                                        script: '''pwd
+                                             ls -l
+                                             . ./.build_vars-Linux.sh
+                                             if [ ! -d $SL_PREFIX ]; then
+                                                 mkdir -p ${SL_PREFIX%/Linux} || {
+                                                   ls -l /var/lib/ /var/lib/jenkins || true
+                                                   exit 1
+                                                 }
+                                                 ln -s $SL_PREFIX/install
+                                             fi
+                                             if bash -x utils/run_test.sh; then
+                                                 echo "run_test.sh exited successfully with ${PIPESTATUS[0]}"
+                                             else
+                                                 echo "run_test.sh exited failure with ${PIPESTATUS[0]}"
+                                             fi''',
+                                    junit_files: null
+                            }
+                            post {
+                                always {
+                                    archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output'
+                                /* when JENKINS-39203 is resolved, can probably use stepResult
+                                   here and remove the remaining post conditions
+                                   stepResult name: env.STAGE_NAME,
+                                           context: 'build/' + env.STAGE_NAME,
+                                            result: ${currentBuild.currentResult}
+                                */
+                                }
+                                /* temporarily moved into runTest->stepResult due to JENKINS-39203
+                                success {
+                                    githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                                 description: env.STAGE_NAME,
+                                                 context: 'test/' + env.STAGE_NAME,
+                                                 status: 'SUCCESS'
+                                }
+                                unstable {
+                                    githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                                 description: env.STAGE_NAME,
+                                                 context: 'test/' + env.STAGE_NAME,
+                                                 status: 'FAILURE'
+                                }
+                                failure {
+                                    githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                                 description: env.STAGE_NAME,
+                                                 context: 'test/' + env.STAGE_NAME,
+                                                 status: 'ERROR'
+                                }
+                                */
+                            }
                         }
-                        unstable {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status',
-                                         description: env.STAGE_NAME,
-                                         context: 'test/' + env.STAGE_NAME,
-                                         status: 'FAILURE'
-                        }
-                        failure {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status',
-                                         description: env.STAGE_NAME,
-                                         context: 'test/' + env.STAGE_NAME,
-                                         status: 'ERROR'
-                        }
-                        */
                     }
                 }
             }
