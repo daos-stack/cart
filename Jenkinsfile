@@ -179,7 +179,7 @@ pipeline {
                                 */
                                 always {
                                     mkdir install/Linux/TESTING/testLogs/non_valgrind
-                                    mv install/Linux/TESTING/testLogs install/Linux/TESTING/testLogs/non_valgrind
+                                    mv install/Linux/TESTING/testLogs/** install/Linux/TESTING/testLogs/non_valgrind
                                     archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/non_valgrind/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output'
                                 }
                             }
