@@ -165,13 +165,6 @@ pipeline {
                                                 fi''',
                                         junit_files: null
                             }
-                            script {
-                                mkdir -p install/Linux/TESTING/testLogs/non_valgrind
-                                mv  install/Linux/TESTING/testLogs/** install/Linux/TESTING/testLogs/non_valgrind
-                                mkdir -p build/Linux/src/utest/non_valgrind
-                                mv build/Linux/src/utest/utest.log build/Linux/src/utest/non_valgrind
-                                mv build/Linux/src/utest/test_output build/Linux/src/utest/non_valgrind
-                            }
                             post {
                                 /* temporarily moved into runTest->stepResult due to JENKINS-39203
                                 success {
@@ -185,7 +178,12 @@ pipeline {
                                 }
                                 */
                                 always {
-                                    archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/non_valgrind/**,build/Linux/src/utest/non_valgrind/**
+                                    sh '''mkdir -p install/Linux/TESTING/testLogs/non_valgrind
+                                          mv  install/Linux/TESTING/testLogs/** install/Linux/TESTING/testLogs/non_valgrind
+                                          mkdir -p build/Linux/src/utest/non_valgrind
+                                          mv build/Linux/src/utest/utest.log build/Linux/src/utest/non_valgrind
+                                          mv build/Linux/src/utest/test_output build/Linux/src/utest/non_valgrind'''
+                                    archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/non_valgrind/**,build/Linux/src/utest/non_valgrind/**'
                                 }
                             }
                         }
@@ -210,28 +208,16 @@ pipeline {
                                              else
                                                  echo "run_test.sh exited failure with ${PIPESTATUS[0]}"
                                              fi''',
-
-                                             /*mkdir -p install/Linux/TESTING/testLogs/valgrind
-                                             if [ -d install/Linux/TESTING/testLogs ]; then
-                                                 mv  install/Linux/TESTING/testLogs/** install/Linux/TESTING/testLogs/valgrind
-                                             fi
-                                             mkdir -p build/Linux/src/utest/valgrind
-                                             if [ -d build/Linux/src/utest ]; then
-                                                 mv build/Linux/src/utest/utest.log build/Linux/src/utest/valgrind
-                                                 mv build/Linux/src/utest/test_output build/Linux/src/utest/valgrind
-                                             fi''',*/
                                     junit_files: null
                             }
                             post {
                                 always {
-                                    script {
-                                        mkdir -p install/Linux/TESTING/testLogs/valgrind
-                                        mv  install/Linux/TESTING/testLogs/** install/Linux/TESTING/testLogs/valgrind
-                                        mkdir -p build/Linux/src/utest/valgrind
-                                        mv build/Linux/src/utest/utest.log build/Linux/src/utest/valgrind
-                                        mv build/Linux/src/utest/test_output build/Linux/src/utest/valgrind
-                                    }
-                                    archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/valgrind/**,build/Linux/src/utest/valgrind/**
+                                    sh '''mkdir -p install/Linux/TESTING/testLogs/valgrind
+                                          mv  install/Linux/TESTING/testLogs/** install/Linux/TESTING/testLogs/valgrind
+                                          mkdir -p build/Linux/src/utest/valgrind
+                                          mv build/Linux/src/utest/utest.log build/Linux/src/utest/valgrind
+                                          mv build/Linux/src/utest/test_output build/Linux/src/utest/valgrind'''
+                                    archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/valgrind/**,build/Linux/src/utest/valgrind/**'
                                 /* when JENKINS-39203 is resolved, can probably use stepResult
                                    here and remove the remaining post conditions
                                    stepResult name: env.STAGE_NAME,
