@@ -178,7 +178,12 @@ pipeline {
                                 }
                                 */
                                 always {
-                                    archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/non_valgrind/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output'
+                                    mkdir -p install/Linux/TESTING/testLogs/non_valgrind
+                                    mv  install/Linux/TESTING/testLogs/** install/Linux/TESTING/testLogs/non_valgrind
+                                    mkdir -p build/Linux/src/utest/non_valgrind
+                                    mv build/Linux/src/utest/utest.log build/Linux/src/utest/non_valgrind
+                                    mv build/Linux/src/utest/test_output build/Linux/src/utest/non_valgrind
+                                    archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/non_valgrind/**,build/Linux/src/utest/non_valgrind/**
                                 }
                             }
                         }
@@ -207,7 +212,12 @@ pipeline {
                             }
                             post {
                                 always {
-                                    archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output'
+                                    mkdir -p install/Linux/TESTING/testLogs/valgrind
+                                    mv  install/Linux/TESTING/testLogs/** install/Linux/TESTING/testLogs/valgrind
+                                    mkdir -p build/Linux/src/utest/valgrind
+                                    mv build/Linux/src/utest/utest.log build/Linux/src/utest/valgrind
+                                    mv build/Linux/src/utest/test_output build/Linux/src/utest/valgrind
+                                    archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/valgrind/**,build/Linux/src/utest/valgrind/**
                                 /* when JENKINS-39203 is resolved, can probably use stepResult
                                    here and remove the remaining post conditions
                                    stepResult name: env.STAGE_NAME,
