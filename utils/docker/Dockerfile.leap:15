@@ -25,17 +25,17 @@ RUN zypper install -y                                        \
            libuuid-devel libopenssl-devel libevent-devel     \
            libltdl7 libcmocka-devel readline-devel           \
            doxygen pandoc flex patch nasm yasm ninja meson   \
-           libcunit1 libaio-devel clang sg3_utils            \
+           cunit-devel libaio-devel clang sg3_utils          \
            libiscsi-devel libnuma-devel graphviz             \
            libyaml-devel                                     \
-           mscgen python2-pip curl which
+           mscgen python2-pip curl which man
 
 RUN pip install --upgrade pip
 RUN pip install -U setuptools
 RUN pip install -U wheel
 Run pip install scons==3.0.1
 
-RUN zypper install -y rsync valgrind man
+RUN zypper install -y rsync valgrind
 
 # Add CaRT user
 ENV USER cart
