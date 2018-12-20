@@ -2,6 +2,26 @@
 // I.e. for testing library changes
 @Library(value="pipeline-lib@debug") _
 
+def singleNodeTest() {
+    runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
+            script: '''pwd
+                       ls -l
+                       . ./.build_vars-Linux.sh
+                       if [ ! -d $SL_PREFIX ]; then
+                           mkdir -p ${SL_PREFIX%/Linux} || {
+                               ls -l /var/lib/ /var/lib/jenkins || true
+                               exit 1
+                           }
+                           ln -s $SL_PREFIX/install
+                       fi
+                       if bash -x utils/run_test.sh; then
+                           echo "run_test.sh exited successfully with ${PIPESTATUS[0]}"
+                       else
+                           echo "run_test.sh exited failure with ${PIPESTATUS[0]}"
+                       fi''',
+          junit_files: null
+}
+
 def arch="-Linux"
 
 pipeline {
@@ -474,34 +494,66 @@ pipeline {
                             additionalBuildArgs '$BUILDARGS'
                         }
                     }
+                    environment {
+                        CART_TEST_MODE = 'native'
+                    }
                     steps {
-                        runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: '''pwd
-                                           ls -l
-                                           . ./.build_vars-Linux.sh
-                                           if [ ! -d $SL_PREFIX ]; then
-                                               mkdir -p ${SL_PREFIX%/Linux} || {
-                                                   ls -l /var/lib/ /var/lib/jenkins || true
-                                                   exit 1
-                                               }
-                                               ln -s $SL_PREFIX/install
-                                           fi
-                                           if bash -x utils/run_test.sh; then
-                                               echo "run_test.sh exited successfully with ${PIPESTATUS[0]}"
-                                           else
-                                               echo "run_test.sh exited failure with ${PIPESTATUS[0]}"
-                                           fi''',
-                              junit_files: null
+                        singleNodeTest()
                     }
                     post {
                         always {
-                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,build/Linux/src/utest/utest.log,build/Linux/src/utest/test_output'
+                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,
+                                                          build/Linux/src/utest/utest.log,
+                                                          build/Linux/src/utest/test_output'
                             /* when JENKINS-39203 is resolved, can probably use stepResult
                                here and remove the remaining post conditions
                                stepResult name: env.STAGE_NAME,
                                           context: 'build/' + env.STAGE_NAME,
                                           result: ${currentBuild.currentResult}
                             */
+                        }
+                        /* temporarily moved into runTest->stepResult due to JENKINS-39203
+                        success {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'test/' + env.STAGE_NAME,
+                                         status: 'SUCCESS'
+                        }
+                        unstable {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'test/' + env.STAGE_NAME,
+                                         status: 'FAILURE'
+                        }
+                        failure {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'test/' + env.STAGE_NAME,
+                                         status: 'ERROR'
+                        }
+                        */
+                    }
+                }
+                stage('Single-node-valgrind') {
+                    environment {
+                        CART_TEST_MODE = 'memcheck'
+                    }
+                    steps {
+                        singleNodeTest()
+                    }
+                    post {
+                        always {
+                            sh ''' mv  install/Linux/TESTING/testLogs{,_valgrind}
+                                  mv build/Linux/src/utest{,_valgrind}'''
+                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs_valgrind/**,
+                                                          build/Linux/src/utest_valgrind/utest.log,
+                                                          build/Linux/src/utest_valgrind/test_output'
+                        /* when JENKINS-39203 is resolved, can probably use stepResult
+                           here and remove the remaining post conditions
+                           stepResult name: env.STAGE_NAME,
+                                   context: 'build/' + env.STAGE_NAME,
+                                    result: ${currentBuild.currentResult}
+                        */
                         }
                         /* temporarily moved into runTest->stepResult due to JENKINS-39203
                         success {
