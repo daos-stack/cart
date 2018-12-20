@@ -7,17 +7,16 @@ def singleNodeTest() {
             script: '''pwd
                        ls -l
                        . ./.build_vars-Linux.sh
-                       if [ ! -d $SL_PREFIX ]; then
-                           mkdir -p ${SL_PREFIX%/Linux} || {
-                               ls -l /var/lib/ /var/lib/jenkins || true
-                               exit 1
-                           }
-                           ln -s $SL_PREFIX/install
-                       fi
                        if bash -x utils/run_test.sh; then
                            echo "run_test.sh exited successfully with ${PIPESTATUS[0]}"
                        else
-                           echo "run_test.sh exited failure with ${PIPESTATUS[0]}"
+                           echo "trying again with LD_LIBRARY_PATH set"
+                           export LD_LIBRARY_PATH=$SL_PREFIX/lib
+                           if bash -x utils/run_test.sh; then
+                               echo "run_test.sh exited successfully with ${PIPESTATUS[0]}"
+                           else
+                               echo "run_test.sh exited failure with ${PIPESTATUS[0]}"
+                           fi
                        fi''',
           junit_files: null
 }
