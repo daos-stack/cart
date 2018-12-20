@@ -502,9 +502,9 @@ pipeline {
                     }
                     post {
                         always {
-                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**,
-                                                          build/Linux/src/utest/utest.log,
-                                                          build/Linux/src/utest/test_output'
+                             archiveArtifacts artifacts: '''install/Linux/TESTING/testLogs/**,
+                                                            build/Linux/src/utest/utest.log,
+                                                            build/Linux/src/utest/test_output'''
                             /* when JENKINS-39203 is resolved, can probably use stepResult
                                here and remove the remaining post conditions
                                stepResult name: env.STAGE_NAME,
@@ -545,9 +545,9 @@ pipeline {
                         always {
                             sh ''' mv  install/Linux/TESTING/testLogs{,_valgrind}
                                   mv build/Linux/src/utest{,_valgrind}'''
-                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs_valgrind/**,
-                                                          build/Linux/src/utest_valgrind/utest.log,
-                                                          build/Linux/src/utest_valgrind/test_output'
+                             archiveArtifacts artifacts: '''install/Linux/TESTING/testLogs_valgrind/**,
+                                                            build/Linux/src/utest_valgrind/utest.log,
+                                                            build/Linux/src/utest_valgrind/test_output'''
                         /* when JENKINS-39203 is resolved, can probably use stepResult
                            here and remove the remaining post conditions
                            stepResult name: env.STAGE_NAME,
