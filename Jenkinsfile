@@ -535,6 +535,14 @@ pipeline {
                     }
                 }
                 stage('Single-node-valgrind') {
+                    agent {
+                        dockerfile {
+                            filename 'Dockerfile.centos:7'
+                            dir 'utils/docker'
+                            label 'docker_runner'
+                            additionalBuildArgs '$BUILDARGS'
+                        }
+                    }
                     environment {
                         CART_TEST_MODE = 'memcheck'
                     }
