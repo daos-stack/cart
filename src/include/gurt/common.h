@@ -78,6 +78,65 @@ extern "C" {
  */
 #define _gurt_gettime(ts) clock_gettime(CLOCK_MONOTONIC, ts)
 
+/**
+ * hide the dark secret that uuid_t is an array not a structure.
+ */
+struct d_uuid {
+	uuid_t		uuid;
+};
+
+/** iovec for memory buffer */
+typedef struct {
+	/** buffer address */
+	void		*iov_buf;
+	/** buffer length */
+	size_t		iov_buf_len;
+	/** data length */
+	size_t		iov_len;
+} d_iov_t;
+
+/** Server identification */
+typedef uint32_t	d_rank_t;
+
+typedef struct {
+	/** list of ranks */
+	d_rank_t	*rl_ranks;
+	/** number of ranks */
+	uint32_t	rl_nr;
+} d_rank_list_t;
+
+typedef d_rank_list_t	*d_rank_list_ptr_t;
+
+typedef char		*d_string_t;
+typedef const char	*d_const_string_t;
+
+/** Scatter/gather list for memory buffers */
+typedef struct {
+	uint32_t	sg_nr;
+	uint32_t	sg_nr_out;
+	d_iov_t		*sg_iovs;
+} d_sg_list_t;
+
+static bool
+is_on_stack(void *ptr)
+{
+	int local_var;
+
+	if ((uintptr_t)&local_var < (uintptr_t)ptr &&
+	    ((uintptr_t)&local_var + 100) > (uintptr_t)ptr)
+		return true;
+	return false;
+}
+
+static inline void
+d_iov_set(d_iov_t *iov, void *buf, size_t size)
+{
+	D_ASSERTF(!is_on_stack(buf), "buf (%p) is on the stack.\n", buf);
+
+	iov->iov_buf = buf;
+	iov->iov_len = iov->iov_buf_len = size;
+}
+
 /* memory allocating macros */
 
 #define D_CHECK_ALLOC(func, cond, ptr, name, size, count, cname,	\
