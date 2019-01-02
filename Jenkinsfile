@@ -114,7 +114,11 @@ pipeline {
                         stash name: 'CentOS-install', includes: 'install/**'
                         stash name: 'CentOS-build-vars', includes: ".build_vars${arch}.*"
                         stash name: 'CentOS-tests', includes: '''build/Linux/src/utest/test_linkage,
-                                                                 build/Linux/src/utest/test_gurt'''
+                                                                 build/Linux/src/utest/test_gurt,
+                                                                 cart-Linux.conf,
+                                                                 .sconf-temp-Linux,
+                                                                 _build.external-Linux/*.crc,
+                                                                 .sconsign-Linux.dblite'''
                     }
                     post {
                         /* when JENKINS-39203 is resolved, can probably use stepResult
