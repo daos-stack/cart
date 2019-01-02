@@ -3,7 +3,7 @@
 @Library(value="pipeline-lib@debug") _
 
 def singleNodeTest() {
-    runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
+    runTest stashes: [ 'CentOS-install', 'CentOS-build-vars', 'CentOS-tests' ],
             script: '''pwd
                        ls -l
                        . ./.build_vars-Linux.sh
@@ -106,8 +106,15 @@ pipeline {
                     }
                     steps {
                         sconsBuild clean: "_build.external${arch}"
+                        /* we're not really interested in running this here
+                         * but just need the tests built, so run it and
+                         * discard it's output
+                         */
+                        sh 'scons utest >/dev/null 2>&1 || true'
                         stash name: 'CentOS-install', includes: 'install/**'
                         stash name: 'CentOS-build-vars', includes: ".build_vars${arch}.*"
+                        stash name: 'CentOS-tests', includes: '''build/Linux/src/utest/test_linkage,
+                                                                 build/Linux/src/utest/test_gurt'''
                     }
                     post {
                         /* when JENKINS-39203 is resolved, can probably use stepResult
