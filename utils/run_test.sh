@@ -83,9 +83,10 @@ else
 fi
 if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
   echo "Nothing to do yet, wish we could fail some tests"
-  scons utest
- pushd ${TESTDIR}
-# Phyl -- I'm betting that the "@" means that the entire list is passed in
+  if ${RUN_UTEST:-true}; then
+      scons utest
+  fi
+  pushd ${TESTDIR}
   if [ "$1" = "--config" ]; then
     echo "Using config file ../../../${2}"
     python3 test_runner --config=../../../"${2}" "${JENKINS_TEST_LIST[@]}"
@@ -97,7 +98,9 @@ fi
 
 if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
   echo "Nothing to do yet"
-  scons utest --utest-mode=memcheck
+  if ${RUN_UTEST:-true}; then
+    scons utest --utest-mode=memcheck
+  fi
   export TR_USE_VALGRIND=memcheck
   pushd ${TESTDIR}
   python3 test_runner "${JENKINS_TEST_LIST[@]}"

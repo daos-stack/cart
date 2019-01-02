@@ -3,11 +3,11 @@
 @Library(value="pipeline-lib@debug") _
 
 def singleNodeTest() {
-    runTest stashes: [ 'CentOS-install', 'CentOS-build-vars', 'CentOS-tests' ],
+    runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
             script: '''pwd
                        ls -l
                        . ./.build_vars-Linux.sh
-                       if bash -x utils/run_test.sh; then
+                       if RUN_UTEST=false bash -x utils/run_test.sh; then
                            echo "run_test.sh exited successfully with ${PIPESTATUS[0]}"
                        else
                            echo "trying again with LD_LIBRARY_PATH set"
@@ -106,19 +106,11 @@ pipeline {
                     }
                     steps {
                         sconsBuild clean: "_build.external${arch}"
-                        /* we're not really interested in running this here
-                         * but just need the tests built, so run it and
-                         * discard it's output
-                         */
-                        sh 'scons utest >/dev/null 2>&1 || true'
+                        // this really belongs in the test stage CORCI-530
+                        sh '''scons utest
+                              scons utest --utest-mode=memcheck'''
                         stash name: 'CentOS-install', includes: 'install/**'
                         stash name: 'CentOS-build-vars', includes: ".build_vars${arch}.*"
-                        stash name: 'CentOS-tests', includes: '''build/Linux/src/utest/test_linkage,
-                                                                 build/Linux/src/utest/test_gurt,
-                                                                 cart-Linux.conf,
-                                                                 .sconf-temp-Linux,
-                                                                 _build.external-Linux/*.crc,
-                                                                 .sconsign-Linux.dblite'''
                     }
                     post {
                         /* when JENKINS-39203 is resolved, can probably use stepResult
