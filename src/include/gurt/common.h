@@ -78,12 +78,15 @@ extern "C" {
  */
 #define _gurt_gettime(ts) clock_gettime(CLOCK_MONOTONIC, ts)
 
+struct d_fault_attr_t *d_fault_attr_mem;
+int d_fault_id_mem;
+
 /* memory allocating macros */
 
 #define D_CHECK_ALLOC(func, cond, ptr, name, size, count, cname,	\
 			on_error)					\
 	do {								\
-		if (D_SHOULD_FAIL(0)) {					\
+		if (D_SHOULD_FAIL(d_fault_attr_mem)) {			\
 			free(ptr);					\
 			ptr = NULL;					\
 		}							\
