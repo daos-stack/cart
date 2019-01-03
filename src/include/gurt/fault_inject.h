@@ -137,19 +137,19 @@ void d_fault_inject_enable(void);
 void d_fault_inject_disable(void);
 
 
-bool d_should_fail(uint32_t fault_id);
+bool d_should_fail(struct d_fault_attr_t *fault_attr_ptr);
 
 /**
  * use this macro to determine if a fault should be injected at a specific call
  * site
  */
-#define D_SHOULD_FAIL(fault_id)						\
+#define D_SHOULD_FAIL(fault_attr)			\
 	({								\
 		bool __rc;						\
-		__rc = d_fault_inject && d_should_fail(fault_id);	\
+		__rc = d_fault_inject && d_should_fail(fault_attr);	\
 		if (__rc)						\
 			D_WARN("fault_id %d, injecting fault.\n",	\
-				fault_id);				\
+				fault_attr->fa_id);			\
 		__rc;							\
 	})
 
@@ -180,6 +180,9 @@ d_fault_attr_set(uint32_t fault_id, struct d_fault_attr_t fa_in);
  */
 int
 d_fault_attr_err_code(uint32_t fault_id);
+
+struct d_fault_attr_t *
+d_fault_attr_lookup(uint32_t fault_id);
 
 #if defined(__cplusplus)
 }
