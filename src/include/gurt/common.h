@@ -116,6 +116,9 @@ typedef struct {
 	d_iov_t		*sg_iovs;
 } d_sg_list_t;
 
+struct d_fault_attr_t *d_fault_attr_mem;
+int d_fault_id_mem;
+
 static inline void
 d_iov_set(d_iov_t *iov, void *buf, size_t size)
 {
@@ -128,7 +131,7 @@ d_iov_set(d_iov_t *iov, void *buf, size_t size)
 #define D_CHECK_ALLOC(func, cond, ptr, name, size, count, cname,	\
 			on_error)					\
 	do {								\
-		if (D_SHOULD_FAIL(0)) {					\
+		if (D_SHOULD_FAIL(d_fault_attr_mem)) {			\
 			free(ptr);					\
 			ptr = NULL;					\
 		}							\
