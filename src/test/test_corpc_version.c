@@ -173,7 +173,8 @@ static void *progress_thread(void *arg)
 		sched_yield();
 	} while (1);
 
-	D_ASSERT(rc == 0 || rc == -DER_TIMEDOUT);
+	D_ASSERTF(rc == 0 || rc == -DER_TIMEDOUT,
+		  "progress_thread failed rc: %d\n", rc);
 	fprintf(stderr, "progress_thread: progress thread exit ...\n");
 
 	pthread_exit(NULL);
@@ -207,16 +208,11 @@ corpc_ver_mismatch_hdlr(crt_rpc_t *rpc_req)
 static void
 test_shutdown_hdlr(crt_rpc_t *rpc_req)
 {
-	int		rc = 0;
-
 	fprintf(stderr, "rpc err server received shutdown request, "
 		"opc: 0x%x.\n", rpc_req->cr_opc);
 	D_ASSERTF(rpc_req->cr_input == NULL, "RPC request has invalid input\n");
 	D_ASSERTF(rpc_req->cr_output == NULL, "RPC request output is NULL\n");
 
-	rc = crt_reply_send(rpc_req);
-	D_ASSERT(rc == 0);
-	printf("rpc err server sent shutdown response.\n");
 	test.t_shutdown = 1;
 	fprintf(stderr, "server set shutdown flag.\n");
 }
@@ -602,8 +598,8 @@ test_init(void)
 				    corpc_ver_mismatch_hdlr,
 				    &corpc_ver_mismatch_ops);
 	D_ASSERTF(rc == 0, "crt_rpc_srv_register() failed, rc: %d\n", rc);
-	rc = crt_rpc_srv_register(TEST_OPC_SHUTDOWN, 0, NULL,
-				  test_shutdown_hdlr);
+	rc = crt_rpc_srv_register(TEST_OPC_SHUTDOWN, CRT_RPC_FEAT_NO_REPLY,
+				  NULL, test_shutdown_hdlr);
 	D_ASSERTF(rc == 0, "crt_rpc_srv_register() failed, rc: %d\n", rc);
 
 	rc = CRT_RPC_SRV_REGISTER(TEST_OPC_RANK_EVICT, 0, rank_evict,
