@@ -4,20 +4,31 @@
 
 def singleNodeTest() {
     runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-            script: '''pwd
+            script: """pwd
                        ls -l
                        . ./.build_vars-Linux.sh
+                       CART_BASE=\${SL_PREFIX%/install}
+                       NODELIST=$env.NODELIST
+                       NODE=\${NODELIST%%,*}
+                       trap 'set +e; set -x; ssh \$NODE "set -ex; sudo umount \$CART_BASE"'
+                       ssh \$NODE "set -x
+                       set -e
+                       sudo mkdir -p $CART_BASE
+                       sudo mount -t nfs $HOSTNAME:$PWD $CART_BASE
                        if RUN_UTEST=false bash -x utils/run_test.sh; then
-                           echo "run_test.sh exited successfully with ${PIPESTATUS[0]}"
+                           echo \"run_test.sh exited successfully with \${PIPESTATUS[0]}\"
                        else
-                           echo "trying again with LD_LIBRARY_PATH set"
-                           export LD_LIBRARY_PATH=$SL_PREFIX/lib
-                           if bash -x utils/run_test.sh; then
-                               echo "run_test.sh exited successfully with ${PIPESTATUS[0]}"
+                           echo \"trying again with LD_LIBRARY_PATH set\"
+                           export LD_LIBRARY_PATH=\$SL_PREFIX/lib
+                           if RUN_UTEST=false bash -x utils/run_test.sh; then
+                               echo \"run_test.sh exited successfully with \${PIPESTATUS[0]}\"
                            else
-                               echo "run_test.sh exited failure with ${PIPESTATUS[0]}"
+                               rc=\${PIPESTATUS[0]}
+                               echo \"run_test.sh exited failure with \$rc\"
+                               exit \$rc
                            fi
-                       fi''',
+                       fi"
+                       """,
           junit_files: null
 }
 
@@ -106,6 +117,8 @@ pipeline {
                     }
                     steps {
                         sconsBuild clean: "_build.external${arch}"
+                        sh '''tar czvf /var/tmp/centos7.tar.gz .
+                              ls -l /var/tmp/centos7.tar.gz'''
                         // this really belongs in the test stage CORCI-530
                         sh '''scons utest
                               scons utest --utest-mode=memcheck'''
@@ -489,12 +502,7 @@ pipeline {
             parallel {
                 stage('Single-node') {
                     agent {
-                        dockerfile {
-                            filename 'Dockerfile.centos:7'
-                            dir 'utils/docker'
-                            label 'docker_runner'
-                            additionalBuildArgs '$BUILDARGS'
-                        }
+                        label 'ci_vm1'
                     }
                     environment {
                         CART_TEST_MODE = 'native'
@@ -538,12 +546,7 @@ pipeline {
                 }
                 stage('Single-node-valgrind') {
                     agent {
-                        dockerfile {
-                            filename 'Dockerfile.centos:7'
-                            dir 'utils/docker'
-                            label 'docker_runner'
-                            additionalBuildArgs '$BUILDARGS'
-                        }
+                        label 'ci_vm1'
                     }
                     environment {
                         CART_TEST_MODE = 'memcheck'
