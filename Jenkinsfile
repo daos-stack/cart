@@ -1,6 +1,6 @@
 // To use a test branch (i.e. PR) until it lands to master
 // I.e. for testing library changes
-@Library(value="pipeline-lib@debug") _
+@Library(value="pipeline-lib@jemalmbe_corci-445") _
 
 def singleNodeTest() {
     runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
@@ -13,8 +13,8 @@ def singleNodeTest() {
                        trap 'set +e; set -x; ssh \$NODE "set -ex; sudo umount \$CART_BASE"'
                        ssh \$NODE "set -x
                        set -e
-                       sudo mkdir -p $CART_BASE
-                       sudo mount -t nfs $HOSTNAME:$PWD $CART_BASE
+                       sudo mkdir -p \$CART_BASE
+                       sudo mount -t nfs $HOSTNAME:$PWD \$CART_BASE
                        if RUN_UTEST=false bash -x utils/run_test.sh; then
                            echo \"run_test.sh exited successfully with \${PIPESTATUS[0]}\"
                        else
@@ -116,9 +116,9 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}"
-                        sh '''tar czvf /var/tmp/centos7.tar.gz .
-                              ls -l /var/tmp/centos7.tar.gz'''
+                        //sconsBuild clean: "_build.external${arch}"
+                        sh '''ls -l /var/tmp/centos7.tar.gz
+                              tar xzvf /var/tmp/centos7.tar.gz'''
                         // this really belongs in the test stage CORCI-530
                         sh '''scons utest
                               scons utest --utest-mode=memcheck'''
@@ -278,6 +278,7 @@ pipeline {
                     }
                 }
                 stage('Build on Ubuntu 18.04 with Clang') {
+                    when { branch 'foobar' }
                     agent {
                         dockerfile {
                             filename 'Dockerfile.ubuntu:18.04'
@@ -442,6 +443,7 @@ pipeline {
                     }
                 }
                 stage('Build on Leap 15 with Intel-C') {
+                    when { branch 'foobar' }
                     agent {
                         dockerfile {
                             filename 'Dockerfile.leap:15'
