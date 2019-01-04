@@ -10,7 +10,7 @@ def singleNodeTest() {
                        CART_BASE=\${SL_PREFIX%/install}
                        NODELIST=$env.NODELIST
                        NODE=\${NODELIST%%,*}
-                       trap 'set +e; set -x; ssh \$NODE "set -ex; sudo umount \$CART_BASE"'
+                       trap 'set +e; set -x; ssh \$NODE "set -ex; sudo umount \$CART_BASE"' EXIT
                        ssh \$NODE "set -x
                        set -e
                        sudo mkdir -p \$CART_BASE
