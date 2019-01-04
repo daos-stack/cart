@@ -119,7 +119,10 @@ pipeline {
                         //sconsBuild clean: "_build.external${arch}"
                         sh '''ls -l centos7.tar.gz || true
                               tar xzvf centos7.tar.gz
-                              sed -i -e "s/\\/.*\\/install/${PWD//\\//\\\\/}\\/install/g" {,install/Linux/TESTING/}.build_vars*.*'''
+                              pwd
+                              cat .build_vars-Linux.sh
+                              sed -i -e "s/\\/.*\\/install/${PWD//\\//\\\\/}\\/install/g" {,install/Linux/TESTING/}.build_vars*.*
+                              cat .build_vars-Linux.sh'''
                         // this really belongs in the test stage CORCI-530
                         sh '''scons utest
                               scons utest --utest-mode=memcheck'''
