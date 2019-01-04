@@ -116,10 +116,9 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}"
+                        //sconsBuild clean: "_build.external${arch}"
                         sh '''ls -l centos7.tar.gz || true
-                              tar czvf centos7.tar.gz .
-                              ls -l centos7.tar.gz'''
+                              tar xzvf centos7.tar.gz'''
                         // this really belongs in the test stage CORCI-530
                         sh '''scons utest
                               scons utest --utest-mode=memcheck'''
