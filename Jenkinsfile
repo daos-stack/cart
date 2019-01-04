@@ -14,7 +14,7 @@ def singleNodeTest() {
                        ssh \$NODE "set -x
                        set -e
                        sudo mkdir -p \$CART_BASE
-                       sudo mount -t nfs $HOSTNAME:$PWD \$CART_BASE
+                       sudo mount -t nfs \$HOSTNAME:\$PWD \$CART_BASE
                        if RUN_UTEST=false bash -x utils/run_test.sh; then
                            echo \"run_test.sh exited successfully with \${PIPESTATUS[0]}\"
                        else
