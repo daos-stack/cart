@@ -1,6 +1,6 @@
 // To use a test branch (i.e. PR) until it lands to master
 // I.e. for testing library changes
-@Library(value="pipeline-lib@jemalmbe_corci-445") _
+@Library(value="pipeline-lib@debug") _
 
 def singleNodeTest() {
     runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
@@ -116,13 +116,7 @@ pipeline {
                         }
                     }
                     steps {
-                        //sconsBuild clean: "_build.external${arch}"
-                        sh '''ls -l centos7.tar.gz || true
-                              tar xzvf centos7.tar.gz
-                              pwd
-                              cat .build_vars-Linux.sh
-                              sed -i -e "s/\\/.*\\/install/${PWD//\\//\\\\/}\\/install/g" {,install/Linux/TESTING/}.build_vars*.*
-                              cat .build_vars-Linux.sh'''
+                        sconsBuild clean: "_build.external${arch}"
                         // this really belongs in the test stage CORCI-530
                         sh '''scons utest
                               scons utest --utest-mode=memcheck'''
