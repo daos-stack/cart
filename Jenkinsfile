@@ -3,6 +3,9 @@
 @Library(value="pipeline-lib@debug") _
 
 def singleNodeTest() {
+    provisionNodes NODELIST: env.NODELIST,
+                   node_count: 1,
+                   snapshot: true
     runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
             script: """pwd
                        ls -l
