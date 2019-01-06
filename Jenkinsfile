@@ -140,10 +140,7 @@ pipeline {
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-centos7",
-                                         tools: [
-                                             [tool: [$class: 'GnuMakeGcc']],
-                                             [tool: [$class: 'CppCheck']],
-                                         ],
+                                         tools: [ gnuMakeGcc(), cppCheck() ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
                             */
@@ -198,10 +195,7 @@ pipeline {
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-centos7-clang",
-                                         tools: [
-                                             [tool: [$class: 'Clang']],
-                                             [tool: [$class: 'CppCheck']],
-                                         ],
+                                         tools: [ clang(), cppCheck() ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
                             */
@@ -256,10 +250,7 @@ pipeline {
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-ubuntu18",
-                                         tools: [
-                                             [tool: [$class: 'GnuMakeGcc']],
-                                             [tool: [$class: 'CppCheck']],
-                                         ],
+                                         tools: [ gnuMakeGcc(), cppCheck() ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
                             */
@@ -314,10 +305,7 @@ pipeline {
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-ubuntu18-clang",
-                                         tools: [
-                                             [tool: [$class: 'Clang']],
-                                             [tool: [$class: 'CppCheck']],
-                                         ],
+                                         tools: [ clang(), cppCheck() ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
                             */
@@ -372,10 +360,7 @@ pipeline {
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-leap15",
-                                         tools: [
-                                             [tool: [$class: 'GnuMakeGcc']],
-                                             [tool: [$class: 'CppCheck']],
-                                         ],
+                                         tools: [ gnuMakeGcc(), cppCheck() ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
                             */
@@ -430,10 +415,7 @@ pipeline {
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-leap15-clang",
-                                         tools: [
-                                             [tool: [$class: 'Clang']],
-                                             [tool: [$class: 'CppCheck']],
-                                         ],
+                                         tools: [ clang(), cppCheck() ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
                             */
@@ -489,10 +471,7 @@ pipeline {
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-leap15-intelc",
-                                         tools: [
-                                             [tool: [$class: 'Intel']],
-                                             [tool: [$class: 'CppCheck']],
-                                         ],
+                                         tools: [ intel(), cppCheck() ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
                             */
