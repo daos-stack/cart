@@ -53,21 +53,7 @@ trap 'echo "encountered an unchecked return code, exiting with error"' ERR
 # shellcheck disable=SC1091
 . .build_vars-Linux.sh
 
-if [ "$1" = "2" ]; then
-    test_runner_vm=$((${EXECUTOR_NUMBER:-0}*3+7))
-    vm1="$((test_runner_vm+1))"
-    vm2="$((test_runner_vm+2))"
-    vmrange="$vm1-$vm2"
-    test_runner_vm="vm$test_runner_vm"
-    vm1="vm$vm1"
-    vm2="vm$vm2"
-elif [ "$1" = "3" ]; then
-    test_runner_vm="vm1"
-    vmrange="2-4"
-elif [ "$1" = "5" ]; then
-    test_runner_vm="vm1"
-    vmrange="2-6"
-fi
+nodes=(${2//, })
 
 log_base_path="testLogs-${1}_node"
 
@@ -80,7 +66,7 @@ i=5
 # due to flakiness on wolf-53, try this several times
 while [ $i -gt 0 ]; do
     pdsh -R ssh -S \
-         -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]" "set -x
+         -w "$(IFS=','; echo ${nodes[*]:0:$1})" "set -x
     x=0
     while [ \$x -lt 30 ] &&
           grep $DAOS_BASE /proc/mounts &&
@@ -102,7 +88,7 @@ done' EXIT
 
 DAOS_BASE=${SL_OMPI_PREFIX%/install/*}
 if ! pdsh -R ssh -S \
-          -w "${HOSTPREFIX}$test_runner_vm,${HOSTPREFIX}vm[$vmrange]" "set -ex
+          -w "$(IFS=','; echo "${nodes[*]:0:$1}")" "set -ex
 ulimit -c unlimited
 sudo mkdir -p $DAOS_BASE
 sudo ed <<EOF /etc/fstab
@@ -126,7 +112,7 @@ fi
 #exit 0
 
 # shellcheck disable=SC2029
-if ! ssh "${HOSTPREFIX}$test_runner_vm" "set -ex
+if ! ssh "${nodes[0]}" "set -ex
 ulimit -c unlimited
 cd $DAOS_BASE
 
@@ -137,10 +123,10 @@ pushd install/Linux/TESTING/
 if [ \"$1\" = \"2\" ]; then
     cat <<EOF > scripts/cart_multi_two_node.cfg
 {
-    \"with_test_runner_host_list\": [\"${HOSTPREFIX}${vm1}\",
-                                     \"${HOSTPREFIX}${vm2}\"],
-    \"host_list\": [\"${HOSTPREFIX}${test_runner_vm}\",
-                    \"${HOSTPREFIX}${vm1}\"],
+    \"with_test_runner_host_list\": [\"${nodes[1]}\",
+                                     \"${nodes[2]}\"],
+    \"host_list\": [\"${nodes[0]}\",
+                    \"${nodes[1]}\"],
     \"use_daemon\": \"DvmRunner\",
     \"log_base_path\": \"$log_base_path\"
 }
@@ -157,13 +143,13 @@ elif [ \"$1\" = \"3\" ]; then
     cat <<EOF > scripts/cart_multi_three_node.cfg
 {
     \"with_test_runner_host_list\": [
-        \"${HOSTPREFIX}vm2\",
-        \"${HOSTPREFIX}vm3\",
-        \"${HOSTPREFIX}vm4\"
+        \"${nodes[1]}\",
+        \"${nodes[2]}\",
+        \"${nodes[3]}\"
     ],
-    \"host_list\": [\"${HOSTPREFIX}${test_runner_vm}\",
-        \"${HOSTPREFIX}vm2\",
-        \"${HOSTPREFIX}vm3\"
+    \"host_list\": [\"${nodes[0]}\",
+        \"${nodes[1]}\",
+        \"${nodes[2]}\"
     ],
     \"use_daemon\": \"DvmRunner\",
     \"log_base_path\": \"$log_base_path\"
@@ -181,17 +167,17 @@ elif [ \"$1\" = \"5\" ]; then
     cat <<EOF > scripts/cart_multi_five_node.cfg
 {
     \"with_test_runner_host_list\": [
-        \"${HOSTPREFIX}vm2\",
-        \"${HOSTPREFIX}vm3\",
-        \"${HOSTPREFIX}vm4\",
-        \"${HOSTPREFIX}vm5\",
-        \"${HOSTPREFIX}vm6\"
+        \"${nodes[1]}\",
+        \"${nodes[2]}\",
+        \"${nodes[3]}\",
+        \"${nodes[4]}\",
+        \"${nodes[5]}\"
     ],
-    \"host_list\": [\"${HOSTPREFIX}${test_runner_vm}\",
-        \"${HOSTPREFIX}vm2\",
-        \"${HOSTPREFIX}vm3\",
-        \"${HOSTPREFIX}vm4\",
-        \"${HOSTPREFIX}vm5\"
+    \"host_list\": [\"${nodes[0]}\",
+        \"${nodes[1]}\",
+        \"${nodes[2]}\",
+        \"${nodes[3]}\",
+        \"${nodes[4]}\"
     ],
     \"use_daemon\": \"DvmRunner\",
     \"log_base_path\": \"$log_base_path\"
@@ -212,7 +198,7 @@ else
     rc=0
 fi
 
-scp -r "${HOSTPREFIX}$test_runner_vm:\
+scp -r "${nodes[0]}:\
 $DAOS_BASE/install/Linux/TESTING/$log_base_path" install/Linux/TESTING/
 {
     cat <<EOF

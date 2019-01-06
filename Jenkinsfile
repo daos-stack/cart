@@ -596,10 +596,13 @@ pipeline {
                 }
                 stage('Two-node') {
                     agent {
-                        label 'cluster_provisioner-2_nodes'
+                        label 'ci_vm2'
                     }
                     steps {
                         echo "Starting Two-node"
+                        provisionNodes NODELIST: env.NODELIST,
+                                       node_count: 2,
+                                       snapshot: true
                         checkoutScm url: 'ssh://review.hpdd.intel.com:29418/exascale/jenkins',
                                     checkoutDir: 'jenkins',
                                     credentialsId: 'bf21c68b-9107-4a38-8077-e929e644996a'
@@ -648,10 +651,13 @@ pipeline {
                 }
                 stage('Three-node') {
                     agent {
-                        label 'cluster_provisioner-5_nodes'
+                        label 'ci_vm3'
                     }
                     steps {
                         echo "Starting Three-node"
+                        provisionNodes NODELIST: env.NODELIST,
+                                       node_count: 3,
+                                       snapshot: true
                         checkoutScm url: 'ssh://review.hpdd.intel.com:29418/exascale/jenkins',
                                     checkoutDir: 'jenkins',
                                     credentialsId: 'bf21c68b-9107-4a38-8077-e929e644996a'
@@ -700,10 +706,13 @@ pipeline {
                 }
                 stage('Five-node') {
                     agent {
-                        label 'cluster_provisioner-5_nodes'
+                        label 'ci_vm5'
                     }
                     steps {
                         echo "Starting Five-node"
+                        provisionNodes NODELIST: env.NODELIST,
+                                       node_count: 5,
+                                       snapshot: true
                         checkoutScm url: 'ssh://review.hpdd.intel.com:29418/exascale/jenkins',
                                     checkoutDir: 'jenkins',
                                     credentialsId: 'bf21c68b-9107-4a38-8077-e929e644996a'
