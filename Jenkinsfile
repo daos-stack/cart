@@ -136,6 +136,7 @@ pipeline {
                         }
                         */
                         success {
+                            /* JENKINS-55417
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-centos7",
@@ -145,7 +146,9 @@ pipeline {
                                          ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
-                        /* temporarily moved into stepResult due to JENKINS-39203
+                            */
+                            sh 'echo "success"'
+                            /* temporarily moved into stepResult due to JENKINS-39203
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
                                          context: 'build/' + env.STAGE_NAME,
@@ -191,6 +194,7 @@ pipeline {
                         }
                         */
                         success {
+                            /* JENKINS-55417
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-centos7-clang",
@@ -200,6 +204,8 @@ pipeline {
                                          ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
+                            */
+                            sh 'echo "success"'
                         /* temporarily moved into stepResult due to JENKINS-39203
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
@@ -246,6 +252,7 @@ pipeline {
                         }
                         */
                         success {
+                            /* JENKINS-55417
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-ubuntu18",
@@ -255,6 +262,8 @@ pipeline {
                                          ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
+                            */
+                            sh 'echo "success"'
                         /* temporarily moved into stepResult due to JENKINS-39203
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
@@ -301,6 +310,7 @@ pipeline {
                         }
                         */
                         success {
+                            /* JENKINS-55417
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-ubuntu18-clang",
@@ -310,6 +320,8 @@ pipeline {
                                          ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
+                            */
+                            sh 'echo "success"'
                         /* temporarily moved into stepResult due to JENKINS-39203
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
@@ -356,6 +368,7 @@ pipeline {
                         }
                         */
                         success {
+                            /* JENKINS-55417
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-leap15",
@@ -365,6 +378,8 @@ pipeline {
                                          ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
+                            */
+                            sh 'echo "success"'
                         /* temporarily moved into stepResult due to JENKINS-39203
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
@@ -411,6 +426,7 @@ pipeline {
                         }
                         */
                         success {
+                            /* JENKINS-55417
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-leap15-clang",
@@ -420,6 +436,8 @@ pipeline {
                                          ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
+                            */
+                            sh 'echo "success"'
                         /* temporarily moved into stepResult due to JENKINS-39203
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
@@ -467,6 +485,7 @@ pipeline {
                         }
                         */
                         success {
+                            /* JENKINS-55417
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-leap15-intelc",
@@ -476,6 +495,8 @@ pipeline {
                                          ],
                                          filters: [excludeFile('.*\\/_build\\.external\\/.*'),
                                                    excludeFile('_build\\.external\\/.*')]
+                            */
+                            sh 'echo "success"'
                         /* temporarily moved into stepResult due to JENKINS-39203
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
