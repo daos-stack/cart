@@ -10,7 +10,7 @@ def singleNodeTest() {
             script: """pwd
                        ls -l
                        . ./.build_vars-Linux.sh
-                       CART_BASE=\${SL_PREFIX%/install}
+                       CART_BASE=\${SL_PREFIX%/install*}
                        NODELIST=$env.NODELIST
                        NODE=\${NODELIST%%,*}
                        trap 'set +e; set -x; ssh \$NODE "set -ex; sudo umount \$CART_BASE"' EXIT
