@@ -53,7 +53,7 @@ trap 'echo "encountered an unchecked return code, exiting with error"' ERR
 # shellcheck disable=SC1091
 . .build_vars-Linux.sh
 
-nodes=(${2//, })
+nodes=(${2//,/ })
 
 log_base_path="testLogs-${1}_node"
 
