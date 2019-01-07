@@ -5,7 +5,6 @@
 def singleNodeTest(nodelist) {
     echo "Running singleNodeTest on " + nodelist
     provisionNodes NODELIST: nodelist,
-                   node_count: 1,
                    snapshot: true
     runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
             script: """pwd
@@ -605,7 +604,6 @@ pipeline {
                         sh 'env'
                         echo "Starting Two-node"
                         provisionNodes NODELIST: env.NODELIST,
-                                       node_count: 2,
                                        snapshot: true
                         checkoutScm url: 'ssh://review.hpdd.intel.com:29418/exascale/jenkins',
                                     checkoutDir: 'jenkins',
@@ -662,7 +660,6 @@ pipeline {
                         sh 'env'
                         echo "Starting Three-node"
                         provisionNodes NODELIST: env.NODELIST,
-                                       node_count: 3,
                                        snapshot: true
                         checkoutScm url: 'ssh://review.hpdd.intel.com:29418/exascale/jenkins',
                                     checkoutDir: 'jenkins',
@@ -719,7 +716,6 @@ pipeline {
                         sh 'env'
                         echo "Starting Five-node"
                         provisionNodes NODELIST: env.NODELIST,
-                                       node_count: 5,
                                        snapshot: true
                         checkoutScm url: 'ssh://review.hpdd.intel.com:29418/exascale/jenkins',
                                     checkoutDir: 'jenkins',
