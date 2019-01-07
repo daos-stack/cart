@@ -8,8 +8,7 @@ if [ -f .localenv ]; then
     . .localenv
 fi
 
-HOSTPREFIX=${HOSTPREFIX-${HOSTNAME%%.*}}
-NFS_SERVER=${NFS_SERVER:-$HOSTPREFIX}
+NFS_SERVER=${NFS_SERVER:-${HOSTNAME%%.*}}
 
 # A list of tests to run as a two node instance on Jenkins
 JENKINS_TEST_LIST_2=(scripts/cart_echo_test.yml                   \
@@ -214,7 +213,11 @@ EOF
 } > results_1.yml
 cat results_1.yml
 
-PYTHONPATH=scony_python-junit/ jenkins/autotest_utils/results_to_junit.py
+if ! PYTHONPATH=scony_python-junit/ jenkins/autotest_utils/results_to_junit.py; then
+    echo "Failed to convert YML to Junit"
+    if [ "$rc" = "0"]; then
+        rc=1
+    fi
 ls -ltar
 
 exit "$rc"
