@@ -512,6 +512,7 @@ pipeline {
                         CART_TEST_MODE = 'native'
                     }
                     steps {
+                        sh 'env'
                         singleNodeTest(env.NODELIST)
                     }
                     post {
@@ -556,6 +557,7 @@ pipeline {
                         CART_TEST_MODE = 'memcheck'
                     }
                     steps {
+                        sh 'env'
                         singleNodeTest(env.NODELIST)
                     }
                     post {
@@ -599,6 +601,7 @@ pipeline {
                         label 'ci_vm2'
                     }
                     steps {
+                        sh 'env'
                         echo "Starting Two-node"
                         provisionNodes NODELIST: env.NODELIST,
                                        node_count: 2,
@@ -655,6 +658,7 @@ pipeline {
                         label 'ci_vm3'
                     }
                     steps {
+                        sh 'env'
                         echo "Starting Three-node"
                         provisionNodes NODELIST: env.NODELIST,
                                        node_count: 3,
@@ -711,6 +715,7 @@ pipeline {
                         label 'ci_vm5'
                     }
                     steps {
+                        sh 'env'
                         echo "Starting Five-node"
                         provisionNodes NODELIST: env.NODELIST,
                                        node_count: 5,
