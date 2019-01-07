@@ -3,6 +3,7 @@
 @Library(value="pipeline-lib@debug") _
 
 def singleNodeTest(nodelist) {
+    echo "Running singleNodeTest on " + nodelist
     provisionNodes NODELIST: nodelist,
                    node_count: 1,
                    snapshot: true
