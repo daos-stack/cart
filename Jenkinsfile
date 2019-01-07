@@ -65,9 +65,8 @@ pipeline {
                                     credentialsId: 'bf21c68b-9107-4a38-8077-e929e644996a'
 
                         echo "Starting Five-node runTest"
-                        sh 'pdsh -R ssh -S -w ' + env.NODELIST +
-                           '"set -x; pdsh -R ssh -S -w ' + env.NODELIST +
-                           'id | dshbak -c" | dshbak -c'
+                        sh """pdsh -R ssh -S -w ${env.NODELIST} " set -x
+                                pdsh -R ssh -S -w ${env.NODELIST} id 2>&1 | dshbak -c" | dshbak -c"""
                     }
                 }
             }
