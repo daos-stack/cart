@@ -2,8 +2,8 @@
 // I.e. for testing library changes
 @Library(value="pipeline-lib@debug") _
 
-def singleNodeTest() {
-    provisionNodes NODELIST: env.NODELIST,
+def singleNodeTest(nodelist) {
+    provisionNodes NODELIST: nodelist,
                    node_count: 1,
                    snapshot: true
     runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
@@ -11,7 +11,7 @@ def singleNodeTest() {
                        ls -l
                        . ./.build_vars-Linux.sh
                        CART_BASE=\${SL_PREFIX%/install*}
-                       NODELIST=$env.NODELIST
+                       NODELIST=$nodelist
                        NODE=\${NODELIST%%,*}
                        trap 'set +e; set -x; ssh \$NODE "set -ex; sudo umount \$CART_BASE"' EXIT
                        ssh \$NODE "set -x
@@ -512,7 +512,7 @@ pipeline {
                         CART_TEST_MODE = 'native'
                     }
                     steps {
-                        singleNodeTest()
+                        singleNodeTest(env.NODELIST)
                     }
                     post {
                         always {
@@ -556,7 +556,7 @@ pipeline {
                         CART_TEST_MODE = 'memcheck'
                     }
                     steps {
-                        singleNodeTest()
+                        singleNodeTest(env.NODELIST)
                     }
                     post {
                         always {
