@@ -613,7 +613,7 @@ pipeline {
 
                         echo "Starting Two-node runTest"
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: 'bash -x ./multi-node-test.sh 2; echo "rc: $?"',
+                                script: "bash -x ./multi-node-test.sh 2 $env.NODELIST; echo \"rc: $?\"",
                                 junit_files: "CART_2-node_junit.xml"
                     }
                     post {
@@ -668,7 +668,7 @@ pipeline {
 
                         echo "Starting Three-node runTest"
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: 'bash -x ./multi-node-test.sh 3; echo "rc: $?"',
+                                script: "bash -x ./multi-node-test.sh 3 $env.NODELIST; echo \"rc: $?\"",
                                 junit_files: "CART_3-node_junit.xml"
                     }
                     post {
@@ -723,7 +723,7 @@ pipeline {
 
                         echo "Starting Five-node runTest"
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: 'bash -x ./multi-node-test.sh 5; echo "rc: $?"',
+                                script: "bash -x ./multi-node-test.sh 5 $env.NODELIST; echo \"rc: $?\"",
                                 junit_files: "CART_5-node_junit.xml"
                     }
                     post {
