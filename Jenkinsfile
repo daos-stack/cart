@@ -38,7 +38,7 @@
  */
 // To use a test branch (i.e. PR) until it lands to master
 // I.e. for testing library changes
-//@Library(value="pipeline-lib@debug") _
+@Library(value="pipeline-lib@error-from-checkpatch") _
 
 def singleNodeTest() {
     provisionNodes NODELIST: env.NODELIST,
