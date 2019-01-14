@@ -102,17 +102,25 @@ while [ $i -gt 0 ]; do
     pdsh -R ssh -S \
          -w "$(IFS=','; echo ${nodes[*]:0:$1})" "set -x
     x=0
+    rc=0
     while [ \$x -lt 30 ] &&
           grep $CART_BASE /proc/mounts &&
           ! sudo umount $CART_BASE; do
         # CART-558 - cart tests leave orte processes around
+        if pgrep -a cart_ctl; then
+            echo "FAIL: cart_ctl found left running on \$HOSTNAME"
+            rc=1
+        fi
         pgrep -a \(orte-dvm\|orted\|cart_ctl\)
         pkill \(orte-dvm\|orted\|cart_ctl\)
         sleep 1
         let x+=1
     done
     sudo sed -i -e \"/added by multi-node-test-$1.sh/d\" /etc/fstab
-    sudo rmdir $CART_BASE || find $CART_BASE || true" 2>&1 | dshbak -c
+    sudo rmdir $CART_BASE || find $CART_BASE || true
+    if [ \$rc != 0 ]; then
+        exit \$rc
+    fi" 2>&1 | dshbak -c
     if [ ${PIPESTATUS[0]} = 0 ]; then
         i=0
     fi
