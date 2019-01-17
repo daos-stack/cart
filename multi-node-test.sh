@@ -226,6 +226,7 @@ EOF
         rc=\${PIPESTATUS[0]}
         echo \"Test exited with \$rc\"
     }
+    rc=1
     find $log_base_path/testRun -name subtest_results.yml \\
          -exec grep -Hi fail {} \\;
 fi
