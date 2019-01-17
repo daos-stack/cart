@@ -45,7 +45,7 @@ int
 crt_barrier_info_init(struct crt_grp_priv *grp_priv)
 {
 	struct crt_barrier_info	*info;
-	crt_group_t		*grp;
+	crt_group_t		*grp
 	int			rc;
 	d_rank_list_t		*membs;
 
