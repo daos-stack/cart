@@ -36,6 +36,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+// Pipeline Library Repo: https://github.com/daos-stack/pipeline-lib
 // To use a test branch (i.e. PR) until it lands to master
 // I.e. for testing library changes
 //@Library(value="pipeline-lib@debug") _
@@ -171,6 +172,12 @@ pipeline {
                                                            build/Linux/src/utest_valgrind/test_output,
                                                            build/Linux/src/utest/utest.log,
                                                            build/Linux/src/utest/test_output'''
+                            recordIssues enabledForFailure: true,
+                                         aggregatingResults: true,
+                                         id: "analysis-centos7",
+                                         tools: [ gcc4(), cppCheck() ],
+                                         filters: [excludeFile('.*\\/_build\\.external-Linux\\/.*'),
+                                                   excludeFile('_build\\.external-Linux\\/.*')]
                         /* when JENKINS-39203 is resolved, can probably use stepResult
                            here and remove the remaining post conditions
                                stepResult name: env.STAGE_NAME,
@@ -178,21 +185,13 @@ pipeline {
                                           result: ${currentBuild.currentResult}
                         */
                         }
+                        /* temporarily moved into stepResult due to JENKINS-39203
                         success {
-                            recordIssues enabledForFailure: true,
-                                         aggregatingResults: true,
-                                         id: "analysis-centos7",
-                                         tools: [ gcc4(), cppCheck() ],
-                                         filters: [excludeFile('.*\\/_build\\.external-Linux\\/.*'),
-                                                   excludeFile('_build\\.external-Linux\\/.*')]
-                            /* temporarily moved into stepResult due to JENKINS-39203
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
                                          context: 'build/' + env.STAGE_NAME,
                                          status: 'SUCCESS'
-                            */
                         }
-                        /* temporarily moved into stepResult due to JENKINS-39203
                         unstable {
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
@@ -222,29 +221,27 @@ pipeline {
                         sconsBuild clean: "_build.external${arch}", COMPILER: "clang"
                     }
                     post {
-                        /* when JENKINS-39203 is resolved, can probably use stepResult
-                           here and remove the remaining post conditions
                         always {
-                               stepResult name: env.STAGE_NAME,
-                                          context: 'build/' + env.STAGE_NAME,
-                                          result: ${currentBuild.currentResult}
-                        }
-                        */
-                        success {
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-centos7-clang",
                                          tools: [ clang(), cppCheck() ],
                                          filters: [excludeFile('.*\\/_build\\.external-Linux\\/.*'),
                                                    excludeFile('_build\\.external-Linux\\/.*')]
+                        /* when JENKINS-39203 is resolved, can probably use stepResult
+                           here and remove the remaining post conditions
+                               stepResult name: env.STAGE_NAME,
+                                          context: 'build/' + env.STAGE_NAME,
+                                          result: ${currentBuild.currentResult}
+                        */
+                        }
                         /* temporarily moved into stepResult due to JENKINS-39203
+                        success {
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
                                          context: 'build/' + env.STAGE_NAME,
                                          status: 'SUCCESS'
-                            */
                         }
-                        /* temporarily moved into stepResult due to JENKINS-39203
                         unstable {
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
@@ -274,29 +271,27 @@ pipeline {
                         sconsBuild clean: "_build.external${arch}"
                     }
                     post {
-                        /* when JENKINS-39203 is resolved, can probably use stepResult
-                           here and remove the remaining post conditions
                         always {
-                               stepResult name: env.STAGE_NAME,
-                                          context: 'build/' + env.STAGE_NAME,
-                                          result: ${currentBuild.currentResult}
-                        }
-                        */
-                        success {
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-ubuntu18",
                                          tools: [ gcc4(), cppCheck() ],
                                          filters: [excludeFile('.*\\/_build\\.external-Linux\\/.*'),
                                                    excludeFile('_build\\.external-Linux\\/.*')]
+                        /* when JENKINS-39203 is resolved, can probably use stepResult
+                           here and remove the remaining post conditions
+                               stepResult name: env.STAGE_NAME,
+                                          context: 'build/' + env.STAGE_NAME,
+                                          result: ${currentBuild.currentResult}
+                        */
+                        }
                         /* temporarily moved into stepResult due to JENKINS-39203
+                        success {
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
                                          context: 'build/' + env.STAGE_NAME,
                                          status: 'SUCCESS'
-                            */
                         }
-                        /* temporarily moved into stepResult due to JENKINS-39203
                         unstable {
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
@@ -325,29 +320,27 @@ pipeline {
                         sconsBuild clean: "_build.external${arch}", COMPILER: "clang"
                     }
                     post {
-                        /* when JENKINS-39203 is resolved, can probably use stepResult
-                           here and remove the remaining post conditions
                         always {
-                               stepResult name: env.STAGE_NAME,
-                                          context: 'build/' + env.STAGE_NAME,
-                                          result: ${currentBuild.currentResult}
-                        }
-                        */
-                        success {
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-ubuntu18-clang",
                                          tools: [ clang(), cppCheck() ],
                                          filters: [excludeFile('.*\\/_build\\.external-Linux\\/.*'),
                                                    excludeFile('_build\\.external-Linux\\/.*')]
+                        /* when JENKINS-39203 is resolved, can probably use stepResult
+                           here and remove the remaining post conditions
+                               stepResult name: env.STAGE_NAME,
+                                          context: 'build/' + env.STAGE_NAME,
+                                          result: ${currentBuild.currentResult}
+                        */
+                        }
                         /* temporarily moved into stepResult due to JENKINS-39203
+                        success {
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
                                          context: 'build/' + env.STAGE_NAME,
                                          status: 'SUCCESS'
-                            */
                         }
-                        /* temporarily moved into stepResult due to JENKINS-39203
                         unstable {
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
@@ -377,29 +370,27 @@ pipeline {
                         sconsBuild clean: "_build.external${arch}"
                     }
                     post {
-                        /* when JENKINS-39203 is resolved, can probably use stepResult
-                           here and remove the remaining post conditions
                         always {
-                               stepResult name: env.STAGE_NAME,
-                                          context: 'build/' + env.STAGE_NAME,
-                                          result: ${currentBuild.currentResult}
-                        }
-                        */
-                        success {
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-leap15",
                                          tools: [ gcc4(), cppCheck() ],
                                          filters: [excludeFile('.*\\/_build\\.external-Linux\\/.*'),
                                                    excludeFile('_build\\.external-Linux\\/.*')]
+                        /* when JENKINS-39203 is resolved, can probably use stepResult
+                           here and remove the remaining post conditions
+                               stepResult name: env.STAGE_NAME,
+                                          context: 'build/' + env.STAGE_NAME,
+                                          result: ${currentBuild.currentResult}
+                        */
+                        }
                         /* temporarily moved into stepResult due to JENKINS-39203
+                        success {
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
                                          context: 'build/' + env.STAGE_NAME,
                                          status: 'SUCCESS'
-                            */
                         }
-                        /* temporarily moved into stepResult due to JENKINS-39203
                         unstable {
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
@@ -429,29 +420,27 @@ pipeline {
                         sconsBuild clean: "_build.external${arch}", COMPILER: "clang"
                     }
                     post {
-                        /* when JENKINS-39203 is resolved, can probably use stepResult
-                           here and remove the remaining post conditions
                         always {
-                               stepResult name: env.STAGE_NAME,
-                                          context: 'build/' + env.STAGE_NAME,
-                                          result: ${currentBuild.currentResult}
-                        }
-                        */
-                        success {
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-leap15-clang",
                                          tools: [ clang(), cppCheck() ],
                                          filters: [excludeFile('.*\\/_build\\.external-Linux\\/.*'),
                                                    excludeFile('_build\\.external-Linux\\/.*')]
+                        /* when JENKINS-39203 is resolved, can probably use stepResult
+                           here and remove the remaining post conditions
+                               stepResult name: env.STAGE_NAME,
+                                          context: 'build/' + env.STAGE_NAME,
+                                          result: ${currentBuild.currentResult}
+                        */
+                        }
                         /* temporarily moved into stepResult due to JENKINS-39203
+                        success {
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
                                          context: 'build/' + env.STAGE_NAME,
                                          status: 'SUCCESS'
-                            */
                         }
-                        /* temporarily moved into stepResult due to JENKINS-39203
                         unstable {
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
@@ -481,29 +470,27 @@ pipeline {
                         sconsBuild clean: "_build.external${arch}", COMPILER: "icc"
                     }
                     post {
-                        /* when JENKINS-39203 is resolved, can probably use stepResult
-                           here and remove the remaining post conditions
                         always {
-                               stepResult name: env.STAGE_NAME,
-                                          context: 'build/' + env.STAGE_NAME,
-                                          result: ${currentBuild.currentResult}
-                        }
-                        */
-                        success {
                             recordIssues enabledForFailure: true,
                                          aggregatingResults: true,
                                          id: "analysis-leap15-intelc",
                                          tools: [ intel(), cppCheck() ],
                                          filters: [excludeFile('.*\\/_build\\.external-Linux\\/.*'),
                                                    excludeFile('_build\\.external-Linux\\/.*')]
+                        /* when JENKINS-39203 is resolved, can probably use stepResult
+                           here and remove the remaining post conditions
+                               stepResult name: env.STAGE_NAME,
+                                          context: 'build/' + env.STAGE_NAME,
+                                          result: ${currentBuild.currentResult}
+                        */
+                        }
                         /* temporarily moved into stepResult due to JENKINS-39203
+                        success {
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
                                          context: 'build/' + env.STAGE_NAME,
                                          status: 'SUCCESS'
-                            */
                         }
-                        /* temporarily moved into stepResult due to JENKINS-39203
                         unstable {
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
                                          description: env.STAGE_NAME,
