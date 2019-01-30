@@ -798,8 +798,7 @@ crt_req_ep_lc_lookup(struct crt_rpc_priv *rpc_priv, crt_phy_addr_t *base_addr)
 		D_GOTO(out, rc);
 	}
 
-	if (base_addr != NULL && *base_addr != NULL &&
-	    rpc_priv->crp_hg_addr == NULL) {
+	if (base_addr != NULL && *base_addr != NULL) {
 		rc = crt_req_get_tgt_uri(rpc_priv, *base_addr);
 		if (rc != 0)
 			D_ERROR("crt_req_get_tgt_uri failed, "

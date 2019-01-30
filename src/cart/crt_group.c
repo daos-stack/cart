@@ -731,9 +731,9 @@ crt_grp_lc_addr_insert(struct crt_grp_priv *grp_priv,
 	if (li->li_tag_addr[tag] == NULL) {
 		li->li_tag_addr[tag] = *hg_addr;
 	} else {
-		D_WARN("NA address already exits. "
-		       " grp_priv %p ctx_idx %d, rank: %d, tag %d, rlink %p\n",
-		       grp_priv, ctx_idx, rank, tag, &li->li_link);
+		D_DEBUG(DB_TRACE, "NA address already exits. "
+			" grp_priv %p ctx_idx %d, rank: %d, tag %d, rlink %p\n",
+			grp_priv, ctx_idx, rank, tag, &li->li_link);
 		rc = crt_hg_addr_free(&crt_ctx->cc_hg_ctx, *hg_addr);
 		if (rc != 0) {
 			D_ERROR("crt_hg_addr_free failed, crt_idx %d, *hg_addr"
@@ -2206,17 +2206,17 @@ crt_hdlr_uri_lookup(crt_rpc_t *rpc_req)
 	crt_ctx = rpc_req->cr_ctx;
 
 	if (ul_in->ul_rank >= grp_priv->gp_size) {
-		D_WARN("Lookup of invalid rank %d in group %s (%d)\n",
-		       ul_in->ul_rank, grp_priv->gp_pub.cg_grpid,
-		       grp_priv->gp_size);
+		D_ERROR("Lookup of invalid rank %d in group %s (%d)\n",
+			ul_in->ul_rank, grp_priv->gp_pub.cg_grpid,
+			grp_priv->gp_size);
 		D_GOTO(out, rc = -DER_OOG);
 	}
 
 	if (ul_in->ul_tag >= CRT_SRV_CONTEXT_NUM) {
-		D_WARN("Looking up invalid tag %d of rank %d "
-		       "in group %s (%d)\n",
-		       ul_in->ul_tag, ul_in->ul_rank,
-		       grp_priv->gp_pub.cg_grpid, grp_priv->gp_size);
+		D_ERROR("Looking up invalid tag %d of rank %d "
+			"in group %s (%d)\n",
+			ul_in->ul_tag, ul_in->ul_rank,
+			grp_priv->gp_pub.cg_grpid, grp_priv->gp_size);
 		D_GOTO(out, rc = -DER_INVAL);
 	}
 

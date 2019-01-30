@@ -338,12 +338,12 @@ crt_opc_lookup(struct crt_opc_map *map, crt_opcode_t opc, int locked)
 		D_GOTO(out, 0);
 	}
 	if (L2_idx >= map->com_map[L1_idx].L2_num_slots_total) {
-		D_WARN("version number %d out of range [0, %d]\n", L2_idx,
-			map->com_map[L1_idx].L2_num_slots_total);
+		D_DEBUG(DB_ALL, "version number %d out of range [0, %d]\n",
+			L2_idx, map->com_map[L1_idx].L2_num_slots_total);
 		D_GOTO(out, 0);
 	}
 	if (L3_idx >= map->com_map[L1_idx].L2_map[L2_idx].L3_num_slots_total) {
-		D_WARN("rpc id %d out of range [0, %d]\n", L3_idx,
+		D_DEBUG(DB_ALL, "rpc id %d out of range [0, %d]\n", L3_idx,
 			map->com_map[L1_idx].L2_map[L2_idx].L3_num_slots_total);
 		D_GOTO(out, 0);
 	}
