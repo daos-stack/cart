@@ -457,14 +457,10 @@ crt_ep_abort(crt_endpoint_t *ep);
  *         - CRT_RPC_DECLARE()
  *         - CRT_RPC_DEFINE()
  *
- *     registration:
- *         - CRT_RPC_REGISTER()
- *         - CRT_RPC_SRV_REGISTER()
  *
  * To register an RPC using macros:
  *     CRT_RPC_DECLARE(my_rpc_name, input_fields, output_fields)
  *     CRT_RPC_DEFINE(my_rpc_name, input_fields, output_fields)
- *     CRT_RPC_REGISTER(opcode, flags, my_rpc_name);
  *
  * The input/output structs can be accessed using the following pointers:
  *     struct my_rpc_name_in *rpc_in;
@@ -489,7 +485,6 @@ crt_ep_abort(crt_endpoint_t *ep);
  *     ((int32_t)       (mr_ret)       CRT_VAR)
  *
  * CRT_RPC_DECLARE(my_rpc, CRT_ISEQ_MY_RPC, CRT_OSEQ_MY_RPC)
- * CRT_RPC_REGISTER(opcode, flags, my_rpc);
  *
  * these two macros above expands into:
  *
@@ -643,33 +638,6 @@ crt_ep_abort(crt_endpoint_t *ep);
 			crt_##rpc_name##_out_fields, NULL));		\
 	_Pragma("GCC diagnostic pop")
 
-#define CRT_RPC_CORPC_REGISTER(opcode, rpc_name, rpc_handler, co_ops)	\
-	crt_corpc_register(opcode, &CQF_##rpc_name, rpc_handler, co_ops)
-
-#define CRT_RPC_SRV_REGISTER(opcode, flags, rpc_name, rpc_handler)	\
-	crt_rpc_srv_register(opcode, flags, &CQF_##rpc_name, rpc_handler)
-
-#define CRT_RPC_REGISTER(opcode, flags, rpc_name)			\
-	crt_rpc_register(opcode, flags, &CQF_##rpc_name)
-
-/**
- * Dynamically register an RPC with features at client-side.
- *
- * \param[in] opc              unique opcode for the RPC
- * \param[in] flags            feature bits, now only supports
- *                             CRT_RPC_FEAT_NO_REPLY - disables reply when set,
- *                             re-enables reply when not set.
- *                             CRT_RPC_FEAT_NO_TIMEOUT - if it's set, the
- *                             elapsed time is reset to 0 on RPC timeout
- * \param[in] drf              pointer to the request format, which
- *                             describe the request format and provide
- *                             callback to pack/unpack each items in the
- *                             request.
- * \return                     DER_SUCCESS on success, negative value if error
- */
-int
-crt_rpc_register(crt_opcode_t opc, uint32_t flags, struct crt_req_format *drf);
-
 /**
  * The RPC callback for the context, which will be called when the context
  * receives any RPC. In this callback, the handler can do sth specially for
@@ -701,32 +669,6 @@ typedef int (*crt_rpc_task_t) (crt_context_t *ctx, crt_rpc_t *rpc,
 int
 crt_context_register_rpc_task(crt_context_t crt_ctx,
 			      crt_rpc_task_t rpc_cb, void *arg);
-
-/**
- * Dynamically register an RPC with features at server-side.
- *
- * \param[in] opc              unique opcode for the RPC
- * \param[in] flags            feature bits, now only supports
- *                             \ref CRT_RPC_FEAT_NO_REPLY - disables reply when
- *                             set, re-enables reply when not set.
- *                             \ref CRT_RPC_FEAT_NO_TIMEOUT - if it's set, the
- *                             elapsed time is reset to 0 on RPC
- *                             timeout
- * \param[in] crf              pointer to the request format, which
- *                             describe the request format and provide
- *                             callback to pack/unpack each items in the
- *                             request.
- * \param[in] rpc_handler      pointer to RPC handler which will be triggered
- *                             when RPC request opcode associated with rpc_name
- *                             is received. Will return -DER_INVAL if pass in
- *                             NULL rpc_handler.
- *
- * \return                     DER_SUCCESS on success, negative value if error
- */
-int
-crt_rpc_srv_register(crt_opcode_t opc, uint32_t flags,
-		     struct crt_req_format *crf,
-		     crt_rpc_cb_t rpc_handler);
 
 /******************************************************************************
  * CRT bulk APIs.
