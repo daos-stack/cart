@@ -88,15 +88,15 @@ fa_op_rec_free(struct d_hash_table *htab, d_list_t *rlink)
 	D_FREE(ht_rec);
 }
 
-//static bool
-//fa_op_rec_decref(struct d_hash_table *htab, d_list_t *rlink)
-//{
-//	return true;
-//}
+static bool
+fa_op_rec_decref(struct d_hash_table *htab, d_list_t *rlink)
+{
+	return true;
+}
 
 static d_hash_table_ops_t fa_table_ops = {
 	.hop_key_cmp	= fa_op_key_cmp,
-//	.hop_rec_decref	= fa_op_rec_decref,
+	.hop_rec_decref	= fa_op_rec_decref,
 	.hop_rec_free	= fa_op_rec_free,
 };
 
