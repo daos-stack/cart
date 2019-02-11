@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2019 Intel Corporation
+/* Copyright (C) 2019 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,9 +16,9 @@
  *    code must carry prominent notices stating that the original code was
  *    changed and the date of the change.
  *
- *  4. All publications or advertising materials mentioning features or use of
- *     this software are asked, but not required, to acknowledge that it was
- *     developed by Intel Corporation and credit the contributors.
+ * 4. All publications or advertising materials mentioning features or use of
+ *    this software are asked, but not required, to acknowledge that it was
+ *    developed by Intel Corporation and credit the contributors.
  *
  * 5. Neither the name of Intel Corporation, nor the name of any Contributor
  *    may be used to endorse or promote products derived from this software
@@ -36,49 +36,89 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /**
- * This file is part of CaRT. It it the common header file which be included by
- * all other .c files of CaRT.
+ * This file is part of CaRT testing.
  */
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+#include <time.h>
 
-#ifndef __CRT_INTERNAL_H__
-#define __CRT_INTERNAL_H__
+#include <cmocka.h>
 
-#include "crt_debug.h"
+#include "../cart/crt_hlc.h"
 
-#include <gurt/common.h>
-#include <gurt/fault_inject.h>
-#include <cart/api.h>
+#define COUNT 32000
 
-#include "crt_hg.h"
-#include "crt_internal_types.h"
-#include "crt_internal_fns.h"
-#include "crt_rpc.h"
-#include "crt_group.h"
-#include "crt_tree.h"
-#include "crt_self_test.h"
-#include "crt_ctl.h"
-#include "crt_swim.h"
-#include "crt_hlc.h"
+static uint64_t last;
 
-#include "crt_pmix.h"
-#include "crt_lm.h"
+static void
+test_hlc_send(void **state)
+{
+	uint64_t time = last;
+	int i, rc = 0;
 
-/* A wrapper around D_TRACE_DEBUG that ensures the ptr option is a RPC */
-#define RPC_TRACE(mask, rpc, fmt, ...)					\
-	do {								\
-		/* no-op statement that type-checks the rpc pointer */	\
-		if (false && (rpc)->crp_refcount)			\
-			;						\
-		D_TRACE_DEBUG(mask, rpc, fmt,  ## __VA_ARGS__);		\
-	} while (0)
+	for (i = 0; i < COUNT; i++) {
+		rc = crt_hlc_send(&time);
+		assert_int_equal(rc, 0);
+		assert_true(last < time);
+		last = time;
+		if (i == 9)
+			sleep(1);
+	}
+}
 
-/* Log an error with a RPC descriptor */
-#define RPC_ERROR(rpc, fmt, ...)					\
-	do {								\
-		/* no-op statement that type-checks the rpc pointer */	\
-		if (false && (rpc)->crp_refcount)			\
-			;						\
-		D_TRACE_ERROR(rpc, fmt,  ## __VA_ARGS__);		\
-	} while (0)
+static void
+test_hlc_receive(void **state)
+{
+	uint64_t time = last, time2 = last;
+	int i, rc = 0;
 
-#endif /* __CRT_INTERNAL_H__ */
+	for (i = 0; i < COUNT; i++) {
+		if (i % 5 == 1)
+			time2 = time + 0x100;
+		else if (i % 5 == 2)
+			time2 = time - 0x100;
+		else
+			time2 = time + (i % 3);
+		rc = crt_hlc_receive(&time, time2);
+		assert_int_equal(rc, 0);
+		assert_true(time2 < time);
+		assert_true(last < time);
+		last = time;
+		if (i == 9)
+			sleep(1);
+	}
+}
+
+static int
+init_tests(void **state)
+{
+	unsigned int seed;
+
+	/* Seed the random number generator once per test run */
+	seed = time(NULL);
+	fprintf(stdout, "Seeding this test run with seed=%u\n", seed);
+	srand(seed);
+
+	return 0;
+}
+
+static int
+fini_tests(void **state)
+{
+	return 0;
+}
+
+
+int main(int argc, char **argv)
+{
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test(test_hlc_send),
+		cmocka_unit_test(test_hlc_receive),
+	};
+
+	return cmocka_run_group_tests(tests, init_tests, fini_tests);
+}

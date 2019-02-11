@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2019 Intel Corporation
+/* Copyright (C) 2019 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,9 +16,9 @@
  *    code must carry prominent notices stating that the original code was
  *    changed and the date of the change.
  *
- *  4. All publications or advertising materials mentioning features or use of
- *     this software are asked, but not required, to acknowledge that it was
- *     developed by Intel Corporation and credit the contributors.
+ * 4. All publications or advertising materials mentioning features or use of
+ *    this software are asked, but not required, to acknowledge that it was
+ *    developed by Intel Corporation and credit the contributors.
  *
  * 5. Neither the name of Intel Corporation, nor the name of any Contributor
  *    may be used to endorse or promote products derived from this software
@@ -36,49 +36,78 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /**
- * This file is part of CaRT. It it the common header file which be included by
- * all other .c files of CaRT.
+ * This file is part of CaRT. Hybrid Logical Clock (HLC) implementation.
  */
-
-#ifndef __CRT_INTERNAL_H__
-#define __CRT_INTERNAL_H__
-
-#include "crt_debug.h"
-
-#include <gurt/common.h>
-#include <gurt/fault_inject.h>
-#include <cart/api.h>
-
-#include "crt_hg.h"
-#include "crt_internal_types.h"
-#include "crt_internal_fns.h"
-#include "crt_rpc.h"
-#include "crt_group.h"
-#include "crt_tree.h"
-#include "crt_self_test.h"
-#include "crt_ctl.h"
-#include "crt_swim.h"
 #include "crt_hlc.h"
+#include <mercury_atomic.h>
+#include <time.h>
 
-#include "crt_pmix.h"
-#include "crt_lm.h"
+#define CRT_HLC_MASK 0xFFFF
 
-/* A wrapper around D_TRACE_DEBUG that ensures the ptr option is a RPC */
-#define RPC_TRACE(mask, rpc, fmt, ...)					\
-	do {								\
-		/* no-op statement that type-checks the rpc pointer */	\
-		if (false && (rpc)->crp_refcount)			\
-			;						\
-		D_TRACE_DEBUG(mask, rpc, fmt,  ## __VA_ARGS__);		\
-	} while (0)
+static hg_atomic_int64_t crt_hlc = HG_ATOMIC_VAR_INIT(0);
 
-/* Log an error with a RPC descriptor */
-#define RPC_ERROR(rpc, fmt, ...)					\
-	do {								\
-		/* no-op statement that type-checks the rpc pointer */	\
-		if (false && (rpc)->crp_refcount)			\
-			;						\
-		D_TRACE_ERROR(rpc, fmt,  ## __VA_ARGS__);		\
-	} while (0)
+uint64_t crt_hlc_get_last(void)
+{
+	return hg_atomic_get64(&crt_hlc);
+}
 
-#endif /* __CRT_INTERNAL_H__ */
+static inline int crt_hlc_gettime(uint64_t *time)
+{
+	struct timespec now;
+	int		rc;
+
+	rc = clock_gettime(CLOCK_REALTIME, &now);
+	if (rc)
+		return rc;
+
+	*time = (uint64_t)(now.tv_sec * 1e9 + now.tv_nsec) & ~CRT_HLC_MASK;
+
+	return 0;
+}
+
+int crt_hlc_send(uint64_t *time)
+{
+	uint64_t pt, hlc, new;
+	int	 rc;
+
+	rc = crt_hlc_gettime(&pt);
+	if (rc)
+		return rc;
+
+	do {
+		hlc = hg_atomic_get64(&crt_hlc);
+		new = (hlc & ~CRT_HLC_MASK) < pt ? pt : hlc + 1;
+	} while (!hg_atomic_cas64(&crt_hlc, hlc, new));
+
+	if (time != NULL)
+		*time = new;
+
+	return 0;
+}
+
+int crt_hlc_receive(uint64_t *time, uint64_t msg)
+{
+	uint64_t pt, hlc, new, ml = msg & ~CRT_HLC_MASK;
+	int	 rc;
+
+	rc = crt_hlc_gettime(&pt);
+	if (rc)
+		return rc;
+
+	do {
+		hlc = hg_atomic_get64(&crt_hlc);
+		if ((hlc & ~CRT_HLC_MASK) < ml)
+			new = ml < pt ? pt : msg + 1;
+		else if ((hlc & ~CRT_HLC_MASK) < pt)
+			new = pt;
+		else if (pt <= ml)
+			new = (hlc < msg ? msg : hlc) + 1;
+		else
+			new = hlc + 1;
+	} while (!hg_atomic_cas64(&crt_hlc, hlc, new));
+
+	if (time != NULL)
+		*time = new;
+
+	return 0;
+}

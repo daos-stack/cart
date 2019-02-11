@@ -408,6 +408,26 @@ crt_reply_get(crt_rpc_t *rpc)
 }
 
 /**
+ * Return HLC timestamp of RPC was sent
+ *
+ * \param[in] req              pointer to RPC request
+ *
+ * \return                     HLC timestamp
+ */
+uint64_t
+crt_hlc_send_get(crt_rpc_t *req);
+
+/**
+ * Return HLC timestamp of RPC (new or reply) was received
+ *
+ * \param[in] req              pointer to RPC request
+ *
+ * \return                     HLC timestamp
+ */
+uint64_t
+crt_hlc_receive_get(crt_rpc_t *req);
+
+/**
  * Abort an RPC request.
  *
  * \param[in] req              pointer to RPC request

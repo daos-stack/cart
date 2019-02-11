@@ -38,7 +38,7 @@
 
 import os
 
-TEST_SRC = ['test_gurt_v1.c', 'test_linkage.cpp', 'test_gurt.c']
+TEST_SRC = ['test_gurt_v1.c', 'test_linkage.cpp', 'test_gurt.c', 'utest_hlc.c']
 WRAPPERS = {'test_linkage.cpp':['PMIx_Init', 'PMIx_Get',
                                 'PMIx_Publish', 'PMIx_Lookup',
                                 'PMIx_Fence', 'PMIx_Unpublish',
@@ -69,7 +69,7 @@ def scons():
         return
 
     test_env = env.Clone()
-    prereqs.require(test_env, "pmix", "mercury", "uuid", "cmocka")
+    prereqs.require(test_env, "pmix", "mercury", "openpa", "uuid", "cmocka")
     test_env.AppendUnique(LIBS=['pthread'])
     test_env.AppendUnique(CPPPATH=['../include'])
     test_env.AppendUnique(CXXFLAGS=['-std=c++0x'])

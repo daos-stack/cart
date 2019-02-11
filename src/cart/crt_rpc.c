@@ -1269,6 +1269,30 @@ out:
 	return rc;
 }
 
+uint64_t
+crt_hlc_send_get(crt_rpc_t *req)
+{
+	struct crt_rpc_priv	*rpc_priv;
+
+	D_ASSERT(req != NULL);
+
+	rpc_priv = container_of(req, struct crt_rpc_priv, crp_pub);
+
+	return rpc_priv->crp_req_hdr.cch_hlc;
+}
+
+uint64_t
+crt_hlc_receive_get(crt_rpc_t *req)
+{
+	struct crt_rpc_priv	*rpc_priv;
+
+	D_ASSERT(req != NULL);
+
+	rpc_priv = container_of(req, struct crt_rpc_priv, crp_pub);
+
+	return rpc_priv->crp_reply_hdr.cch_hlc;
+}
+
 static void
 crt_rpc_inout_buff_fini(struct crt_rpc_priv *rpc_priv)
 {

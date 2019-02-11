@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2019 Intel Corporation
+/* Copyright (C) 2019 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,9 +16,9 @@
  *    code must carry prominent notices stating that the original code was
  *    changed and the date of the change.
  *
- *  4. All publications or advertising materials mentioning features or use of
- *     this software are asked, but not required, to acknowledge that it was
- *     developed by Intel Corporation and credit the contributors.
+ * 4. All publications or advertising materials mentioning features or use of
+ *    this software are asked, but not required, to acknowledge that it was
+ *    developed by Intel Corporation and credit the contributors.
  *
  * 5. Neither the name of Intel Corporation, nor the name of any Contributor
  *    may be used to endorse or promote products derived from this software
@@ -36,49 +36,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /**
- * This file is part of CaRT. It it the common header file which be included by
- * all other .c files of CaRT.
+ * This file is part of CaRT. It's the header for crt_hlc.c.
  */
 
-#ifndef __CRT_INTERNAL_H__
-#define __CRT_INTERNAL_H__
+#ifndef __CRT_HLC_H__
+#define __CRT_HLC_H__
 
-#include "crt_debug.h"
+#include <stdint.h>
 
-#include <gurt/common.h>
-#include <gurt/fault_inject.h>
-#include <cart/api.h>
+uint64_t crt_hlc_get_last(void);
+int crt_hlc_send(uint64_t *time);
+int crt_hlc_receive(uint64_t *time, uint64_t msg);
 
-#include "crt_hg.h"
-#include "crt_internal_types.h"
-#include "crt_internal_fns.h"
-#include "crt_rpc.h"
-#include "crt_group.h"
-#include "crt_tree.h"
-#include "crt_self_test.h"
-#include "crt_ctl.h"
-#include "crt_swim.h"
-#include "crt_hlc.h"
-
-#include "crt_pmix.h"
-#include "crt_lm.h"
-
-/* A wrapper around D_TRACE_DEBUG that ensures the ptr option is a RPC */
-#define RPC_TRACE(mask, rpc, fmt, ...)					\
-	do {								\
-		/* no-op statement that type-checks the rpc pointer */	\
-		if (false && (rpc)->crp_refcount)			\
-			;						\
-		D_TRACE_DEBUG(mask, rpc, fmt,  ## __VA_ARGS__);		\
-	} while (0)
-
-/* Log an error with a RPC descriptor */
-#define RPC_ERROR(rpc, fmt, ...)					\
-	do {								\
-		/* no-op statement that type-checks the rpc pointer */	\
-		if (false && (rpc)->crp_refcount)			\
-			;						\
-		D_TRACE_ERROR(rpc, fmt,  ## __VA_ARGS__);		\
-	} while (0)
-
-#endif /* __CRT_INTERNAL_H__ */
+#endif /* __CRT_HLC_H__ */
