@@ -173,6 +173,10 @@ static void *progress_thread(void *arg)
 		sched_yield();
 	} while (1);
 
+	if (rc != 0 && rc != -DER_TIMEDOUT) {
+		fprintf(stderr, "crt_progress failed rc: %d.\n", rc);	
+	}
+
 	D_ASSERT(rc == 0 || rc == -DER_TIMEDOUT);
 	fprintf(stderr, "progress_thread: progress thread exit ...\n");
 
