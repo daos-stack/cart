@@ -339,12 +339,18 @@ CRT_RPC_DECLARE(crt_grp_destroy, CRT_ISEQ_GRP_DESTROY, CRT_OSEQ_GRP_DESTROY)
 
 CRT_RPC_DECLARE(crt_uri_lookup, CRT_ISEQ_URI_LOOKUP, CRT_OSEQ_URI_LOOKUP)
 
+/*
+ * Note that for these non-empty send structures the session_id is always
+ * the first value. This allows the session to be retrieved without knowing
+ * what the rest of the structure contains
+ */
+
 #define CRT_ISEQ_ST_SEND_ID	/* input fields */		 \
 	((uint64_t)		(unused1)		CRT_VAR)
 
 #define CRT_ISEQ_ST_SEND_ID_IOV	/* input fields */		 \
-	((uint64_t)		(unused1)		CRT_VAR) \
-	((d_iov_t)		(unused2)		CRT_VAR)
+	((int64_t)		(session_id)		CRT_VAR) \
+	((d_iov_t)		(buf)			CRT_VAR)
 
 #define CRT_ISEQ_ST_SEND_ID_IOV_BULK /* input fields */		 \
 	((uint64_t)		(unused1)		CRT_VAR) \

@@ -315,7 +315,7 @@ static void close_sessions(void)
 static void send_next_rpc(struct st_cb_args *cb_args, int skip_inc_complete)
 {
 	crt_rpc_t		*new_rpc;
-	void			*args = NULL;
+	void			*args;
 	crt_endpoint_t		 local_endpt = {0};
 	struct st_test_endpt	*endpt_ptr;
 	crt_opcode_t		 opcode;
@@ -435,8 +435,7 @@ static void send_next_rpc(struct st_cb_args *cb_args, int skip_inc_complete)
 		case CRT_OPC_SELF_TEST_SEND_IOV_REPLY_EMPTY:
 		case CRT_OPC_SELF_TEST_BOTH_IOV:
 			{
-				struct crt_st_send_id_iov *typed_args =
-					(struct crt_st_send_id_iov *)args;
+				struct crt_st_both_iov_in *typed_args = args;
 
 				D_ASSERT(cb_args->buf_len >= g_data->send_size);
 				d_iov_set(&typed_args->buf,
@@ -447,8 +446,7 @@ static void send_next_rpc(struct st_cb_args *cb_args, int skip_inc_complete)
 			break;
 		case CRT_OPC_SELF_TEST_SEND_IOV_REPLY_BULK:
 			{
-				struct crt_st_send_id_iov_bulk *typed_args =
-					(struct crt_st_send_id_iov_bulk *)args;
+				struct crt_st_send_id_iov_bulk *typed_args = args;
 
 				D_ASSERT(cb_args->buf_len >= g_data->send_size);
 				d_iov_set(&typed_args->buf,
@@ -462,8 +460,7 @@ static void send_next_rpc(struct st_cb_args *cb_args, int skip_inc_complete)
 		case CRT_OPC_SELF_TEST_SEND_BULK_REPLY_IOV:
 		case CRT_OPC_SELF_TEST_BOTH_BULK:
 			{
-				struct crt_st_send_id_bulk *typed_args =
-					(struct crt_st_send_id_bulk *)args;
+				struct crt_st_send_id_bulk *typed_args = args;
 
 				typed_args->bulk_hdl = cb_args->bulk_hdl;
 				D_ASSERT(typed_args->bulk_hdl != CRT_BULK_NULL);

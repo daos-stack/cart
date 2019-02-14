@@ -194,17 +194,6 @@ enum crt_st_status {
 	CRT_ST_STATUS_TEST_COMPLETE_WITH_ERRORS = 1,
 };
 
-/*
- * Note that for these non-empty send structures the session_id is always
- * the first value. This allows the session to be retrieved without knowing
- * what the rest of the structure contains
- */
-
-struct crt_st_send_id_iov {
-	int64_t		session_id;
-	d_iov_t		buf;
-};
-
 struct crt_st_send_id_iov_bulk {
 	int64_t		session_id;
 	d_iov_t		buf;
