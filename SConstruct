@@ -1,5 +1,6 @@
 # Copyright (C) 2016-2019 Intel Corporation
 # All rights reserved.
+# test patch
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted for any purpose (including commercial purposes)
