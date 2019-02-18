@@ -58,7 +58,7 @@ int __wrap_PMIx_Unpublish(char **keys, const pmix_info_t info[], size_t ninfo);
 void __wrap_PMIx_Register_event_handler(pmix_status_t codes[], size_t ncodes,
 					pmix_info_t info[], size_t ninfo,
 					pmix_notification_fn_t evhdlr,
-					pmix_evhdlr_reg_cbfunc_t cbfunc,
+					pmix_hdlr_reg_cbfunc_t cbfunc,
 					void *cbdata);
 
 #define expect_pmix_get(type, value)                        \
