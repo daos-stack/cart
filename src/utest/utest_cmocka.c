@@ -60,11 +60,14 @@ __wrap_PMIx_Unpublish(char **keys, const pmix_info_t info[], size_t ninfo)
 	return PMIX_SUCCESS;
 }
 
+/* Use void * for cbfuc as the type has changed, and as void * aliases to
+ * anything this allows the code to be version agnostic
+ */
 void
 __wrap_PMIx_Register_event_handler(pmix_status_t codes[], size_t ncodes,
 				   pmix_info_t info[], size_t ninfo,
 				   pmix_notification_fn_t evhdlr,
-				   pmix_evhdlr_reg_cbfunc_t cbfunc,
+				   void *cbfunc,
 				   void *cbdata)
 {
 }
