@@ -63,8 +63,8 @@ struct test_t {
 	char			*t_target_group_name;
 	int			 t_is_service;
 	uint32_t		 t_is_client,
-				 t_hold:1,
-				 t_shutdown:1;
+				 t_hold:1;
+	uint32_t		 t_shutdown;
 	uint32_t		 t_holdtime;
 	uint32_t		 t_my_rank;
 	uint32_t		 t_my_group_size;
@@ -157,18 +157,19 @@ test_parse_args(int argc, char **argv)
 
 static void *progress_thread(void *arg)
 {
-	int			rc;
-	crt_context_t		crt_ctx;
+	volatile uint32_t	*shut_down = &test.t_shutdown;
+	crt_context_t		 crt_ctx;
+	int			 rc;
 
 	crt_ctx = (crt_context_t) arg;
 	do {
 		rc = crt_progress(crt_ctx, 1, NULL, NULL);
 		if (rc != 0 && rc != -DER_TIMEDOUT) {
 			D_ERROR("crt_progress failed rc: %d.\n", rc);
-			break;
+			/* continue calling progress on error */
 		}
 
-		if (test.t_shutdown == 1)
+		if (*shut_down == 1)
 			break;
 		sched_yield();
 	} while (1);
@@ -208,16 +209,11 @@ corpc_ver_mismatch_hdlr(crt_rpc_t *rpc_req)
 static void
 test_shutdown_hdlr(crt_rpc_t *rpc_req)
 {
-	int		rc = 0;
-
 	fprintf(stderr, "rpc err server received shutdown request, "
 		"opc: 0x%x.\n", rpc_req->cr_opc);
 	D_ASSERTF(rpc_req->cr_input == NULL, "RPC request has invalid input\n");
 	D_ASSERTF(rpc_req->cr_output == NULL, "RPC request output is NULL\n");
 
-	rc = crt_reply_send(rpc_req);
-	D_ASSERT(rc == 0);
-	printf("rpc err server sent shutdown response.\n");
 	test.t_shutdown = 1;
 	fprintf(stderr, "server set shutdown flag.\n");
 }
@@ -606,7 +602,8 @@ test_init(void)
 				    corpc_ver_mismatch_hdlr,
 				    &corpc_ver_mismatch_ops);
 	D_ASSERTF(rc == 0, "crt_rpc_srv_register() failed, rc: %d\n", rc);
-	rc = crt_rpc_srv_register(TEST_OPC_SHUTDOWN, 0, NULL,
+	rc = crt_rpc_srv_register(TEST_OPC_SHUTDOWN,
+				  CRT_RPC_FEAT_NO_REPLY, NULL,
 				  test_shutdown_hdlr);
 	D_ASSERTF(rc == 0, "crt_rpc_srv_register() failed, rc: %d\n", rc);
 
