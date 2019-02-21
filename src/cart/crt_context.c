@@ -1362,6 +1362,7 @@ crt_context_set_timeout(crt_context_t crt_ctx, uint32_t timeout_sec)
 
 	if (crt_ctx == CRT_CONTEXT_NULL) {
 		D_ERROR("NULL context passed\n");
+
 		D_GOTO(exit, rc = -DER_INVAL);
 	}
 
