@@ -108,11 +108,4 @@ if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
   python3 test_runner "${JENKINS_TEST_LIST[@]}"
 
   popd
-  RESULTS="valgrind_results"
-  if [[ ! -e ${RESULTS} ]]; then mkdir ${RESULTS}; fi
-
-  # Recursive copy to results, including all directories and matching files,
-  # but pruning empty directories from the tree.
-  rsync -rm --include="*/" --include="valgrind*xml" "--exclude=*" ${TESTDIR} ${RESULTS}
-
 fi
