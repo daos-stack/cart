@@ -71,6 +71,8 @@ struct crt_ivns_id {
 
 /* Structure for storing/passing of global namespace */
 struct crt_global_ns {
+
+/* ALEX: test2 */
 	/* Namespace ID */
 	struct crt_ivns_id	gn_ivns_id;
 	/* Number of classes for this namespace; used for sanity check */
