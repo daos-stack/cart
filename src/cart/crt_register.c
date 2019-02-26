@@ -999,7 +999,7 @@ crt_proto_query(crt_endpoint_t *tgt_ep, crt_opcode_t base_opc,
 	memcpy(tmp_array, ver, sizeof(tmp_array[0])*count);
 
 	/* set input */
-	d_iov_set(&rpc_req_input->pq_ver, tmp_array, sizeof(*ver) * count);
+	d_iov_set_safe(&rpc_req_input->pq_ver, tmp_array, sizeof(*ver) * count);
 	rpc_req_input->pq_ver_count = count;
 	rpc_req_input->pq_base_opc = base_opc;
 

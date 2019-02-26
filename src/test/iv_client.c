@@ -357,7 +357,7 @@ test_iv_update(struct iv_key_struct *key, char *str_value, bool value_is_hex,
 	prepare_rpc_request(g_crt_ctx, RPC_TEST_UPDATE_IV, &g_server_ep,
 			    (void **)&input, &rpc_req);
 	d_iov_set(&input->iov_key, key, sizeof(struct iv_key_struct));
-	d_iov_set(&input->iov_sync, sync, sizeof(crt_iv_sync_t));
+	d_iov_set_safe(&input->iov_sync, sync, sizeof(crt_iv_sync_t));
 
 	if (value_is_hex) {
 		rc = unpack_hex_string_inplace(str_value, &len);
