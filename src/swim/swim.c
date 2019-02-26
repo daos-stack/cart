@@ -43,6 +43,38 @@
 
 static uint64_t swim_ping_timeout = SWIM_PING_TIMEOUT;
 
+static inline void
+swim_dump_updates(swim_id_t self_id, swim_id_t from, swim_id_t to,
+		  struct swim_member_update *upds, size_t nupds)
+{
+	FILE *fp;
+	char *msg;
+	size_t msg_size, i;
+	int rc;
+
+	if (!D_LOG_ENABLED(DLOG_INFO))
+		return;
+
+	fp = open_memstream(&msg, &msg_size);
+	if (fp != NULL) {
+		for (i = 0; i < nupds; i++) {
+			rc = fprintf(fp, " {%lu %c %lu}", upds[i].smu_id,
+				     "ASD"[upds[i].smu_state.sms_status],
+				     upds[i].smu_state.sms_incarnation);
+			if (rc < 0)
+				break;
+		}
+
+		fclose(fp);
+		/* msg and msg_size will be set after fclose(fp) only */
+		if (msg_size > 0)
+			SWIM_INFO("%lu %s %lu:%s\n", self_id,
+				  self_id == from ? "=>" : "<=",
+				  self_id == from ? to   : from, msg);
+		free(msg); /* allocated by open_memstream() */
+	}
+}
+
 static int
 swim_updates_send(struct swim_context *ctx, swim_id_t id, swim_id_t to)
 {
@@ -118,8 +150,10 @@ swim_updates_send(struct swim_context *ctx, swim_id_t id, swim_id_t to)
 out_unlock:
 	swim_ctx_unlock(ctx);
 
-	if (rc == 0)
+	if (rc == 0) {
+		swim_dump_updates(self_id, self_id, to, upds, i);
 		rc = ctx->sc_ops->send_message(ctx, to, upds, i);
+	}
 
 	if (rc)
 		D_FREE(upds);
@@ -720,6 +754,8 @@ swim_parse_message(struct swim_context *ctx, swim_id_t from,
 	if (self_id == SWIM_ID_INVALID) /* not initialized yet */
 		return 0; /* Ignore this update */
 
+	swim_dump_updates(self_id, from, self_id, upds, nupds);
+
 	swim_ctx_lock(ctx);
 	ctx_state = swim_state_get(ctx);
 
@@ -727,10 +763,6 @@ swim_parse_message(struct swim_context *ctx, swim_id_t from,
 		ctx_state = SCS_ACKED;
 
 	for (i = 0; i < nupds; i++) {
-		SWIM_INFO("%lu: update: %lu %c %lu\n", self_id, upds[i].smu_id,
-			  "ASD"[upds[i].smu_state.sms_status],
-			  upds[i].smu_state.sms_incarnation);
-
 		if (to == SWIM_ID_INVALID)
 			to = upds[i].smu_id; /* save first index from update */
 
