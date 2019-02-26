@@ -506,6 +506,18 @@ d_time2s(struct timespec t)
 	return (double) t.tv_sec + (double) t.tv_nsec / 1e9;
 }
 
+static inline bool
+is_on_stack(void *ptr)
+{
+	int local_var;
+
+	if ((uintptr_t)&local_var < (uintptr_t)ptr &&
+	    ((uintptr_t)&local_var + 100) > (uintptr_t)ptr)
+		return true;
+	return false;
+}
+
+
 static inline void
 d_iov_set_safe(d_iov_t *iov, void *buf, size_t size)
 {
