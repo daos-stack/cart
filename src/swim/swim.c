@@ -746,12 +746,12 @@ swim_parse_message(struct swim_context *ctx, swim_id_t from,
 	enum swim_context_state ctx_state;
 	struct swim_member_state self_state;
 	swim_id_t self_id = swim_self_get(ctx);
-	swim_id_t id_target, id_sendto, to = SWIM_ID_INVALID;
+	swim_id_t id_target, id_sendto, to;
 	bool send_updates = false;
 	size_t i;
 	int rc = 0;
 
-	if (self_id == SWIM_ID_INVALID) /* not initialized yet */
+	if (self_id == SWIM_ID_INVALID || nupds == 0) /* not initialized yet */
 		return 0; /* Ignore this update */
 
 	swim_dump_updates(self_id, from, self_id, upds, nupds);
@@ -762,10 +762,8 @@ swim_parse_message(struct swim_context *ctx, swim_id_t from,
 	if (ctx_state == SCS_DPINGED && from == ctx->sc_target)
 		ctx_state = SCS_ACKED;
 
+	to = upds[0].smu_id; /* save first index from update */
 	for (i = 0; i < nupds; i++) {
-		if (to == SWIM_ID_INVALID)
-			to = upds[i].smu_id; /* save first index from update */
-
 		switch (upds[i].smu_state.sms_status) {
 		case SWIM_MEMBER_ALIVE:
 			/* ignore alive updates for self */
@@ -847,7 +845,6 @@ swim_parse_message(struct swim_context *ctx, swim_id_t from,
 				id_target = to;
 				id_sendto = item->si_from;
 				send_updates = true;
-
 				SWIM_INFO("%lu: iresp %lu => %lu\n",
 					  self_id, id_target, id_sendto);
 
@@ -858,7 +855,22 @@ swim_parse_message(struct swim_context *ctx, swim_id_t from,
 			}
 		}
 	} else { /* iping request or response */
-		if (to != ctx->sc_target) {
+		if (to != ctx->sc_target &&
+		    upds[0].smu_state.sms_status == SWIM_MEMBER_SUSPECT) {
+			/* send dping request to iping target */
+			id_target = to;
+			id_sendto = to;
+			send_updates = true;
+
+			/* looking if sent already */
+			TAILQ_FOREACH(item, &ctx->sc_ipings, si_link) {
+				if (item->si_id == to) {
+					/* don't send a second time */
+					send_updates = false;
+					break;
+				}
+			}
+
 			D_ALLOC_PTR(item);
 			if (item != NULL) {
 				item->si_id   = to;
@@ -867,15 +879,10 @@ swim_parse_message(struct swim_context *ctx, swim_id_t from,
 						    + swim_ping_timeout;
 				TAILQ_INSERT_TAIL(&ctx->sc_ipings, item,
 						  si_link);
-
-				/* send dping request to iping target */
-				id_target = to;
-				id_sendto = to;
-				send_updates = true;
-
 				SWIM_INFO("%lu: iping %lu => %lu\n",
-					  self_id, from, id_sendto);
+					  self_id, from, to);
 			} else {
+				send_updates = false;
 				rc = -ENOMEM;
 			}
 		}
@@ -884,10 +891,32 @@ swim_parse_message(struct swim_context *ctx, swim_id_t from,
 	swim_state_set(ctx, ctx_state);
 	swim_ctx_unlock(ctx);
 
-	if (send_updates) {
+	while (send_updates) {
 		rc = swim_updates_send(ctx, id_target, id_sendto);
 		if (rc)
 			SWIM_ERROR("swim_updates_send() failed rc=%d\n", rc);
+
+		send_updates = false;
+		if (to != self_id && to == from) { /* dping response */
+			/* forward this dping response to appropriate target */
+			swim_ctx_lock(ctx);
+			TAILQ_FOREACH(item, &ctx->sc_ipings, si_link) {
+				if (item->si_id == from) {
+					id_target = to;
+					id_sendto = item->si_from;
+					send_updates = true;
+					SWIM_INFO("%lu: iresp %lu => %lu\n",
+						  self_id, id_target,
+						  id_sendto);
+
+					TAILQ_REMOVE(&ctx->sc_ipings, item,
+						     si_link);
+					D_FREE(item);
+					break;
+				}
+			}
+			swim_ctx_unlock(ctx);
+		}
 	}
 out:
 	return rc;
