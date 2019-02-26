@@ -41,6 +41,8 @@
 #include "swim_internal.h"
 #include <assert.h>
 
+static uint64_t swim_ping_timeout = SWIM_PING_TIMEOUT;
+
 static int
 swim_updates_send(struct swim_context *ctx, swim_id_t id, swim_id_t to)
 {
@@ -183,6 +185,11 @@ update:
 		if (item->si_id == id) {
 			/* remove this member from suspect list */
 			TAILQ_REMOVE(&ctx->sc_suspects, item, si_link);
+			if (swim_ping_timeout < SWIM_PROTOCOL_PERIOD_LEN) {
+				swim_ping_timeout += SWIM_PING_TIMEOUT;
+				SWIM_INFO("%lu: increase ping timeout to %lu\n",
+					  ctx->sc_self, swim_ping_timeout);
+			}
 			D_FREE(item);
 			break;
 		}
@@ -313,7 +320,7 @@ swim_member_update_suspected(struct swim_context *ctx, uint64_t now)
 				from = item->si_from;
 
 				item->si_from = self_id;
-				item->u.si_deadline += SWIM_PING_TIMEOUT;
+				item->u.si_deadline += swim_ping_timeout;
 
 				D_ALLOC_PTR(item);
 				if (item == NULL)
@@ -572,7 +579,7 @@ swim_progress(struct swim_context *ctx, int64_t timeout)
 					 ctx->sc_self, ctx->sc_self, id_sendto);
 
 				ctx->sc_dping_deadline = now
-							+ SWIM_PING_TIMEOUT;
+							+ swim_ping_timeout;
 				ctx_state = SCS_DPINGED;
 			}
 			break;
@@ -661,7 +668,7 @@ swim_progress(struct swim_context *ctx, int64_t timeout)
 				item = TAILQ_FIRST(&ctx->sc_subgroup);
 				if (item == NULL) {
 					ctx->sc_iping_deadline = now
-							+ 2 * SWIM_PING_TIMEOUT;
+							+ 2 * swim_ping_timeout;
 					ctx_state = SCS_IPINGED;
 				}
 				break;
@@ -825,7 +832,7 @@ swim_parse_message(struct swim_context *ctx, swim_id_t from,
 				item->si_id   = to;
 				item->si_from = from;
 				item->u.si_deadline = swim_now_ms()
-						    + SWIM_PING_TIMEOUT;
+						    + swim_ping_timeout;
 				TAILQ_INSERT_TAIL(&ctx->sc_ipings, item,
 						  si_link);
 
