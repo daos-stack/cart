@@ -76,6 +76,7 @@ RUN useradd -u $UID -ms /bin/bash $USER
 RUN echo "$USER:$PASSWD" | chpasswd
 
 # Create a writeable temp area
+RUN mkdir /tmpfs
 RUN mount -t tmpfs -o size=10G,nr_inodes=10k,mode=700 tmpfs /tmpfs
 RUN mkdir /tmpfs/cart
 RUN chown cart.cart /tmpfs/cart
