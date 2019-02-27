@@ -159,6 +159,7 @@ pipeline {
                         }
                     }
                     steps {
+		        sh """df -h"""
                         sconsBuild clean: "_build.external${arch}"
                         // this really belongs in the test stage CORCI-530
                         sh '''scons utest --utest-mode=memcheck
