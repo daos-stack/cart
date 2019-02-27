@@ -159,7 +159,7 @@ pipeline {
                         }
                     }
                     steps {
-		        script: """df -h
+		        sh """df -h
                           CDIR=`pwd`
 cd /tmpfs/cart
 git clone $CDIR/scons_local .
