@@ -777,7 +777,8 @@ crt_req_uri_lookup_psr(struct crt_rpc_priv *rpc_priv, crt_cb_t complete_cb,
 }
 
 /* Fill rpc_priv->crp_hg_addr field based on local cache contents */
-static int crt_lc_hg_addr_fill(struct crt_rpc_priv *rpc_priv)
+static int
+crt_lc_hg_addr_fill(struct crt_rpc_priv *rpc_priv)
 {
 	struct crt_grp_priv	*grp_priv;
 	crt_rpc_t		*req;
