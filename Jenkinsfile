@@ -159,7 +159,14 @@ pipeline {
                         }
                     }
                     steps {
-		        sh """df -h"""
+		        script """df -h
+CDIR=`pwd`
+cd /tmpfs/cart
+git clone $CDIR/scons_local .
+cd scons_local
+scons --build-deps=yes TARGET_PREFIX=../pre-built REQUIRES=ompi
+cd -
+scons PREBUILT_PREFIX=/tmpfs/carc/pre-built"""
                         sconsBuild clean: "_build.external${arch}"
                         // this really belongs in the test stage CORCI-530
                         sh '''scons utest --utest-mode=memcheck

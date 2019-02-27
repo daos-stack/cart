@@ -50,7 +50,6 @@ ARG NOBUILD
 ARG UID=1000
 ARG DONT_USE_RPMS=true
 
-
 # for good measure, clean the metadata
 RUN yum clean metadata
 
@@ -87,6 +86,11 @@ WORKDIR /home/$USER/cart
 # Build CaRT & dependencies
 RUN if [ "x$NOBUILD" = "x" ] ; then git submodule init && git submodule update; fi
 RUN if [ "x$NOBUILD" = "x" ] ; then scons --build-deps=yes USE_INSTALLED=all install; fi
+
+# Create a writeable temp area
+RUN mount -t tmpfs -o size=10G,nr_inodes=10k,mode=700 tmpfs /tmpfs
+RUN mkdir /tmpfs/cart
+RUN chown cart.cart /tmpfs/cart
 
 # Set environment variables
 ENV PATH=/home/cart/cart/install/bin:$PATH
