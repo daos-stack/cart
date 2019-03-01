@@ -54,7 +54,7 @@ def singleNodeTest() {
                        NODELIST=$nodelist
                        NODE=\${NODELIST%%,*}
                        trap 'set +e; set -x; ssh -i ci_key jenkins@\$NODE "set -ex; sudo umount \$CART_BASE"' EXIT
-                       ssh -i ci_key jenkins@\$NODE "set -x
+                       ssh -i ci_key -oSendEnv=CART_TEST_MODE jenkins@\$NODE "set -x
                            set -e
                            sudo mkdir -p \$CART_BASE
                            sudo mount -t nfs \$HOSTNAME:\$PWD \$CART_BASE
