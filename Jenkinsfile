@@ -862,7 +862,7 @@ pipeline {
                     }
                     checkout([$class: 'GitSCM',
                         local: "iof",
-                        remote: 'https://github.com/daos-stack/iof.git']),
+                        remote: 'https://github.com/daos-stack/iof.git'])
                     sh 'find .'
                 }
             }
