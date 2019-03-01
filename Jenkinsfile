@@ -860,10 +860,14 @@ pipeline {
                             additionalBuildArgs "-t ${sanitized_JOB_NAME}-centos7 " + '$BUILDARGS'
                         }
                     }
-                    checkout([$class: 'GitSCM',
-                        local: "iof",
-                        remote: 'https://github.com/daos-stack/iof.git'])
-                    sh 'find .'
+                    steps {
+                        checkoutScm url: 'https://github.com/daos-stack/iof.git',
+                                    withSubmodules: true,
+                                    checkoutDir: 'iof'
+                        script: """find .
+                                   cd iof
+                                   scons PREBUILT_PREFIX=../install/Linux"""
+                    }
                 }
             }
         }
