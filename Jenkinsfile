@@ -860,8 +860,8 @@ pipeline {
                             additionalBuildArgs "-t ${sanitized_JOB_NAME}-centos7 " + '$BUILDARGS'
                         }
                     }
-                    checkout([$class: 'GitSCM':
-                        local: "iof"
+                    checkout([$class: 'GitSCM',
+                        local: "iof",
                         remote: 'https://github.com/daos-stack/iof.git']),
                     sh 'find .'
                 }
