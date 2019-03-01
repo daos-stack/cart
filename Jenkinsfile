@@ -851,6 +851,20 @@ pipeline {
                         */
                     }
                 }
+                stage ('IOF-build') {
+                    agent {
+                        dockerfile {
+                            filename 'Dockerfile.centos:7'
+                            dir 'utils/docker'
+                            label 'docker_runner'
+                            additionalBuildArgs "-t ${sanitized_JOB_NAME}-centos7 " + '$BUILDARGS'
+                        }
+                    }
+                    checkout([$class: 'GitSCM':
+                        local: "iof"
+                        remote: 'https://github.com/daos-stack/iof.git']),
+                    sh 'find .'
+                }
             }
         }
     }
