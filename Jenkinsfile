@@ -864,9 +864,10 @@ pipeline {
                         checkoutScm url: 'https://github.com/daos-stack/iof.git',
                                     withSubmodules: true,
                                     checkoutDir: 'iof'
-                        script: """find .
-                                   cd iof
-                                   scons PREBUILT_PREFIX=../install/Linux"""
+                        runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
+                            script: """find .
+                                cd iof
+                                scons PREBUILT_PREFIX=../install/Linux"""
                     }
                 }
             }
