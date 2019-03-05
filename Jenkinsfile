@@ -853,17 +853,18 @@ pipeline {
                 }
                 stage ('IOF-build') {
                     agent {
-                        dockerfile {
-                            filename 'Dockerfile.centos:7'
-                            dir 'utils/docker'
-                            label 'docker_runner'
-                            additionalBuildArgs "-t ${sanitized_JOB_NAME}-centos7 " + '$BUILDARGS'
-                        }
+                        label 'ci_vm1'
+                    }
+                    options {
+                        timeout(time: 60, unit: 'MINUTES')
                     }
                     steps {
+                        provisionNodes NODELIST: env.NODELIST,
+                            node_count: 1,
+                            snapshot: true
                         checkoutScm url: 'https://github.com/daos-stack/iof.git',
-                                    withSubmodules: true,
-                                    checkoutDir: 'iof'
+                            withSubmodules: true,
+                            checkoutDir: 'iof'			    
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
                             script: """find .
                                 cd iof
