@@ -859,17 +859,19 @@ pipeline {
                         timeout(time: 60, unit: 'MINUTES')
                     }
                     steps {
+		        step {
                         provisionNodes NODELIST: env.NODELIST,
                             node_count: 1,
                             snapshot: true
                         checkoutScm url: 'https://github.com/daos-stack/iof.git',
                             withSubmodules: true,
-                            checkoutDir: 'iof'			    
+                            checkoutDir: 'iof'
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                            script: """find .
+                                script: """find .
                                 cd iof
                                 scons PREBUILT_PREFIX=../install/Linux"""
                     }
+		    }
                 }
             }
         }
