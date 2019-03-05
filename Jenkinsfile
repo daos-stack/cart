@@ -857,6 +857,7 @@ pipeline {
                     }
                     options {
                         timeout(time: 60, unit: 'MINUTES')
+                        skipDefaultCheckout(true)
                     }
                     steps {
                         provisionNodes NODELIST: env.NODELIST,
@@ -867,9 +868,19 @@ pipeline {
                             checkoutDir: 'iof'
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
                                 script: """find .
-                                cd iof
-                                scons PREBUILT_PREFIX=../install/Linux"""
-		    }
+                       . ./.build_vars-Linux.sh
+                       CART_BASE=\${SL_PREFIX%/install*}
+                       NODELIST=$nodelist
+                       NODE=\${NODELIST%%,*}
+                       trap 'set +e; set -x; ssh -i ci_key jenkins@\$NODE "set -ex; sudo umount \$CART_BASE"' EXIT
+                       ssh -i ci_key jenkins@\$NODE "set -x
+                           set -e
+                           sudo mkdir -p \$CART_BASE
+                           sudo mount -t nfs \$HOSTNAME:\$PWD \$CART_BASE
+                           cd \$CART_BASE
+			   cd iof
+                                scons CART_PREBUILT=../install/Linux"""
+                    }
                 }
             }
         }
