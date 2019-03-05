@@ -159,12 +159,12 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}"
+                        sconsBuild clean: "_build.external${arch} TARGET_PREFIX=targets"
                         // this really belongs in the test stage CORCI-530
                         sh '''scons utest --utest-mode=memcheck
                               mv build/Linux/src/utest{,_valgrind}
                               scons utest'''
-                        stash name: 'CentOS-install', includes: 'install/**'
+                        stash name: 'CentOS-install', includes: 'install/**,targets/**'
                         stash name: 'CentOS-build-vars', includes: ".build_vars${arch}.*"
                     }
                     post {
@@ -879,7 +879,8 @@ pipeline {
                            sudo mount -t nfs \$HOSTNAME:\$PWD \$CART_BASE
                            cd \$CART_BASE
 			   cd iof
-                                scons CART_PREBUILT=../install/Linux"""
+                           scons CART_PREBUILT=../install/Linux, PREBUILD_PREFIX=../targets"
+                       true"""
                     }
                 }
             }
