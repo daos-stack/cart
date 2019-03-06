@@ -159,8 +159,8 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild(clean: "_build.external${arch}",
-			           'TARGET_PREFIX': targets")
+                        sconsBuild clean: "_build.external${arch}",
+			           TARGET_PREFIX: "targets"
                         // this really belongs in the test stage CORCI-530
                         sh '''scons utest --utest-mode=memcheck
                               mv build/Linux/src/utest{,_valgrind}
