@@ -1644,7 +1644,9 @@ crt_lm_attach(crt_group_t *tgt_grp, crt_lm_attach_cb_t completion_cb,
  */
 
 /**
- * Register a protocol. Can be called on a server or a client.
+ * Register a protocol. Can be called on a server or a client. Re-registering
+ * existing base_opc + version combination will result in -DER_EXIST error
+ * being returned to the caller.
  *
  * \param[in] cpf              protocol format description. (See \ref
  *                             crt_proto_format)
@@ -1654,6 +1656,18 @@ crt_lm_attach(crt_group_t *tgt_grp, crt_lm_attach_cb_t completion_cb,
  */
 int
 crt_proto_register(struct crt_proto_format *cpf);
+
+/**
+ * Unregister rpcs specified by base_opc and ver pairs.
+ *
+ * \param[in] base_opc         base_opc to unregister
+ * \param[in] ver              version to unregister
+ *
+ * \return                     DER_SPUCCESS on success, negative value
+ *                             on failure.
+ */
+int
+crt_proto_unregister(crt_opcode_t base_opc, uint32_t ver);
 
 /**
  * query tgt_ep if it has registered base_opc with version.
