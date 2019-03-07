@@ -93,24 +93,12 @@ test_init()
 	rc = crt_group_rank(NULL, &test.tg_my_rank);
 	D_ASSERTF(rc == 0, "crt_group_rank() failed. rc: %d\n", rc);
 
-	/* Attempt to register and unregister OPC_MY_PROTO:0 */
-	rc = crt_proto_register(&my_proto_fmt_0_duplicate);
-	D_ASSERTF(rc == 0, "registration failed with rc: %d\n", rc);
-
-	rc = crt_proto_unregister(OPC_MY_PROTO, 0);
-	D_ASSERTF(rc == 0, "unregistration failed with rc: %d\n", rc);
-
 	/* Attempt to register actual fmt_0 and fmt_1 */
 	rc = crt_proto_register(&my_proto_fmt_0);
 	D_ASSERTF(rc == 0, "registration failed with rc: %d\n", rc);
 
 	rc = crt_proto_register(&my_proto_fmt_1);
 	D_ASSERTF(rc == 0, "registration failed with rc: %d\n", rc);
-
-	/* Attempt to unregister non-existing version */
-	rc = crt_proto_unregister(OPC_MY_PROTO, 2);
-	D_ASSERTF(rc == -DER_NONEXIST,
-		"deregistration returned unexpected rc: %d\n", rc);
 
 	/* Attempt to re-register duplicate proto */
 	rc = crt_proto_register(&my_proto_fmt_0_duplicate);

@@ -1658,18 +1658,6 @@ int
 crt_proto_register(struct crt_proto_format *cpf);
 
 /**
- * Unregister rpcs specified by base_opc and ver pairs.
- *
- * \param[in] base_opc         base_opc to unregister
- * \param[in] ver              version to unregister
- *
- * \return                     DER_SPUCCESS on success, negative value
- *                             on failure.
- */
-int
-crt_proto_unregister(crt_opcode_t base_opc, uint32_t ver);
-
-/**
  * query tgt_ep if it has registered base_opc with version.
  *
  * \param[in] tgt_ep           the service rank to query

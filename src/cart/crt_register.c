@@ -885,35 +885,6 @@ crt_proto_register(struct crt_proto_format *cpf)
 }
 
 int
-crt_proto_unregister(crt_opcode_t base_opc, uint32_t ver)
-{
-	int rc;
-	unsigned int	L1_idx;
-	unsigned int	L2_idx;
-	struct crt_opc_map	*map;
-	crt_opcode_t	opc;
-
-	rc = crt_proto_query_local(base_opc, ver);
-	if (rc != 0) {
-		D_ERROR("Protocol %#x:%#x not registered, rc:%d\n",
-			base_opc, ver, rc);
-		D_GOTO(out, rc = -DER_NONEXIST);
-	}
-
-	opc = CRT_PROTO_OPC(base_opc, ver, 0);
-
-	L1_idx = opc >> 24;
-	L2_idx = (opc & CRT_PROTO_VER_MASK) >> 16;
-
-	map = crt_gdata.cg_opc_map;
-
-	crt_opc_map_L3_destroy(&map->com_map[L1_idx].L2_map[L2_idx]);
-
-out:
-	return rc;
-}
-
-int
 crt_proto_register_internal(struct crt_proto_format *cpf)
 {
 	if (cpf == NULL) {
