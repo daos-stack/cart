@@ -88,6 +88,11 @@ fa_op_rec_free(struct d_hash_table *htab, d_list_t *rlink)
 	D_FREE(ht_rec);
 }
 
+/**
+ * abuse hop_rec_decref() so that we can safely use it without a
+ * hop_rec_addref(). The goal is to have d_hash_table_destroy_inplace()
+ * destroy all records automatically.
+ */
 static bool
 fa_op_rec_decref(struct d_hash_table *htab, d_list_t *rlink)
 {
@@ -149,23 +154,15 @@ fault_attr_set(uint32_t fault_id, struct d_fault_attr_t fa_in, bool take_lock)
 	if (take_lock)
 		D_RWLOCK_WRLOCK(&d_fi_gdata.dfg_rwlock);
 
-	rlink = d_hash_rec_find(&d_fi_gdata.dfg_fa_table, &fault_id,
-				sizeof(fault_id));
-	if (rlink == NULL) {
+	rlink = d_hash_rec_find_insert(&d_fi_gdata.dfg_fa_table, &fault_id,
+				sizeof(fault_id), &new_rec->fa_link);
+	if (rlink == &new_rec->fa_link) {
 		fault_attr = &new_rec->fa_attr;
-
 		rc = D_SPIN_INIT(&fault_attr->fa_lock,
 				 PTHREAD_PROCESS_PRIVATE);
 		if (rc != DER_SUCCESS)
 			D_GOTO(out_unlock, rc);
-
-		rc = d_hash_rec_insert(&d_fi_gdata.dfg_fa_table, &fault_id,
-				       sizeof(fault_id), &new_rec->fa_link,
-				       true /* exclusive */);
-		if (rc != 0) {
-			D_ERROR("d_hash_rec_insert failed, rc: %d.\n", rc);
-			D_GOTO(out_unlock, rc);
-		}
+		D_DEBUG(DB_ALL, "new fault id: %u added.\n", fault_id);
 		should_free = false;
 	} else {
 		rec = fa_link2ptr(rlink);
