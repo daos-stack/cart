@@ -192,9 +192,7 @@ struct crt_proto_format my_proto_fmt_0_duplicate = {
 	/* Chose different count from my_proto_fmt_0 */
 	.cpf_count = 1,
 	.cpf_prf = &my_proto_rpc_fmt_0[1],
-
 };
-
 
 struct crt_proto_format my_proto_fmt_1 = {
 	.cpf_name = "my-proto",
