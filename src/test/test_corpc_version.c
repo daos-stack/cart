@@ -72,6 +72,7 @@ struct test_t {
 	crt_context_t		 t_crt_ctx;
 	pthread_t		 t_tid;
 	sem_t			 t_all_done;
+	pthread_spinlock_t	 t_shutdown_lock;
 };
 
 struct test_t test;
@@ -157,9 +158,9 @@ test_parse_args(int argc, char **argv)
 
 static void *progress_thread(void *arg)
 {
-	volatile uint32_t	*shut_down = &test.t_shutdown;
-	crt_context_t		 crt_ctx;
-	int			 rc;
+	uint32_t	shut_down;
+	crt_context_t	crt_ctx;
+	int		rc;
 
 	crt_ctx = (crt_context_t) arg;
 	do {
@@ -169,7 +170,10 @@ static void *progress_thread(void *arg)
 			/* continue calling progress on error */
 		}
 
-		if (*shut_down == 1)
+		D_SPIN_LOCK(&test.t_shutdown_lock);
+		shut_down = test.t_shutdown;
+		D_SPIN_UNLOCK(&test.t_shutdown_lock);
+		if (shut_down == 1)
 			break;
 		sched_yield();
 	} while (1);
@@ -214,7 +218,9 @@ test_shutdown_hdlr(crt_rpc_t *rpc_req)
 	D_ASSERTF(rpc_req->cr_input == NULL, "RPC request has invalid input\n");
 	D_ASSERTF(rpc_req->cr_output == NULL, "RPC request output is NULL\n");
 
+	D_SPIN_LOCK(&test.t_shutdown_lock);
 	test.t_shutdown = 1;
+	D_SPIN_UNLOCK(&test.t_shutdown_lock);
 	fprintf(stderr, "server set shutdown flag.\n");
 }
 
@@ -560,7 +566,9 @@ test_run(void)
 	D_ASSERT(rc == 0);
 	for (i = 0; i < test.t_my_group_size - 1; i++)
 		sem_wait(&test.t_all_done);
+	D_SPIN_LOCK(&test.t_shutdown_lock);
 	test.t_shutdown = 1;
+	D_SPIN_UNLOCK(&test.t_shutdown_lock);
 out:
 	D_ASSERT(rc == 0);
 }
@@ -618,6 +626,9 @@ test_init(void)
 	rc = sem_init(&test.t_all_done, 0, 0);
 	D_ASSERTF(rc == 0, "Could not initialize semaphore\n");
 
+	rc = D_SPIN_INIT(&test.t_shutdown_lock, PTHREAD_PROCESS_PRIVATE);
+	D_ASSERT(rc == 0);
+
 	rc = pthread_create(&test.t_tid, NULL, progress_thread,
 			    test.t_crt_ctx);
 	D_ASSERTF(rc == 0, "pthread_create() failed. rc: %d\n", rc);
@@ -654,6 +665,9 @@ test_fini()
 
 	rc = pthread_join(test.t_tid, NULL);
 	D_ASSERTF(rc == 0, "pthread_join() failed, rc: %d\n", rc);
+
+	rc = D_SPIN_DESTROY(&test.t_shutdown_lock);
+	D_ASSERT(rc == 0);
 
 	rc = crt_context_destroy(test.t_crt_ctx, 0);
 	D_ASSERTF(rc == 0, "crt_context_destroy() failed. rc: %d\n", rc);
