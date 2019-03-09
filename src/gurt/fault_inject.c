@@ -50,11 +50,11 @@
 
 #include <gurt/common.h>
 #include <gurt/hash.h>
+#include "fi.h"
 
-struct d_fault_attr {
-	d_list_t		fa_link;
-	struct d_fault_attr_t	fa_attr;
-};
+
+struct d_fault_attr_t *d_fault_attr_mem;
+int d_fault_id_mem;
 
 static struct d_fault_attr *
 fa_link2ptr(d_list_t *rlink)

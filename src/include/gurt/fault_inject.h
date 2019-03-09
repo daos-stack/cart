@@ -65,6 +65,9 @@ extern "C" {
 extern unsigned int	d_fault_inject;
 extern unsigned int	d_fault_config_file;
 
+extern struct d_fault_attr_t *d_fault_attr_mem;
+extern int d_fault_id_mem;
+
 struct d_fault_attr_t {
 	/**
 	 * config id, used to select configuration from the fault_inject config
