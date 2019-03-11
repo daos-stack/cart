@@ -51,6 +51,7 @@
 #include "crt_fake_events.h"
 #include "test_group_rpc.h"
 
+/* max num */
 #define TEST_CTX_MAX_NUM	 (72)
 
 struct test_t {
