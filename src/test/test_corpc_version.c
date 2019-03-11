@@ -48,6 +48,7 @@
 #include <semaphore.h>
 
 #include <gurt/common.h>
+#include <gurt/atomic.h>
 #include <cart/api.h>
 
 #define TEST_OPC_SHUTDOWN			(0xA1)
@@ -64,7 +65,7 @@ struct test_t {
 	int			 t_is_service;
 	uint32_t		 t_is_client,
 				 t_hold:1;
-	uint32_t		 t_shutdown;
+	ATOMIC uint32_t		 t_shutdown;
 	uint32_t		 t_holdtime;
 	uint32_t		 t_my_rank;
 	uint32_t		 t_my_group_size;
@@ -158,7 +159,6 @@ test_parse_args(int argc, char **argv)
 
 static void *progress_thread(void *arg)
 {
-	uint32_t	shut_down;
 	crt_context_t	crt_ctx;
 	int		rc;
 
@@ -170,10 +170,8 @@ static void *progress_thread(void *arg)
 			/* continue calling progress on error */
 		}
 
-		D_SPIN_LOCK(&test.t_shutdown_lock);
-		shut_down = test.t_shutdown;
-		D_SPIN_UNLOCK(&test.t_shutdown_lock);
-		if (shut_down == 1)
+		atomic_load_consume(&test.t_shutdown);
+		if (test.t_shutdown == 1)
 			break;
 		sched_yield();
 	} while (1);
@@ -218,9 +216,7 @@ test_shutdown_hdlr(crt_rpc_t *rpc_req)
 	D_ASSERTF(rpc_req->cr_input == NULL, "RPC request has invalid input\n");
 	D_ASSERTF(rpc_req->cr_output == NULL, "RPC request output is NULL\n");
 
-	D_SPIN_LOCK(&test.t_shutdown_lock);
-	test.t_shutdown = 1;
-	D_SPIN_UNLOCK(&test.t_shutdown_lock);
+	atomic_store_release(&test.t_shutdown, 1);
 	fprintf(stderr, "server set shutdown flag.\n");
 }
 
@@ -566,9 +562,7 @@ test_run(void)
 	D_ASSERT(rc == 0);
 	for (i = 0; i < test.t_my_group_size - 1; i++)
 		sem_wait(&test.t_all_done);
-	D_SPIN_LOCK(&test.t_shutdown_lock);
-	test.t_shutdown = 1;
-	D_SPIN_UNLOCK(&test.t_shutdown_lock);
+	atomic_store_release(&test.t_shutdown, 1);
 out:
 	D_ASSERT(rc == 0);
 }
