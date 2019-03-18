@@ -73,7 +73,6 @@ struct test_t {
 	crt_context_t		 t_crt_ctx;
 	pthread_t		 t_tid;
 	sem_t			 t_all_done;
-	pthread_spinlock_t	 t_shutdown_lock;
 };
 
 struct test_t test;
@@ -170,8 +169,7 @@ static void *progress_thread(void *arg)
 			/* continue calling progress on error */
 		}
 
-		atomic_load_consume(&test.t_shutdown);
-		if (test.t_shutdown == 1)
+		if (atomic_load_consume(&test.t_shutdown) == 1)
 			break;
 		sched_yield();
 	} while (1);
@@ -620,9 +618,6 @@ test_init(void)
 	rc = sem_init(&test.t_all_done, 0, 0);
 	D_ASSERTF(rc == 0, "Could not initialize semaphore\n");
 
-	rc = D_SPIN_INIT(&test.t_shutdown_lock, PTHREAD_PROCESS_PRIVATE);
-	D_ASSERT(rc == 0);
-
 	rc = pthread_create(&test.t_tid, NULL, progress_thread,
 			    test.t_crt_ctx);
 	D_ASSERTF(rc == 0, "pthread_create() failed. rc: %d\n", rc);
@@ -659,9 +654,6 @@ test_fini()
 
 	rc = pthread_join(test.t_tid, NULL);
 	D_ASSERTF(rc == 0, "pthread_join() failed, rc: %d\n", rc);
-
-	rc = D_SPIN_DESTROY(&test.t_shutdown_lock);
-	D_ASSERT(rc == 0);
 
 	rc = crt_context_destroy(test.t_crt_ctx, 0);
 	D_ASSERTF(rc == 0, "crt_context_destroy() failed. rc: %d\n", rc);
