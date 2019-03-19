@@ -50,7 +50,7 @@ extern "C" {
 #endif
 
 #ifdef __INTEL_COMPILER
-#define ATOMIC volatle
+#define ATOMIC volatile
 #else
 #define ATOMIC _Atomic
 #endif
