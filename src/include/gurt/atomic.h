@@ -43,6 +43,12 @@
 #if HAVE_STDATOMIC
 
 #include <stdatomic.h>
+
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #define ATOMIC _Atomic
 /* stdatomic interface for compare_and_exchange doesn't quite align */
 #define atomic_compare_exchange(ptr, oldvalue, newvalue) \
@@ -58,6 +64,10 @@
 
 #define atomic_dec_release(ptr) \
 	atomic_fetch_sub_explicit(ptr, 1, memory_order_release)
+
+#if defined(__cplusplus)
+}
+#endif
 
 #else
 
