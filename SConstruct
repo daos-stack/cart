@@ -49,6 +49,7 @@ except ImportError:
 # Desired compiler flags that will be used if the compiler supports them.
 DESIRED_FLAGS = ['-Wno-gnu-designator',
                  '-Wno-missing-braces',
+                 '-Wframe-larger-than=128',
                  '-Wno-gnu-zero-variadic-macro-arguments',
                  '-Wno-tautological-constant-out-of-range-compare']
 
@@ -109,7 +110,7 @@ def scons():
         env.Append(SHLIBSUFFIX='.so')
 
     # Compiler options
-    env.Append(CCFLAGS=['-g3', '-Wshadow', '-Wall', '-Werror', '-fpic',
+    env.Append(CCFLAGS=['-g3', '-Wshadow', '-Wall', '-fpic',
                         '-D_GNU_SOURCE', '-DD_LOG_V2'])
     env.Append(CCFLAGS=['-O2', '-pthread'])
     env.Append(CFLAGS=['-std=gnu99'])

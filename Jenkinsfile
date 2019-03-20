@@ -168,7 +168,8 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}"
+                        sconsBuild(clean: "_build.external${arch}"
+                                   scons_args: '--warning-level=warning')			   
                         // this really belongs in the test stage CORCI-530
                         sh '''scons utest --utest-mode=memcheck
                               mv build/Linux/src/utest{,_valgrind}
