@@ -44,11 +44,6 @@
 
 #include <stdatomic.h>
 
-
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
 #ifdef __INTEL_COMPILER
 #define ATOMIC volatile
 #else
@@ -69,10 +64,6 @@ extern "C" {
 
 #define atomic_dec_release(ptr) \
 	atomic_fetch_sub_explicit(ptr, 1, memory_order_release)
-
-#if defined(__cplusplus)
-}
-#endif
 
 #else
 

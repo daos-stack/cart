@@ -98,7 +98,6 @@ def scons():
     denv.AppendUnique(RPATH=['$PREFIX/lib'])
 
     pp_env = Environment(TOOLS=['default', 'extra'])
-    pp_env.Replace(CC=env['CC'])
     pp_env.AppendUnique(CPPPATH=['src/include', 'src/cart'])
     prereqs.require(pp_env, 'mercury', 'pmix', headers_only=True)
 
