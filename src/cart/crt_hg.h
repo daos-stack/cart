@@ -138,6 +138,7 @@ struct crt_hg_addr_lookup_cb_args {
 int crt_hg_init(crt_phy_addr_t *addr, bool server);
 int crt_hg_fini(void);
 int crt_hg_ctx_init(struct crt_hg_context *hg_ctx, int idx);
+int crt_hg_ctx_init_psm2(struct crt_hg_context *hg_ctx, int idx);
 int crt_hg_ctx_fini(struct crt_hg_context *hg_ctx);
 int crt_hg_req_create(struct crt_hg_context *hg_ctx,
 		      struct crt_rpc_priv *rpc_priv);

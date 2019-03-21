@@ -707,6 +707,7 @@ crt_req_uri_lookup_by_rpc(struct crt_rpc_priv *rpc_priv, crt_cb_t complete_cb,
 	struct crt_uri_lookup_in	*ul_in;
 	struct crt_uri_lookup_out	*ul_out;
 	int				 rc = 0;
+	crt_context_t			 crt_ctx;
 
 	orig_tgt_ep = &rpc_priv->crp_pub.cr_ep;
 
@@ -716,7 +717,8 @@ crt_req_uri_lookup_by_rpc(struct crt_rpc_priv *rpc_priv, crt_cb_t complete_cb,
 	ul_tgt_ep.ep_rank = rank;
 	ul_tgt_ep.ep_tag = tag;
 
-	rc = crt_req_create(rpc_priv->crp_pub.cr_ctx, &ul_tgt_ep,
+	crt_ctx = crt_context_lookup(0);
+	rc = crt_req_create(crt_ctx, &ul_tgt_ep,
 			    CRT_OPC_URI_LOOKUP, &ul_req);
 	if (rc != 0) {
 		D_ERROR("crt_req_create URI_LOOKUP failed, rc: %d opc: %#x.\n",

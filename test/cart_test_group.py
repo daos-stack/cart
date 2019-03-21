@@ -105,10 +105,10 @@ class TestGroup(commontestsuite.CommonTestSuite):
         procrtn = self.launch_test(testmsg, '1', self.pass_env, \
                                    cli_arg='tests/test_group' + \
                                              ' --name client_group' + \
-                                             ' --attach_to service_group',
+                                             ' --attach_to service_group --ctx_num 2',
                                    srv_arg='tests/test_group' + \
                                              ' --name service_group' + \
-                                             ' --is_service')
+                                             ' --is_service --ctx_num 2')
         if procrtn:
             self.fail("Failed, return code %d" % procrtn)
 

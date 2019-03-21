@@ -85,6 +85,7 @@ typedef struct crt_init_options {
 			  * CRT_CTX_NUM
 			  */
 	int		 cio_ctx_max_num;
+	int		 na_id;
 } crt_init_options_t;
 
 typedef int		 crt_status_t;

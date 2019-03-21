@@ -53,6 +53,9 @@
 
 #define TEST_CTX_MAX_NUM	 (72)
 
+#define YULU_DEBUG \
+	D_DEBUG(DB_TEST, "line:%d YULU-MOD.\n", __LINE__)
+
 struct test_t {
 	crt_group_t	*t_local_group;
 	crt_group_t	*t_remote_group;
@@ -117,13 +120,15 @@ test_checkin_handler(crt_rpc_t *rpc_req)
 	struct test_ping_check_in	*e_req;
 	struct test_ping_check_out	*e_reply;
 	int				 rc = 0;
+	int				 ctx_id = -1;;
 
 	/* CaRT internally already allocated the input/output buffer */
 	e_req = crt_req_get(rpc_req);
 	D_ASSERTF(e_req != NULL, "crt_req_get() failed. e_req: %p\n", e_req);
 
-	printf("tier1 test_server recv'd checkin, opc: %#x.\n",
-	       rpc_req->cr_opc);
+	crt_context_idx(rpc_req->cr_ctx, &ctx_id);
+	printf("tier1 test_server epid: %d recv'd checkin, opc: %#x.\n",
+	       ctx_id, rpc_req->cr_opc);
 	printf("tier1 checkin input - age: %d, name: %s, days: %d, "
 	       "bool_val %d.\n",
 	       e_req->age, e_req->name, e_req->days, e_req->bool_val);
@@ -337,7 +342,10 @@ test_init(void)
 
 	for (i = 0; i < test_g.t_ctx_num; i++) {
 		test_g.t_thread_id[i] = i;
-		rc = crt_context_create(&test_g.t_crt_ctx[i]);
+		if (i == 1)
+			rc = crt_context_create_psm2(&test_g.t_crt_ctx[i]);
+		else
+			rc = crt_context_create(&test_g.t_crt_ctx[i]);
 		D_ASSERTF(rc == 0, "crt_context_create() failed. rc: %d\n", rc);
 		rc = pthread_create(&test_g.t_tid[i], NULL, progress_thread,
 				    &test_g.t_thread_id[i]);
@@ -396,6 +404,57 @@ check_in(crt_group_t *remote_group, int rank)
 }
 
 void
+check_in_1to1(crt_group_t *remote_group, int rank)
+{
+	crt_rpc_t			*rpc_req = NULL;
+	struct test_ping_check_in	*rpc_req_input;
+	crt_endpoint_t			 server_ep = {0};
+	char				*buffer;
+	int				 rc;
+
+	server_ep.ep_grp = remote_group;
+	server_ep.ep_rank = rank;
+	server_ep.ep_tag = 1;
+	rc = crt_req_create(test_g.t_crt_ctx[1], &server_ep,
+			TEST_OPC_CHECKIN, &rpc_req);
+	D_ASSERTF(rc == 0 && rpc_req != NULL, "crt_req_create() failed,"
+			" rc: %d rpc_req: %p\n", rc, rpc_req);
+
+	rpc_req_input = crt_req_get(rpc_req);
+	D_ASSERTF(rpc_req_input != NULL, "crt_req_get() failed."
+			" rpc_req_input: %p\n", rpc_req_input);
+
+	/**
+	 * example to inject faults to D_ALLOC. To turn it on, edit the fault
+	 * config file: under fault id 1000, change the probability from 0 to
+	 * anything in [1, 100]
+	 */
+	if (D_SHOULD_FAIL(test_g.t_fault_attr_1000)) {
+		buffer = NULL;
+	} else {
+		D_ALLOC(buffer, 256);
+		D_INFO("not injecting fault.\n");
+	}
+
+	D_ASSERTF(buffer != NULL, "Cannot allocate memory.\n");
+	snprintf(buffer,  256, "Guest %d", test_g.t_my_rank);
+	rpc_req_input->name = buffer;
+	rpc_req_input->age = 21;
+	rpc_req_input->days = 7;
+	rpc_req_input->bool_val = true;
+	D_DEBUG(DB_TEST, "client(rank %d) sending checkin rpc with tag "
+		"%d, name: %s, age: %d, days: %d, bool_val %d.\n",
+		test_g.t_my_rank, server_ep.ep_tag, rpc_req_input->name,
+		rpc_req_input->age, rpc_req_input->days,
+		rpc_req_input->bool_val);
+
+	/* send an rpc, print out reply */
+	rc = crt_req_send(rpc_req, client_cb_common, NULL);
+	D_ASSERTF(rc == 0, "crt_req_send() failed. rc: %d\n", rc);
+}
+
+
+void
 test_run(void)
 {
 	crt_group_t			*remote_group = NULL;
@@ -430,8 +489,10 @@ test_run(void)
 	/* send shutdown to the target group, don't run any test */
 	if (test_g.t_shut_only)
 		return;
-	for (ii = 0; ii < test_g.t_remote_group_size; ii++)
+	for (ii = 0; ii < test_g.t_remote_group_size; ii++) {
 		check_in(test_g.t_remote_group, ii);
+		check_in_1to1(test_g.t_remote_group, ii);
+	}
 
 	for (ii = 0; ii < test_g.t_remote_group_size; ii++)
 		test_sem_timedwait(&test_g.t_token_to_proceed, 61, __LINE__);
@@ -450,7 +511,9 @@ test_fini()
 	crt_rpc_t			*rpc_req = NULL;
 	int				 rc = 0;
 
+	YULU_DEBUG;
 	if (test_g.t_should_attach && test_g.t_my_rank == 0) {
+		YULU_DEBUG;
 		/* client rank 0 tells all servers to shut down */
 		for (ii = 0; ii < test_g.t_remote_group_size; ii++) {
 			server_ep.ep_grp = test_g.t_remote_group;
@@ -467,6 +530,7 @@ test_fini()
 			test_sem_timedwait(&test_g.t_token_to_proceed, 61,
 					   __LINE__);
 		}
+		YULU_DEBUG;
 	}
 	if (test_g.t_should_attach) {
 		rc = crt_group_detach(test_g.t_remote_group);
@@ -491,6 +555,7 @@ test_fini()
 			  rc);
 		D_DEBUG(DB_TEST, "destroyed crt_ctx.\n");
 	}
+	YULU_DEBUG;
 
 	if (test_g.t_is_service)
 		crt_fake_event_fini(test_g.t_my_rank);

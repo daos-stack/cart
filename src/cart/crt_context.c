@@ -257,6 +257,57 @@ out:
 }
 
 int
+crt_context_create_psm2(crt_context_t *crt_ctx)
+{
+	struct crt_context	*ctx = NULL;
+	int			rc = 0;
+
+	if (crt_ctx == NULL) {
+		D_ERROR("invalid parameter of NULL crt_ctx.\n");
+		D_GOTO(out, rc = -DER_INVAL);
+	}
+
+	if (crt_gdata.cg_share_na &&
+	    crt_gdata.cg_ctx_num >= crt_gdata.cg_ctx_max_num) {
+		D_ERROR("Number of active contexts (%d) reached limit (%d).\n",
+			crt_gdata.cg_ctx_num, crt_gdata.cg_ctx_max_num);
+		D_GOTO(out, -DER_AGAIN);
+	}
+
+	D_ALLOC_PTR(ctx);
+	if (ctx == NULL)
+		D_GOTO(out, rc = -DER_NOMEM);
+
+	rc = crt_context_init(ctx);
+	if (rc != 0) {
+		D_ERROR("crt_context_init failed, rc: %d.\n", rc);
+		D_FREE_PTR(ctx);
+		D_GOTO(out, rc);
+	}
+
+	D_RWLOCK_WRLOCK(&crt_gdata.cg_rwlock);
+
+
+	rc = crt_hg_ctx_init_psm2(&ctx->cc_hg_ctx, crt_gdata.cg_ctx_num);
+	if (rc != 0) {
+		D_ERROR("crt_hg_ctx_init failed rc: %d.\n", rc);
+		D_RWLOCK_UNLOCK(&crt_gdata.cg_rwlock);
+		crt_context_destroy(ctx, true);
+		D_GOTO(out, rc);
+	}
+
+	ctx->cc_idx = crt_gdata.cg_ctx_num;
+	d_list_add_tail(&ctx->cc_link, &crt_gdata.cg_ctx_list);
+	crt_gdata.cg_ctx_num++;
+
+	D_RWLOCK_UNLOCK(&crt_gdata.cg_rwlock);
+
+	*crt_ctx = (crt_context_t)ctx;
+
+out:
+	return rc;
+}
+int
 crt_context_register_rpc_task(crt_context_t ctx, crt_rpc_task_t process_cb,
 			      void *arg)
 {

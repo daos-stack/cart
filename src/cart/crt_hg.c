@@ -457,6 +457,31 @@ crt_get_info_string(char **string)
 }
 
 static int
+crt_get_info_string_psm2(char **string)
+{
+	int	 port;
+	int	 plugin;
+	char	*plugin_str;
+
+	plugin = CRT_NA_OFI_PSM2;
+	D_ASSERT(plugin == crt_na_dict[plugin].nad_type);
+	plugin_str = crt_na_dict[plugin].nad_str;
+
+	if (!crt_na_dict[plugin].nad_port_bind) {
+		D_ASPRINTF(*string, "%s://", plugin_str);
+	} else {
+		port = crt_na_ofi_conf.noc_port;
+		crt_na_ofi_conf.noc_port++;
+		D_ASPRINTF(*string, "%s://%s:%d", plugin_str,
+			   crt_na_ofi_conf.noc_ip_str, port);
+	}
+	if (*string == NULL)
+		return -DER_NOMEM;
+
+	return 0;
+}
+
+static int
 crt_hg_log(FILE *stream, const char *fmt, ...)
 {
 	va_list		ap;
@@ -706,6 +731,135 @@ crt_hg_ctx_init(struct crt_hg_context *hg_ctx, int idx)
 
 		D_DEBUG(DB_NET, "crt_gdata.cg_hg->chg_hgcla %p\n",
 			crt_gdata.cg_hg->chg_hgcla);
+		/* register crt_ctx to get it in crt_rpc_handler_common */
+		hg_ret = HG_Context_set_data(hg_context, crt_ctx, NULL);
+		if (hg_ret != HG_SUCCESS) {
+			D_ERROR("HG_Context_set_data failed, ret: %d.\n",
+				hg_ret);
+			HG_Context_destroy(hg_context);
+			HG_Finalize(hg_class);
+			NA_Finalize(na_class);
+			D_GOTO(out, rc = -DER_HG);
+		}
+
+		hg_ctx->chc_nacla = na_class;
+		hg_ctx->chc_hgcla = hg_class;
+		hg_ctx->chc_shared_na = false;
+	}
+
+	hg_ctx->chc_hgctx = hg_context;
+	/* TODO: need to create separate bulk class and bulk context? */
+	hg_ctx->chc_bulkcla = hg_ctx->chc_hgcla;
+	hg_ctx->chc_bulkctx = hg_ctx->chc_hgctx;
+	D_ASSERT(hg_ctx->chc_bulkcla != NULL);
+	D_ASSERT(hg_ctx->chc_bulkctx != NULL);
+
+	rc = crt_hg_pool_init(hg_ctx);
+	if (rc != 0)
+		D_ERROR("context idx %d hg_ctx %p, crt_hg_pool_init failed, "
+			"rc: %d.\n", idx, hg_ctx, rc);
+
+out:
+	if (info_string)
+		D_FREE(info_string);
+	return rc;
+}
+
+int
+crt_hg_ctx_init_psm2(struct crt_hg_context *hg_ctx, int idx)
+{
+	struct crt_context	*crt_ctx;
+	na_class_t		*na_class = NULL;
+	hg_class_t		*hg_class = NULL;
+	hg_context_t		*hg_context = NULL;
+	char			*info_string = NULL;
+	struct hg_init_info	 init_info = {};
+	hg_return_t		 hg_ret;
+	int			 rc = 0;
+
+	D_ASSERT(hg_ctx != NULL);
+	crt_ctx = container_of(hg_ctx, struct crt_context, cc_hg_ctx);
+
+	D_DEBUG(DB_NET, "crt_gdata.cg_share_na %d, crt_is_service() %d\n",
+			crt_gdata.cg_share_na, crt_is_service());
+	if (idx == 0 || crt_gdata.cg_share_na == true) {
+		hg_context = HG_Context_create_id(crt_gdata.cg_hg->chg_hgcla,
+						  idx);
+		if (hg_context == NULL) {
+			D_ERROR("Could not create HG context.\n");
+			D_GOTO(out, rc = -DER_HG);
+		}
+
+		/* register crt_ctx to get it in crt_rpc_handler_common */
+		hg_ret = HG_Context_set_data(hg_context, crt_ctx, NULL);
+		if (hg_ret != HG_SUCCESS) {
+			D_ERROR("HG_Context_set_data failed, ret: %d.\n",
+				hg_ret);
+			HG_Context_destroy(hg_context);
+			D_GOTO(out, rc = -DER_HG);
+		}
+
+		hg_ctx->chc_nacla = crt_gdata.cg_hg->chg_nacla;
+		hg_ctx->chc_hgcla = crt_gdata.cg_hg->chg_hgcla;
+		D_DEBUG(DB_NET, "hg_ctx->chc_hgcla %p\n", hg_ctx->chc_hgcla);
+		hg_ctx->chc_shared_na = true;
+	} else {
+		char		addr_str[CRT_ADDR_STR_MAX_LEN] = {'\0'};
+		na_size_t	str_size = CRT_ADDR_STR_MAX_LEN;
+
+		rc = crt_get_info_string_psm2(&info_string);
+		if (rc != 0)
+			D_GOTO(out, rc);
+
+		D_DEBUG(DB_ALL, "info_string %s\n", info_string);
+		init_info.na_init_info.progress_mode = NA_DEFAULT;
+		init_info.na_init_info.max_contexts = 1;
+		na_class = NA_Initialize_opt(info_string, crt_is_service(),
+					     &init_info.na_init_info);
+		if (na_class == NULL) {
+			D_ERROR("Could not initialize NA class.\n");
+			D_GOTO(out, rc = -DER_HG);
+		}
+
+		rc = crt_na_class_get_addr(na_class, addr_str, &str_size);
+		if (rc != 0) {
+			D_ERROR("crt_na_class_get_addr failed, rc: %d.\n", rc);
+			NA_Finalize(na_class);
+			D_GOTO(out, rc = -DER_HG);
+		}
+		D_DEBUG(DB_NET, "New context(idx:%d), listen address: %s.\n",
+			idx, addr_str);
+
+		init_info.na_class = na_class;
+		/* first two args unused because init_info.na_class is not NULL.
+		 */
+		hg_class = HG_Init_opt(NULL, false, &init_info);
+		if (hg_class == NULL) {
+			D_ERROR("Could not initialize HG class.\n");
+			NA_Finalize(na_class);
+			D_GOTO(out, rc = -DER_HG);
+		}
+
+		hg_context = HG_Context_create(hg_class);
+		if (hg_context == NULL) {
+			D_ERROR("Could not create HG context.\n");
+			HG_Finalize(hg_class);
+			NA_Finalize(na_class);
+			D_GOTO(out, rc = -DER_HG);
+		}
+
+		/* register the shared RPCID to every hg_class */
+		rc = crt_hg_reg_rpcid(hg_class);
+		if (rc != 0) {
+			D_ERROR("crt_hg_reg_rpcid failed, rc: %d.\n", rc);
+			HG_Context_destroy(hg_context);
+			HG_Finalize(hg_class);
+			NA_Finalize(na_class);
+			D_GOTO(out, rc);
+		}
+
+//		D_DEBUG(DB_NET, "crt_gdata.cg_hg->chg_hgcla %p\n",
+//			crt_gdata.cg_hg->chg_hgcla);
 		/* register crt_ctx to get it in crt_rpc_handler_common */
 		hg_ret = HG_Context_set_data(hg_context, crt_ctx, NULL);
 		if (hg_ret != HG_SUCCESS) {

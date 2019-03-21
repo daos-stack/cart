@@ -124,6 +124,8 @@ crt_init(crt_group_id_t grpid, uint32_t flags)
 int
 crt_context_create(crt_context_t *crt_ctx);
 
+int
+crt_context_create_psm2(crt_context_t *crt_ctx);
 
 /**
  * Set the timeout value for all RPC requests created on the specified context.
