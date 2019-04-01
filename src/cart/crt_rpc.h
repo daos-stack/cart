@@ -267,6 +267,9 @@ struct crt_rpc_priv {
 	X(CRT_OPC_MEMB_SAMPLE,						\
 		0, &CQF_crt_lm_memb_sample,				\
 		crt_hdlr_memb_sample, NULL),				\
+	X(CRT_OPC_CTL_GET_URI_CACHE,					\
+		0, &CQF_crt_ctl_get_uri_cache,				\
+		crt_hdlr_ctl_get_uri_cache, NULL),			\
 	X(CRT_OPC_CTL_LS,						\
 		0, &CQF_crt_ctl_ep_ls, crt_hdlr_ctl_ls, NULL),		\
 	X(CRT_OPC_CTL_GET_HOSTNAME,					\
@@ -512,6 +515,12 @@ CRT_RPC_DECLARE(crt_lm_memb_sample,
 	((int32_t)		(cel_rc)		CRT_VAR)
 
 CRT_RPC_DECLARE(crt_ctl_ep_ls, CRT_ISEQ_CTL, CRT_OSEQ_CTL_EP_LS)
+
+#define CRT_OSEQ_CTL_GET_URI_CACHE /* output fields */		 \
+	((d_iov_t)		(cguc_grp_info)		CRT_VAR) \
+	((int32_t)		(cguc_rc)		CRT_VAR)
+
+CRT_RPC_DECLARE(crt_ctl_get_uri_cache, CRT_ISEQ_CTL, CRT_OSEQ_CTL_GET_URI_CACHE)
 
 #define CRT_OSEQ_CTL_GET_HOST	/* output fields */		 \
 	((d_iov_t)		(cgh_hostname)		CRT_VAR) \

@@ -42,6 +42,13 @@
 #ifndef __CRT_CTL_H__
 #define __CRT_CTL_H__
 
+/* crt uri lookup cache info */
+struct crt_uri_cache {
+	char	*info_buf; /* uri:tag:uri_size:uri info */
+	int	info_idx; /* idx to locate the beginning of each hash item */
+};
+
+void crt_hdlr_ctl_get_uri_cache(crt_rpc_t *rpc_req);
 void crt_hdlr_ctl_ls(crt_rpc_t *rpc_req);
 void crt_hdlr_ctl_get_hostname(crt_rpc_t *rpc_req);
 void crt_hdlr_ctl_get_pid(crt_rpc_t *rpc_req);
