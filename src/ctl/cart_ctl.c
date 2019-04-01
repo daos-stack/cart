@@ -58,6 +58,7 @@
 int crt_ctl_logfac;
 
 enum cmd_t {
+	CMD_GET_URI_CACHE,
 	CMD_LIST_CTX,
 	CMD_GET_HOSTNAME,
 	CMD_GET_PID,
@@ -77,6 +78,7 @@ struct cmd_info {
 
 struct cmd_info cmds[] = {
 	DEF_CMD(CMD_LIST_CTX, CRT_OPC_CTL_LS),
+	DEF_CMD(CMD_GET_URI_CACHE, CRT_OPC_CTL_GET_URI_CACHE),
 	DEF_CMD(CMD_GET_HOSTNAME, CRT_OPC_CTL_GET_HOSTNAME),
 	DEF_CMD(CMD_GET_PID, CRT_OPC_CTL_GET_PID),
 	DEF_CMD(CMD_ENABLE_FI, CRT_OPC_CTL_FI_TOGGLE),
@@ -277,7 +279,9 @@ print_usage_msg(const char *msg)
 	printf("Usage: cart_ctl <cmd> --group-name name --rank "
 	       "start-end,start-end,rank,rank\n"
 	       "--path path-to-attach-info\n");
-	printf("\ncmds: list_ctx, get_hostname, get_pid\n");
+	printf("\ncmds: get_uri_cache, list_ctx, get_hostname, get_pid\n");
+	printf("\nget_uri_cache:\n");
+	printf("\tPrint rank, tag and uri from uri cache\n");
 	printf("\nlist_ctx:\n");
 	printf("\tPrint # of contexts on each rank and uri for each context\n");
 	printf("\nget_hostname:\n");
@@ -310,7 +314,9 @@ parse_args(int argc, char **argv)
 		D_GOTO(out, rc = -DER_INVAL);
 	}
 
-	if (strcmp(argv[1], "list_ctx") == 0)
+	if (strcmp(argv[1], "get_uri_cache") == 0)
+		ctl_gdata.cg_cmd_code = CMD_GET_URI_CACHE;
+	else if (strcmp(argv[1], "list_ctx") == 0)
 		ctl_gdata.cg_cmd_code = CMD_LIST_CTX;
 	else if (strcmp(argv[1], "get_hostname") == 0)
 		ctl_gdata.cg_cmd_code = CMD_GET_HOSTNAME;
@@ -377,18 +383,69 @@ out:
 	return rc;
 }
 
+void
+print_uri_cache(struct crt_ctl_get_uri_cache_out *out_get_uri_cache_args)
+{
+	char					*ptr;
+	char					*uri;
+	size_t					 buf_len;
+	d_rank_t				 rank;
+	int					 tag;
+	int					 len;
+	int					 size = 0;
+	int					 uri_size;
+
+	ptr = out_get_uri_cache_args->cguc_grp_info.iov_buf;
+
+	buf_len = out_get_uri_cache_args->cguc_grp_info.iov_buf_len;
+
+	size = 0;
+
+	while (size < buf_len) {
+		/* Unpack rank */
+		rank = *((d_rank_t *)ptr);
+		ptr += sizeof(d_rank_t);
+		size += sizeof(d_rank_t);
+		D_ASSERT(size < buf_len);
+
+		/* Unpack tag */
+		tag = *((uint32_t *)ptr);
+		ptr += sizeof(uint32_t);
+		size += sizeof(uint32_t);
+		D_ASSERT(size < buf_len);
+
+		/* Unpack size of uri string */
+		uri_size = *((uint32_t *)ptr);
+		ptr += sizeof(uint32_t);
+		size += sizeof(uint32_t);
+		D_ASSERT(size < buf_len);
+
+		/* Unpack uri */
+		len = strnlen(ptr, buf_len - size) + 1;
+		D_ASSERT(len == uri_size);
+		uri = ptr;
+		ptr += len;
+		size += len;
+		D_ASSERT(size <= buf_len);
+
+		printf("    rank=%d tag=%d uri='%s'\n",
+			rank, tag, uri);
+	}
+}
+
 static void
 ctl_client_cb(const struct crt_cb_info *cb_info)
 {
-	struct crt_ctl_ep_ls_in		*in_args;
-	struct crt_ctl_ep_ls_out	*out_ls_args;
-	struct crt_ctl_get_host_out	*out_get_host_args;
-	struct crt_ctl_get_pid_out	*out_get_pid_args;
-	struct crt_ctl_fi_attr_set_out	*out_set_fi_attr_args;
-	struct crt_ctl_fi_toggle_out	*out_fi_toggle_args;
-	char				*addr_str;
-	int				 i;
-	struct cb_info			*info;
+	struct crt_ctl_ep_ls_in			*in_args;
+	struct crt_ctl_get_uri_cache_out	*out_get_uri_cache_args;
+	struct crt_ctl_ep_ls_out		*out_ls_args;
+	struct crt_ctl_get_host_out		*out_get_host_args;
+	struct crt_ctl_get_pid_out		*out_get_pid_args;
+	struct crt_ctl_fi_attr_set_out		*out_set_fi_attr_args;
+	struct crt_ctl_fi_toggle_out		*out_fi_toggle_args;
+	char					*addr_str;
+	struct cb_info				*info;
+	int					 i;
 
 	info = cb_info->cci_arg;
 
@@ -412,7 +469,10 @@ ctl_client_cb(const struct crt_cb_info *cb_info)
 		fprintf(stdout, "group: %s, rank: %d\n",
 			in_args->cel_grp_id, in_args->cel_rank);
 
-		if (info->cmd == CMD_LIST_CTX) {
+		if (info->cmd == CMD_GET_URI_CACHE) {
+			out_get_uri_cache_args = crt_reply_get(cb_info->cci_rpc);
+			print_uri_cache(out_get_uri_cache_args);
+		} else if (info->cmd == CMD_LIST_CTX) {
 			out_ls_args = crt_reply_get(cb_info->cci_rpc);
 			fprintf(stdout, "ctx_num: %d\n",
 				out_ls_args->cel_ctx_num);
