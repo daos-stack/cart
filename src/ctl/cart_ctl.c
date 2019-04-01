@@ -384,7 +384,7 @@ out:
 }
 
 void
-print_uri_cache(struct crt_ctl_get_uri_cache_out *out_get_uri_cache_args)
+print_uri_cache(struct crt_ctl_get_uri_cache_out *out_uri_cache_args)
 {
 	char					*ptr;
 	char					*uri;
@@ -395,9 +395,9 @@ print_uri_cache(struct crt_ctl_get_uri_cache_out *out_get_uri_cache_args)
 	int					 size = 0;
 	int					 uri_size;
 
-	ptr = out_get_uri_cache_args->cguc_grp_info.iov_buf;
+	ptr = out_uri_cache_args->cguc_grp_info.iov_buf;
 
-	buf_len = out_get_uri_cache_args->cguc_grp_info.iov_buf_len;
+	buf_len = out_uri_cache_args->cguc_grp_info.iov_buf_len;
 
 	size = 0;
 
@@ -437,7 +437,7 @@ static void
 ctl_client_cb(const struct crt_cb_info *cb_info)
 {
 	struct crt_ctl_ep_ls_in			*in_args;
-	struct crt_ctl_get_uri_cache_out	*out_get_uri_cache_args;
+	struct crt_ctl_get_uri_cache_out	*out_uri_cache_args;
 	struct crt_ctl_ep_ls_out		*out_ls_args;
 	struct crt_ctl_get_host_out		*out_get_host_args;
 	struct crt_ctl_get_pid_out		*out_get_pid_args;
@@ -470,8 +470,8 @@ ctl_client_cb(const struct crt_cb_info *cb_info)
 			in_args->cel_grp_id, in_args->cel_rank);
 
 		if (info->cmd == CMD_GET_URI_CACHE) {
-			out_get_uri_cache_args = crt_reply_get(cb_info->cci_rpc);
-			print_uri_cache(out_get_uri_cache_args);
+			out_uri_cache_args = crt_reply_get(cb_info->cci_rpc);
+			print_uri_cache(out_uri_cache_args);
 		} else if (info->cmd == CMD_LIST_CTX) {
 			out_ls_args = crt_reply_get(cb_info->cci_rpc);
 			fprintf(stdout, "ctx_num: %d\n",
