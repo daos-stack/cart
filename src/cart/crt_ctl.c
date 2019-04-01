@@ -93,7 +93,7 @@ crt_ctl_fill_buffer_cb(d_list_t *rlink, void *arg)
 
 	D_MUTEX_LOCK(&ui->ui_mutex);
 	for (i = 0; i < CRT_SRV_CONTEXT_NUM; i++) {
-		if(ui->ui_uri[i] != NULL) {
+		if (ui->ui_uri[i] != NULL) {
 			char *tmp_uri;
 
 			tmp_uri = ui->ui_uri[i];
@@ -140,7 +140,7 @@ crt_ctl_get_uri_cache_size_cb(d_list_t *rlink, void *arg)
 
 	D_MUTEX_LOCK(&ui->ui_mutex);
 	for (i = 0; i < CRT_SRV_CONTEXT_NUM; i++) {
-		if(ui->ui_uri[i] != NULL) {
+		if (ui->ui_uri[i] != NULL) {
 			char *tmp_uri;
 
 			tmp_uri = ui->ui_uri[i];
