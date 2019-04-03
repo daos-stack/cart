@@ -24,6 +24,7 @@ _topdir/SOURCES/%: % | _topdir/SOURCES/
 	ln $< $@
 
 %.$(SRC_EXT): %
+	rm -f $@
 	gzip $<
 
 scons_local-$(VERSION).tar:
