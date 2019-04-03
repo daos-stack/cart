@@ -21,7 +21,17 @@ BuildRequires: hwloc-devel
 BuildRequires: openssl-devel
 BuildRequires: libcmocka-devel
 BuildRequires: libyaml-devel
-#Requires:
+Requires: libfabric
+Requires: pmix
+Requires: openpa
+Requires: mercury
+Requires: ompi
+Requires: libevent
+Requires: boost
+Requires: libuuid
+Requires: hwloc
+Requires: openssl
+Requires: libyaml
 
 %description
 
@@ -43,16 +53,12 @@ find . -name SConscript | xargs sed -i -e '/AppendUnique(RPATH=.*)/d'
 
 scons %{?_smp_mflags}                     \
       --config=force                      \
-      --update-prereq=all                 \
-      --build-deps=yes                    \
       USE_INSTALLED=all                   \
       PREFIX=%{?buildroot}
 
 %install
 scons %{?_smp_mflags}                     \
       --config=force                      \
-      --update-prereq=all                 \
-      --build-deps=yes                    \
       install                             \
       USE_INSTALLED=all                   \
       PREFIX=%{?buildroot}%{_prefix}
