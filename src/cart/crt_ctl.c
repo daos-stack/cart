@@ -75,15 +75,13 @@ out:
 	return rc;
 }
 
-int
+static int
 crt_ctl_fill_buffer_cb(d_list_t *rlink, void *arg)
 {
 	struct crt_uri_item	*ui;
 	int			*idx;
-	char			*buf;
 	struct crt_uri_cache	*uri_cache = arg;
 	int			 i;
-	int			 uri_size;
 	int			 rc = 0;
 
 	D_ASSERT(rlink != NULL);
@@ -92,44 +90,30 @@ crt_ctl_fill_buffer_cb(d_list_t *rlink, void *arg)
 	ui = crt_ui_link2ptr(rlink);
 
 	D_MUTEX_LOCK(&ui->ui_mutex);
+
+	idx = &uri_cache->idx;
+
 	for (i = 0; i < CRT_SRV_CONTEXT_NUM; i++) {
-		if (ui->ui_uri[i] != NULL) {
-			char *tmp_uri;
+		if (ui->ui_uri[i] == NULL)
+			continue;
 
-			tmp_uri = ui->ui_uri[i];
+		uri_cache->grp_cache[*idx].gc_rank = ui->ui_rank;
+		uri_cache->grp_cache[*idx].gc_tag = i;
+		uri_cache->grp_cache[*idx].gc_uri = ui->ui_uri[i];
 
-			idx = &uri_cache->info_idx;
-
-			buf = uri_cache->info_buf;
-
-			/* Pack rank */
-			*((d_rank_t *)(buf + *idx)) = ui->ui_rank;
-			*idx += sizeof(d_rank_t);
-
-			/* Pack tag */
-			*((uint32_t *)(buf + *idx)) = i;
-			*idx += sizeof(uint32_t);
-
-			/* Pack uri size */
-			uri_size = strlen(tmp_uri) + 1;
-			*((uint32_t *)(buf + *idx)) = uri_size;
-			*idx += sizeof(uint32_t);
-
-			/* Pack uri */
-			snprintf(buf + *idx, uri_size, "%s", tmp_uri);
-			*idx += uri_size;
-		}
+		*idx += 1;
 	}
+
 	D_MUTEX_UNLOCK(&ui->ui_mutex);
 
 	return rc;
 }
 
-int
+static int
 crt_ctl_get_uri_cache_size_cb(d_list_t *rlink, void *arg)
 {
 	struct crt_uri_item	*ui;
-	uint32_t		*total_size = arg;
+	uint32_t		*nuri = arg;
 	int			 i;
 	int			 rc = 0;
 
@@ -140,17 +124,10 @@ crt_ctl_get_uri_cache_size_cb(d_list_t *rlink, void *arg)
 
 	D_MUTEX_LOCK(&ui->ui_mutex);
 	for (i = 0; i < CRT_SRV_CONTEXT_NUM; i++) {
-		if (ui->ui_uri[i] != NULL) {
-			char *tmp_uri;
+		if (ui->ui_uri[i] == NULL)
+			continue;
 
-			tmp_uri = ui->ui_uri[i];
-
-			/* Allocate space for rank:tag:uri_size:uri */
-			*total_size += sizeof(d_rank_t);
-			*total_size += sizeof(uint32_t);
-			*total_size += sizeof(uint32_t);
-			*total_size += strlen(tmp_uri) + 1;
-		}
+		*nuri += 1;
 	}
 	D_MUTEX_UNLOCK(&ui->ui_mutex);
 
@@ -160,18 +137,14 @@ crt_ctl_get_uri_cache_size_cb(d_list_t *rlink, void *arg)
 void
 crt_hdlr_ctl_get_uri_cache(crt_rpc_t *rpc_req)
 {
-	struct crt_ctl_get_uri_cache_in		*in_args;
 	struct crt_ctl_get_uri_cache_out	*out_args;
-	int					 rc = 0;
-	uint32_t				 total_size = 0;
-	struct crt_grp_priv			*grp_priv;
+	struct crt_grp_priv			*grp_priv = NULL;
+	uint32_t				 nuri = 0;
 	struct crt_uri_cache			 uri_cache;
+	int					 rc = 0;
 
 	D_ASSERTF(crt_is_service(), "Must be called in a service process\n");
-	in_args = crt_req_get(rpc_req);
-	D_ASSERTF(in_args != NULL, "NULL input args\n");
 	out_args = crt_reply_get(rpc_req);
-	D_ASSERTF(out_args != NULL, "NULL output args\n");
 
 	rc = verify_ctl_in_args(crt_req_get(rpc_req));
 	if (rc != 0)
@@ -179,29 +152,34 @@ crt_hdlr_ctl_get_uri_cache(crt_rpc_t *rpc_req)
 
 	grp_priv = crt_gdata.cg_grp->gg_srv_pri_grp;
 
-	rc = d_hash_table_traverse(&grp_priv->gp_uri_lookup_cache,
-				   crt_ctl_get_uri_cache_size_cb, &total_size);
-	if (rc != 0)
-		D_ERROR("Get uri cache size failed, rc: %d.\n", rc);
+	D_RWLOCK_RDLOCK(&grp_priv->gp_rwlock);
 
-	D_ALLOC(uri_cache.info_buf, total_size);
-	if (uri_cache.info_buf == NULL)
+	rc = d_hash_table_traverse(&grp_priv->gp_uri_lookup_cache,
+				   crt_ctl_get_uri_cache_size_cb, &nuri);
+	if (rc != 0)
+		D_GOTO(out, 0);
+
+	D_ALLOC_ARRAY(uri_cache.grp_cache, nuri);
+	if (uri_cache.grp_cache == NULL)
 		D_GOTO(out, rc = -DER_NOMEM);
 
-	uri_cache.info_idx = 0;
+	uri_cache.idx = 0;
 
 	rc = d_hash_table_traverse(&grp_priv->gp_uri_lookup_cache,
 				   crt_ctl_fill_buffer_cb, &uri_cache);
 	if (rc != 0)
-		D_ERROR("Fill uri cache buffer failed, rc: %d.\n", rc);
+		D_GOTO(out, 0);
 
-	d_iov_set(&out_args->cguc_grp_info, uri_cache.info_buf, total_size);
+	out_args->cguc_grp_cache.ca_arrays = uri_cache.grp_cache;
+	out_args->cguc_grp_cache.ca_count  = nuri;
 
 out:
+	out_args->cguc_rc = rc;
 	rc = crt_reply_send(rpc_req);
 	D_ASSERTF(rc == 0, "crt_reply_send() failed. rc: %d\n", rc);
 	D_DEBUG(DB_TRACE, "sent reply to get uri cache request\n");
-	D_FREE(uri_cache.info_buf);
+	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
+	D_FREE(uri_cache.grp_cache);
 }
 
 void

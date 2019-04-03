@@ -386,50 +386,18 @@ out:
 void
 print_uri_cache(struct crt_ctl_get_uri_cache_out *out_uri_cache_args)
 {
-	char					*ptr;
-	char					*uri;
-	size_t					 buf_len;
-	d_rank_t				 rank;
-	int					 tag;
-	int					 len;
-	int					 size = 0;
-	int					 uri_size;
+	struct crt_grp_cache    *grp_cache;
+	int			 count;
+	int			 i;
 
-	ptr = out_uri_cache_args->cguc_grp_info.iov_buf;
+	count = out_uri_cache_args->cguc_grp_cache.ca_count;
 
-	buf_len = out_uri_cache_args->cguc_grp_info.iov_buf_len;
+	grp_cache = out_uri_cache_args->cguc_grp_cache.ca_arrays;
 
-	size = 0;
-
-	while (size < buf_len) {
-		/* Unpack rank */
-		rank = *((d_rank_t *)ptr);
-		ptr += sizeof(d_rank_t);
-		size += sizeof(d_rank_t);
-		D_ASSERT(size < buf_len);
-
-		/* Unpack tag */
-		tag = *((uint32_t *)ptr);
-		ptr += sizeof(uint32_t);
-		size += sizeof(uint32_t);
-		D_ASSERT(size < buf_len);
-
-		/* Unpack size of uri string */
-		uri_size = *((uint32_t *)ptr);
-		ptr += sizeof(uint32_t);
-		size += sizeof(uint32_t);
-		D_ASSERT(size < buf_len);
-
-		/* Unpack uri */
-		len = strnlen(ptr, buf_len - size) + 1;
-		D_ASSERT(len == uri_size);
-		uri = ptr;
-		ptr += len;
-		size += len;
-		D_ASSERT(size <= buf_len);
-
-		printf("    rank=%d tag=%d uri='%s'\n",
-			rank, tag, uri);
+	for (i = 0; i < count; i++) {
+		fprintf(stdout, "  rank = %d, ", grp_cache[i].gc_rank);
+		fprintf(stdout, "tag = %d, ", grp_cache[i].gc_tag);
+		fprintf(stdout, "uri = %s\n", grp_cache[i].gc_uri);
 	}
 }
 

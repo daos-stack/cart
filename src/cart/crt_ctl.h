@@ -44,8 +44,8 @@
 
 /* crt uri lookup cache info */
 struct crt_uri_cache {
-	char	*info_buf; /* uri:tag:uri_size:uri info */
-	int	info_idx; /* idx to locate the beginning of each hash item */
+	struct crt_grp_cache	*grp_cache;
+	int			 idx;
 };
 
 void crt_hdlr_ctl_get_uri_cache(crt_rpc_t *rpc_req);

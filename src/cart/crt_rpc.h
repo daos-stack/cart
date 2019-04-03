@@ -300,6 +300,13 @@ enum {
 
 #undef X
 
+#define CRT_SEQ_GRP_CACHE					 \
+	((d_rank_t)		(gc_rank)		CRT_VAR) \
+	((uint32_t)		(gc_tag)		CRT_VAR) \
+	((d_string_t)		(gc_uri)		CRT_VAR)
+
+CRT_GEN_STRUCT(crt_grp_cache, CRT_SEQ_GRP_CACHE)
+
 /* CRT internal RPC definitions */
 #define CRT_ISEQ_GRP_CREATE	/* input fields */		 \
 	/* user visible grp id (group name) */			 \
@@ -519,7 +526,7 @@ CRT_RPC_DECLARE(crt_lm_memb_sample,
 CRT_RPC_DECLARE(crt_ctl_ep_ls, CRT_ISEQ_CTL, CRT_OSEQ_CTL_EP_LS)
 
 #define CRT_OSEQ_CTL_GET_URI_CACHE /* output fields */		 \
-	((d_iov_t)		(cguc_grp_info)		CRT_VAR) \
+	((struct crt_grp_cache)	(cguc_grp_cache)	CRT_ARRAY) \
 	((int32_t)		(cguc_rc)		CRT_VAR)
 
 CRT_RPC_DECLARE(crt_ctl_get_uri_cache, CRT_ISEQ_CTL, CRT_OSEQ_CTL_GET_URI_CACHE)
