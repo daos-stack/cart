@@ -107,16 +107,13 @@ class TestEpCredits(commontestsuite.CommonTestSuite):
             self.fail("Failed to launch cred server; return code %s" \
                        % srv_proc.returncode)
 
-
         # Important: 0 should be last in tuple, as client shuts down server
         # for credit=0 case
-        credits_to_test = (1, 10, 100, 255, 0)
+        credits_to_test = (1, 5, 10, 20, 255, 0)
 
         for credit in credits_to_test:
-
-            cli_cmd = 'tests/test_ep_cred_client -a cred_group -c %d -b 100' \
+            cli_cmd = 'tests/test_ep_cred_client -a cred_group -c %d -b 20' \
                        % credit
-
             self.logger.info(cli_cmd)
 
             if credit == 0:

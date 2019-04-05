@@ -152,7 +152,7 @@ test_run()
 
 	D_DEBUG(DB_TRACE, "Waiting for responses to %d rpcs\n",
 		test.tg_burst_count);
-	test_sem_timedwait(&test.tg_token_to_proceed, 21, __LINE__);
+	test_sem_timedwait(&test.tg_token_to_proceed, 61, __LINE__);
 	D_DEBUG(DB_TRACE, "Got all responses\n");
 
 	if (test.tg_send_shutdown) {
