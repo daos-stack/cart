@@ -383,7 +383,7 @@ out:
 	return rc;
 }
 
-void
+static void
 print_uri_cache(struct crt_ctl_get_uri_cache_out *out_uri_cache_args)
 {
 	struct crt_grp_cache    *grp_cache;
@@ -439,7 +439,12 @@ ctl_client_cb(const struct crt_cb_info *cb_info)
 
 		if (info->cmd == CMD_GET_URI_CACHE) {
 			out_uri_cache_args = crt_reply_get(cb_info->cci_rpc);
-			print_uri_cache(out_uri_cache_args);
+			if (out_uri_cache_args->cguc_rc != 0)
+				fprintf(stdout, "CMD_GET_URI_CACHE \
+					returned error, rc = %d\n",
+					out_uri_cache_args->cguc_rc);
+			else
+				print_uri_cache(out_uri_cache_args);
 		} else if (info->cmd == CMD_LIST_CTX) {
 			out_ls_args = crt_reply_get(cb_info->cci_rpc);
 			fprintf(stdout, "ctx_num: %d\n",

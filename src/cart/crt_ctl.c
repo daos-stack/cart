@@ -140,19 +140,19 @@ crt_hdlr_ctl_get_uri_cache(crt_rpc_t *rpc_req)
 	struct crt_ctl_get_uri_cache_out	*out_args;
 	struct crt_grp_priv			*grp_priv = NULL;
 	uint32_t				 nuri = 0;
-	struct crt_uri_cache			 uri_cache;
+	struct crt_uri_cache			 uri_cache = {0};
 	int					 rc = 0;
 
 	D_ASSERTF(crt_is_service(), "Must be called in a service process\n");
 	out_args = crt_reply_get(rpc_req);
 
-	rc = verify_ctl_in_args(crt_req_get(rpc_req));
-	if (rc != 0)
-		D_GOTO(out, rc);
-
 	grp_priv = crt_gdata.cg_grp->gg_srv_pri_grp;
 
 	D_RWLOCK_RDLOCK(&grp_priv->gp_rwlock);
+
+	rc = verify_ctl_in_args(crt_req_get(rpc_req));
+	if (rc != 0)
+		D_GOTO(out, rc);
 
 	rc = d_hash_table_traverse(&grp_priv->gp_uri_lookup_cache,
 				   crt_ctl_get_uri_cache_size_cb, &nuri);
