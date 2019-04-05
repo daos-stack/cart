@@ -675,7 +675,7 @@ crt_req_timeout_reset(struct crt_rpc_priv *rpc_priv)
 	}
 	RPC_TRACE(DB_NET, rpc_priv, "reset_timer enabled.\n");
 
-	rpc_priv->crp_timeout_ts = crt_get_timeout(rpc_priv);
+	crt_set_timeout(rpc_priv);
 	D_MUTEX_LOCK(&crt_ctx->cc_mutex);
 	rc = crt_req_timeout_track(rpc_priv);
 	D_MUTEX_UNLOCK(&crt_ctx->cc_mutex);
@@ -875,7 +875,7 @@ crt_context_req_track(struct crt_rpc_priv *rpc_priv)
 	/* add the RPC req to crt_ep_inflight */
 	D_MUTEX_LOCK(&epi->epi_mutex);
 	D_ASSERT(epi->epi_req_num >= epi->epi_reply_num);
-	rpc_priv->crp_timeout_ts = crt_get_timeout(rpc_priv);
+	crt_set_timeout(rpc_priv);
 	rpc_priv->crp_epi = epi;
 	RPC_ADDREF(rpc_priv);
 	if (crt_gdata.cg_credit_ep_ctx != 0 &&
@@ -996,7 +996,7 @@ crt_context_req_untrack(struct crt_rpc_priv *rpc_priv)
 		tmp_rpc = d_list_entry(epi->epi_req_waitq.next,
 					struct crt_rpc_priv, crp_epi_link);
 		tmp_rpc->crp_state = RPC_STATE_INITED;
-		tmp_rpc->crp_timeout_ts = crt_get_timeout(tmp_rpc);
+		crt_set_timeout(tmp_rpc);
 
 		D_MUTEX_LOCK(&crt_ctx->cc_mutex);
 		rc = crt_req_timeout_track(tmp_rpc);
@@ -1028,8 +1028,8 @@ crt_context_req_untrack(struct crt_rpc_priv *rpc_priv)
 			continue;
 
 		RPC_ADDREF(tmp_rpc);
-		D_ERROR("crt_req_send_internal failed, rc: %d, opc: %#x.\n",
-			rc, tmp_rpc->crp_pub.cr_opc);
+		RPC_ERROR(tmp_rpc, "crt_req_send_internal failed, rc: %d\n",
+			rc);
 		tmp_rpc->crp_state = RPC_STATE_INITED;
 		crt_context_req_untrack(tmp_rpc);
 		/* for error case here */
