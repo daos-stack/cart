@@ -106,14 +106,10 @@ struct crt_ctl_get_uri_cache_in {
 };
 
 struct crt_ctl_get_uri_cache_out {
-<<<<<<< HEAD
 	struct {
 	uint64_t ca_count;
 	struct crt_grp_cache *ca_arrays;
 	} cguc_grp_cache;
-=======
-	d_iov_t cguc_grp_info;
->>>>>>> 0c4b79f6a74640611c777aea57266b69df19fe57
 	int32_t cguc_rc;
 };
 
