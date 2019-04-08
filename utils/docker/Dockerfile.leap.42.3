@@ -44,8 +44,6 @@ FROM opensuse/leap:42.3
 MAINTAINER Johann Lombardi <johann.lombardi@intel.com>
 
 # Build arguments can be set via -build-arg
-# set NOBUILD to disable git clone & build
-ARG NOBUILD
 # use same UID as host and default value of 1000 if not specified
 ARG UID=1000
 
@@ -54,7 +52,7 @@ ARG UID=1000
 # zypper install command so that the database is updated if/when the
 # installed packages list below is updated
 RUN zypper --non-interactive update
-RUN zypper --non-interactive install                                  \
+RUN zypper --non-interactive install                                   \
            boost-devel ca-certificates-mozilla cmake cunit-devel curl  \
            doxygen flex gcc gcc-c++ git go graphviz                    \
            libaio-devel libevent-devel libiscsi-devel libltdl7 libtool \
@@ -80,6 +78,9 @@ RUN useradd -u $UID -ms /bin/bash $USER
 # Switch to new user
 USER $USER
 WORKDIR /home/$USER
+
+# set NOBUILD to disable git clone & build
+ARG NOBUILD
 
 # Fetch CaRT code
 RUN if [ "x$NOBUILD" = "x" ] ; then \

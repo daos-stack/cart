@@ -763,8 +763,6 @@ pipeline {
         stage('Test') {
             parallel {
                 stage('Single-node') {
-                    when { beforeAgent true
-                           expression { false } }
                     agent {
                         label 'ci_vm1'
                     }
@@ -810,8 +808,6 @@ pipeline {
                     }
                 }
                 stage('Single-node-valgrind') {
-                    when { beforeAgent true
-                           expression { false } }
                     agent {
                         label 'ci_vm1'
                     }
@@ -875,8 +871,6 @@ pipeline {
                     }
                 }
                 stage('Two-node') {
-                    when { beforeAgent true
-                           expression { false } }
                     agent {
                         label 'ci_vm2'
                     }
@@ -932,8 +926,6 @@ pipeline {
                     }
                 }
                 stage('Three-node') {
-                    when { beforeAgent true
-                           expression { false } }
                     agent {
                         label 'ci_vm3'
                     }
@@ -989,8 +981,6 @@ pipeline {
                     }
                 }
                 stage('Five-node') {
-                    when { beforeAgent true
-                           expression { false } }
                     agent {
                         label 'ci_vm5'
                     }
