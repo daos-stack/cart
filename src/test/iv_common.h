@@ -48,6 +48,8 @@
 
 #define IV_GRP_NAME "IV_TEST"
 
+#define TEST_IV_BASE 0x010000000
+
 /* Describes internal structure of a key */
 struct iv_key_struct {
 	d_rank_t	rank;
@@ -101,7 +103,7 @@ struct iv_key_struct {
 #define RPC_DECLARE(name, function)					\
 	CRT_RPC_DECLARE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)		\
 	CRT_RPC_DEFINE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)		\
-	static void *DQF_FUNC_##name = (void *)function
+	//static void *DQF_FUNC_##name = (void *)function 
 #else
 #define RPC_DECLARE(name, function)					\
 	CRT_RPC_DECLARE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)		\

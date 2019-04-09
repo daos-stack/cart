@@ -406,6 +406,39 @@ progress_function(void *data)
 	return NULL;
 }
 
+static struct crt_proto_rpc_format my_proto_rpc_fmt_iv[] = {
+	{
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_TEST_FETCH_IV,
+		.prf_hdlr	= NULL,
+		.prf_co_ops	= NULL,
+	}, {
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_TEST_UPDATE_IV, 
+		.prf_hdlr	= NULL,
+		.prf_co_ops	= NULL,
+	}, {
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_TEST_INVALIDATE_IV, 
+		.prf_hdlr	= NULL,
+		.prf_co_ops	= NULL,
+	}, {
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_SHUTDOWN,
+		.prf_hdlr	= NULL,
+		.prf_co_ops	= NULL,
+	}
+};
+
+static struct crt_proto_format my_proto_fmt_iv = {
+        .cpf_name = "my-proto-iv",
+        .cpf_ver = 0,
+        .cpf_count = ARRAY_SIZE(my_proto_rpc_fmt_iv),
+        .cpf_prf = &my_proto_rpc_fmt_iv[0],
+        .cpf_base = TEST_IV_BASE,
+};
+
+
 #define NUM_ATTACH_RETRIES 10
 
 int main(int argc, char **argv)
@@ -524,20 +557,10 @@ int main(int argc, char **argv)
 		sleep(1);
 	}
 	assert(rc == 0);
-
 	rc = pthread_create(&progress_thread, 0, progress_function, &g_crt_ctx);
 	assert(rc == 0);
 
-	rc = RPC_REGISTER(RPC_TEST_FETCH_IV);
-	assert(rc == 0);
-
-	rc = RPC_REGISTER(RPC_TEST_UPDATE_IV);
-	assert(rc == 0);
-
-	rc = RPC_REGISTER(RPC_TEST_INVALIDATE_IV);
-	assert(rc == 0);
-
-	rc = RPC_REGISTER(RPC_SHUTDOWN);
+        rc = crt_proto_register(&my_proto_fmt_iv);
 	assert(rc == 0);
 
 	g_server_ep.ep_grp = srv_grp;

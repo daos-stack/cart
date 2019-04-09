@@ -1151,6 +1151,43 @@ show_usage(char *app_name)
 	printf("Verbose numbers are 0,1,2\n\n");
 }
 
+static struct crt_proto_rpc_format my_proto_rpc_fmt_iv_srv[] = {
+	{
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_TEST_FETCH_IV,
+		.prf_hdlr	= (void *)iv_test_fetch_iv,
+		.prf_co_ops	= NULL,
+	}, {
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_TEST_UPDATE_IV,
+		.prf_hdlr	= (void *)iv_test_update_iv,
+		.prf_co_ops	= NULL,
+	}, {
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_TEST_INVALIDATE_IV,
+		.prf_hdlr	= (void *)iv_test_invalidate_iv,
+		.prf_co_ops	= NULL,
+	}, {
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_SET_IVNS,
+		.prf_hdlr	= (void *)iv_set_ivns,
+		.prf_co_ops	= NULL,
+	}, {
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_SHUTDOWN,
+		.prf_hdlr	= (void *)iv_shutdown,
+		.prf_co_ops	= NULL,
+	}
+};
+
+static struct crt_proto_format my_proto_fmt_iv_srv = {
+        .cpf_name = "my-proto-iv-srv",
+        .cpf_ver = 0,
+        .cpf_count = ARRAY_SIZE(my_proto_rpc_fmt_iv_srv),
+        .cpf_prf = &my_proto_rpc_fmt_iv_srv[0],
+        .cpf_base = TEST_IV_BASE,
+};
+
 int main(int argc, char **argv)
 {
 	char	*arg_verbose = NULL;
@@ -1186,19 +1223,7 @@ int main(int argc, char **argv)
 
 	DBG_PRINT("Server starting\n");
 
-	rc = RPC_REGISTER(RPC_TEST_FETCH_IV);
-	assert(rc == 0);
-
-	rc = RPC_REGISTER(RPC_TEST_UPDATE_IV);
-	assert(rc == 0);
-
-	rc = RPC_REGISTER(RPC_TEST_INVALIDATE_IV);
-	assert(rc == 0);
-
-	rc = RPC_REGISTER(RPC_SET_IVNS);
-	assert(rc == 0);
-
-	rc = RPC_REGISTER(RPC_SHUTDOWN);
+        rc = crt_proto_register(&my_proto_fmt_iv_srv);
 	assert(rc == 0);
 
 	rc = crt_group_rank(NULL, &g_my_rank);
