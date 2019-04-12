@@ -54,7 +54,8 @@ def singleNodeTest(test_mode) {
                        NODELIST=$nodelist
                        NODE=\${NODELIST%%,*}
                        trap 'set +e; set -x; ssh -i ci_key jenkins@\$NODE "set -ex; sudo umount \$CART_BASE"' EXIT
-                       ssh -i ci_key jenkins@\$NODE "set -x
+                       rc=0
+                       if ! ssh -i ci_key jenkins@\$NODE "set -x
                            set -e
                            sudo mkdir -p \$CART_BASE
                            sudo mount -t nfs \$HOSTNAME:\$PWD \$CART_BASE
@@ -66,8 +67,9 @@ def singleNodeTest(test_mode) {
                                rc=\\\${PIPESTATUS[0]}
                                echo \"run_test.sh exited failure with \\\$rc\"
                            fi
-                           exit \\\$rc"
-                       rc=\${PIPESTATUS[0]}
+                           exit \\\$rc"; then
+                           rc=\${PIPESTATUS[0]}
+                       fi
                        mkdir -p install/Linux/TESTING/
                        scp -i ci_key -r jenkins@\$NODE:\$CART_BASE/install/Linux/TESTING/testLogs \
                                         install/Linux/TESTING/
@@ -170,29 +172,45 @@ pipeline {
                         }
                     }
                     steps {
+                         githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                      description: env.STAGE_NAME,
+                                      context: "build" + "/" + env.STAGE_NAME,
+                                      status: "PENDING"
                         checkoutScm withSubmodules: true
-                        sh '''rm -rf artifacts/
-                              mkdir -p artifacts/
-                              if make srpm; then
-                                  if make mockbuild; then
-                                      (cd /var/lib/mock/epel-7-x86_64/result/ && cp -r . $OLDPWD/artifacts/)
-                                      createrepo artifacts/
-                                  else
-                                      rc=\${PIPESTATUS[0]}
-                                      (cd /var/lib/mock/epel-7-x86_64/result/ && cp -r . $OLDPWD/artifacts/)
-                                      cp -af _topdir/SRPMS artifacts/
-                                      exit \$rc
-                                  fi
-                              else
-                                  exit \${PIPESTATUS[0]}
-                              fi'''
+                        sh label: env.STAGE_NAME,
+                           script: '''rm -rf artifacts/
+                                      mkdir -p artifacts/
+                                      if make srpm; then
+                                          if make mockbuild; then
+                                              (cd /var/lib/mock/epel-7-x86_64/result/ && cp -r . $OLDPWD/artifacts/)
+                                              createrepo artifacts/
+                                          else
+                                              rc=\${PIPESTATUS[0]}
+                                              (cd /var/lib/mock/epel-7-x86_64/result/ && cp -r . $OLDPWD/artifacts/)
+                                              cp -af _topdir/SRPMS artifacts/
+                                              exit \$rc
+                                          fi
+                                      else
+                                          exit \${PIPESTATUS[0]}
+                                      fi'''
                     }
                     post {
                         always {
                             archiveArtifacts artifacts: 'artifacts/**'
                         }
+                        success {
+                            stepResult name: env.STAGE_NAME, context: "build",
+                                       result: "SUCCESS"
+                        }
+                        unstable {
+                            stepResult name: env.STAGE_NAME, context: "build",
+                                       result: "UNSTABLE"
+                        }
+                        failure {
+                            stepResult name: env.STAGE_NAME, context: "build",
+                                       result: "FAILURE"
+                        }
                     }
-
                 }
                 stage('Build on CentOS 7') {
                     agent {
