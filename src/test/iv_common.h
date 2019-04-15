@@ -48,6 +48,10 @@
 
 #define IV_GRP_NAME "IV_TEST"
 
+#define TEST_IV_BASE 0x010000000
+#define TEST_IV_VER  0
+
+
 /* Describes internal structure of a key */
 struct iv_key_struct {
 	d_rank_t	rank;
@@ -100,8 +104,8 @@ struct iv_key_struct {
 #ifdef _SERVER
 #define RPC_DECLARE(name, function)					\
 	CRT_RPC_DECLARE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)		\
-	CRT_RPC_DEFINE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)		\
-	static void *DQF_FUNC_##name = (void *)function
+	CRT_RPC_DEFINE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)	
+
 #else
 #define RPC_DECLARE(name, function)					\
 	CRT_RPC_DECLARE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)		\
@@ -109,11 +113,17 @@ struct iv_key_struct {
 #endif
 
 enum {
-	RPC_TEST_FETCH_IV = 0xB1, /* Client issues fetch call */
-	RPC_TEST_UPDATE_IV = 0xB2, /* Client issues update call */
-	RPC_TEST_INVALIDATE_IV = 0xB3, /* Client issues invalidate call */
-	RPC_SET_IVNS, /* send global ivns */
-	RPC_SHUTDOWN, /* Request server shutdown */
+	/* Client issues fetch call */
+	RPC_TEST_FETCH_IV = CRT_PROTO_OPC(TEST_IV_BASE, TEST_IV_VER, 0),
+	 /* Client issues update call */
+	RPC_TEST_UPDATE_IV = CRT_PROTO_OPC(TEST_IV_BASE, TEST_IV_VER, 1),
+	/* Client issues invalidate call */
+	RPC_TEST_INVALIDATE_IV = CRT_PROTO_OPC(TEST_IV_BASE,
+							TEST_IV_VER, 2),
+	/* send global ivns */
+	RPC_SET_IVNS = CRT_PROTO_OPC(TEST_IV_BASE, TEST_IV_VER, 3),
+	/* Request server shutdown */
+	RPC_SHUTDOWN = CRT_PROTO_OPC(TEST_IV_BASE, TEST_IV_VER, 4),
 } rpc_id_t;
 
 int iv_test_fetch_iv(crt_rpc_t *rpc);
@@ -129,6 +139,72 @@ RPC_DECLARE(RPC_TEST_INVALIDATE_IV, iv_test_invalidate_iv);
 RPC_DECLARE(RPC_SET_IVNS, iv_set_ivns);
 RPC_DECLARE(RPC_SHUTDOWN, iv_shutdown);
 
+static struct crt_proto_rpc_format my_proto_rpc_fmt_iv[] = {
+#ifdef _SERVER
+	{
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_TEST_FETCH_IV,
+		.prf_hdlr	= (void *)iv_test_fetch_iv,
+		.prf_co_ops	= NULL,
+	}, {
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_TEST_UPDATE_IV,
+		.prf_hdlr	= (void *)iv_test_update_iv,
+		.prf_co_ops	= NULL,
+	}, {
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_TEST_INVALIDATE_IV,
+		.prf_hdlr	= (void *)iv_test_invalidate_iv,
+		.prf_co_ops	= NULL,
+	}, {
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_SET_IVNS,
+		.prf_hdlr	= (void *)iv_set_ivns,
+		.prf_co_ops	= NULL,
+	}, {
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_SHUTDOWN,
+		.prf_hdlr	= (void *)iv_shutdown,
+		.prf_co_ops	= NULL,
+	}
+#else
+	{
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_TEST_FETCH_IV,
+		.prf_hdlr	= NULL,
+		.prf_co_ops	= NULL,
+	}, {
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_TEST_UPDATE_IV,
+		.prf_hdlr	= NULL,
+		.prf_co_ops	= NULL,
+	}, {
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_TEST_INVALIDATE_IV,
+		.prf_hdlr	= NULL,
+		.prf_co_ops	= NULL,
+	}, {
+		.prf_flags	= 0,
+		.prf_req_fmt	= NULL,
+		.prf_hdlr	= NULL,
+		.prf_co_ops	= NULL,
+
+	}, {
+		.prf_flags	= 0,
+		.prf_req_fmt	= &CQF_RPC_SHUTDOWN,
+		.prf_hdlr	= NULL,
+		.prf_co_ops	= NULL,
+	}
+#endif
+};
+
+static struct crt_proto_format my_proto_fmt_iv = {
+	.cpf_name = "my-proto-iv",
+	.cpf_ver = TEST_IV_VER,
+	.cpf_count = ARRAY_SIZE(my_proto_rpc_fmt_iv),
+	.cpf_prf = &my_proto_rpc_fmt_iv[0],
+	.cpf_base = TEST_IV_BASE,
+};
 void
 rpc_handle_reply(const struct crt_cb_info *info)
 {
