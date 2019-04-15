@@ -234,7 +234,7 @@ static void
 		if (rc != 0 && rc != -DER_TIMEDOUT) {
 			D_ERROR("crt_progress failed %d", rc);
 			break;
-		 }
+		}
 	}
 
 	dbg("progress_handler: progress thread exit ...\n");
@@ -553,11 +553,11 @@ static struct crt_proto_rpc_format my_proto_rpc_fmt_test_srv[] = {
 
 
 static struct crt_proto_format my_proto_fmt_test_srv = {
-        .cpf_name = "my-proto-test-srv",
-        .cpf_ver = TEST_RPC_COMMON_VER,
-        .cpf_count = ARRAY_SIZE(my_proto_rpc_fmt_test_srv),
-        .cpf_prf = &my_proto_rpc_fmt_test_srv[0],
-        .cpf_base = TEST_RPC_COMMON_BASE,
+	.cpf_name = "my-proto-test-srv",
+	.cpf_ver = TEST_RPC_COMMON_VER,
+	.cpf_count = ARRAY_SIZE(my_proto_rpc_fmt_test_srv),
+	.cpf_prf = &my_proto_rpc_fmt_test_srv[0],
+	.cpf_base = TEST_RPC_COMMON_BASE,
 };
 
 int
@@ -576,7 +576,7 @@ srv_rpc_init(void)
 	rc  = crt_group_config_save(NULL, false);
 	D_ASSERTF(rc == 0, "crt_group_config_save failed %d\n", rc);
 
-        rc = crt_proto_register(&my_proto_fmt_test_srv);
+	rc = crt_proto_register(&my_proto_fmt_test_srv);
 	D_ASSERTF(rc == 0, "crt_proto_register failed %d\n", rc);
 
 	rc = crt_group_rank(NULL, &rpc_srv.my_rank);

@@ -652,7 +652,8 @@ test_init(void)
 	D_ASSERTF(rc == 0, "crt_context_create() failed. rc: %d\n", rc);
 
 	rc = crt_proto_register(&my_proto_fmt_corpc);
-	D_ASSERTF(rc == 0, "crt_proto_register() for corpc failed, rc: %d\n", rc);
+	D_ASSERTF(rc == 0, "crt_proto_register() for corpc failed,
+							rc: %d\n", rc);
 
 	rc = crt_proto_register(&my_proto_fmt_srv);
 	D_ASSERTF(rc == 0, "crt_rpc_srv_register() failed, rc: %d\n", rc);

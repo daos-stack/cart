@@ -104,7 +104,7 @@ struct iv_key_struct {
 #ifdef _SERVER
 #define RPC_DECLARE(name, function)					\
 	CRT_RPC_DECLARE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)		\
-	CRT_RPC_DEFINE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)	
+	CRT_RPC_DEFINE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)
 
 #else
 #define RPC_DECLARE(name, function)					\
