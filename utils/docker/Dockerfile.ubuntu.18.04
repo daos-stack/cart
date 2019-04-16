@@ -44,8 +44,6 @@ FROM ubuntu:18.04
 MAINTAINER Johann Lombardi <johann.lombardi@intel.com>
 
 # Build arguments can be set via -build-arg
-# set NOBUILD to disable git clone & build
-ARG NOBUILD
 # use same UID as host and default value of 1000 if not specified
 ARG UID=1000
 
@@ -55,17 +53,20 @@ ARG UID=1000
 # installed packages list below is updated
 
 # Install basic tools
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y git   \
-                       gcc golang-go make cmake libtool-bin scons autoconf    \
-                       libboost-dev uuid-dev libssl-dev libevent-dev          \
-                       libltdl-dev librdmacm-dev libcmocka0 libcmocka-dev     \
-                       libreadline6-dev curl doxygen pandoc flex patch nasm   \
-                       yasm graphviz doxygen libibverbs-dev librdmacm-dev     \
-                       libcunit1-dev libnuma-dev libaio-dev sg3-utils         \
-                       libiscsi-dev python-dev mscgen ninja-build meson       \
-                       pylint bash locales clang libyaml-dev
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y go-dep \
-                       python3 python-yaml python3-yaml
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            autoconf bash clang cmake curl doxygen flex                 \
+            gcc git golang-go graphviz                                  \
+            libaio-dev libboost-dev libcmocka0 libcmocka-dev            \
+            libcunit1-dev libevent-dev libibverbs-dev libiscsi-dev      \
+            libltdl-dev libnuma-dev librdmacm-dev libreadline6-dev      \
+            libssl-dev libtool-bin libyaml-dev                          \
+            locales make meson nasm ninja-build pandoc patch            \
+            pylint python-dev scons sg3-utils uuid-dev yasm
+
+# CaRT Specific
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            go-dep mscgen python-yaml python3 python3-yaml
+
 # Don't need libsafec-dev and libipmctl-dev
 
 RUN ln -s /usr/bin/cc /bin/cc
@@ -84,6 +85,9 @@ RUN echo "$USER:$PASSWD" | chpasswd
 # Switch to new user
 USER $USER
 WORKDIR /home/$USER
+
+# set NOBUILD to disable git clone & build
+ARG NOBUILD
 
 # Fetch CaRT code
 RUN if [ "x$NOBUILD" = "x" ] ; then git clone https://github.com/daos-stack/cart.git; fi
