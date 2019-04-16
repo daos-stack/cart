@@ -101,16 +101,9 @@ struct iv_key_struct {
 	CRT_RPC_REGISTER(name, 0, name)
 #endif
 
-#ifdef _SERVER
 #define RPC_DECLARE(name, function)					\
 	CRT_RPC_DECLARE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)		\
 	CRT_RPC_DEFINE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)
-
-#else
-#define RPC_DECLARE(name, function)					\
-	CRT_RPC_DECLARE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)		\
-	CRT_RPC_DEFINE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)
-#endif
 
 enum {
 	/* Client issues fetch call */
@@ -139,63 +132,31 @@ RPC_DECLARE(RPC_TEST_INVALIDATE_IV, iv_test_invalidate_iv);
 RPC_DECLARE(RPC_SET_IVNS, iv_set_ivns);
 RPC_DECLARE(RPC_SHUTDOWN, iv_shutdown);
 
-static struct crt_proto_rpc_format my_proto_rpc_fmt_iv[] = {
-#ifdef _SERVER
-	{
-		.prf_flags	= 0,
-		.prf_req_fmt	= &CQF_RPC_TEST_FETCH_IV,
-		.prf_hdlr	= (void *)iv_test_fetch_iv,
-		.prf_co_ops	= NULL,
-	}, {
-		.prf_flags	= 0,
-		.prf_req_fmt	= &CQF_RPC_TEST_UPDATE_IV,
-		.prf_hdlr	= (void *)iv_test_update_iv,
-		.prf_co_ops	= NULL,
-	}, {
-		.prf_flags	= 0,
-		.prf_req_fmt	= &CQF_RPC_TEST_INVALIDATE_IV,
-		.prf_hdlr	= (void *)iv_test_invalidate_iv,
-		.prf_co_ops	= NULL,
-	}, {
-		.prf_flags	= 0,
-		.prf_req_fmt	= &CQF_RPC_SET_IVNS,
-		.prf_hdlr	= (void *)iv_set_ivns,
-		.prf_co_ops	= NULL,
-	}, {
-		.prf_flags	= 0,
-		.prf_req_fmt	= &CQF_RPC_SHUTDOWN,
-		.prf_hdlr	= (void *)iv_shutdown,
-		.prf_co_ops	= NULL,
-	}
+#ifdef _SERVER	
+#define PRF_ENTRY(x,y)		\
+{				\
+	.prf_flags = 0,		\
+	.prf_req_fmt = &x,	\
+	.prf_hdlr = (void*) y,	\
+	.prf_co_ops = NULL,	\
+}			
 #else
-	{
-		.prf_flags	= 0,
-		.prf_req_fmt	= &CQF_RPC_TEST_FETCH_IV,
-		.prf_hdlr	= NULL,
-		.prf_co_ops	= NULL,
-	}, {
-		.prf_flags	= 0,
-		.prf_req_fmt	= &CQF_RPC_TEST_UPDATE_IV,
-		.prf_hdlr	= NULL,
-		.prf_co_ops	= NULL,
-	}, {
-		.prf_flags	= 0,
-		.prf_req_fmt	= &CQF_RPC_TEST_INVALIDATE_IV,
-		.prf_hdlr	= NULL,
-		.prf_co_ops	= NULL,
-	}, {
-		.prf_flags	= 0,
-		.prf_req_fmt	= NULL,
-		.prf_hdlr	= NULL,
-		.prf_co_ops	= NULL,
+#define PRF_ENTRY(x,y)	\
+{			\
+.prf_flags = 0,		\
+.prf_req_fmt = &x,	\
+.prf_hdlr = NULL,	\
+.prf_co_ops = NULL,	\
+}
 
-	}, {
-		.prf_flags	= 0,
-		.prf_req_fmt	= &CQF_RPC_SHUTDOWN,
-		.prf_hdlr	= NULL,
-		.prf_co_ops	= NULL,
-	}
 #endif
+
+static struct crt_proto_rpc_format my_proto_rpc_fmt_iv[] = {
+	PRF_ENTRY (CQF_RPC_TEST_FETCH_IV, iv_test_fetch_iv),
+	PRF_ENTRY (CQF_RPC_TEST_UPDATE_IV, iv_test_update_iv),
+	PRF_ENTRY (CQF_RPC_TEST_INVALIDATE_IV, iv_test_invalidate_iv),
+	PRF_ENTRY (CQF_RPC_SET_IVNS, iv_set_ivns),
+	PRF_ENTRY (CQF_RPC_SHUTDOWN, iv_shutdown),
 };
 
 static struct crt_proto_format my_proto_fmt_iv = {
