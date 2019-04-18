@@ -51,24 +51,21 @@ ARG UID=1000
 RUN yum clean metadata
 
 # Install basic tools
-RUN yum -y install epel-release
-RUN yum -y install                                                 \
-           git gcc gcc-c++ make cmake golang libtool boost-devel   \
-           libuuid-devel openssl-devel libevent-devel              \
-           libtool-ltdl-devel libcmocka-devel readline-devel       \
-           doxygen pandoc flex patch nasm yasm ninja-build meson   \
-           CUnit-devel libaio-devel clang-analyzer sg3_utils       \
-           libiscsi-devel numactl-devel graphviz                   \
-           libyaml-devel                                           \
-           scons pylint file ShellCheck python-pep8 lcov  python   \
-           python2-pygithub yum-plugin-copr
+RUN yum -y install epel-release; \
+    yum -y install                                                        \
+           boost-devel clang-analyzer cmake CUnit-devel doxygen file flex \
+           gcc gcc-c++ git golang graphviz lcov                           \
+           libaio-devel libcmocka-devel libevent-devel libiscsi-devel     \
+           libtool libtool-ltdl-devel libuuid-devel libyaml-devel         \
+           make meson nasm ninja-build numactl-devel openssl-devel        \
+           pandoc patch                                                   \
+           pylint python python-pep8 python-requests python2-pygithub     \
+           readline-devel scons sg3_utils ShellCheck yasm
 
-RUN yum -y copr enable jhli/ipmctl
-RUN yum -y copr enable jhli/safeclib
-RUN yum -y install libipmctl-devel
-
-RUN yum -y install python34 python34-pylint python34-PyYAML.x86_64 \
-           PyYAML python2-paramiko python34-paramiko valgrind rsync
+# CaRT specific
+RUN yum -y install \
+           python2-paramiko python36 python36-pylint python36-PyYAML \
+           python36-paramiko PyYAML rsync valgrind
 
 # Add CaRT user
 ENV USER cart
