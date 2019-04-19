@@ -83,20 +83,6 @@ def macro_expand(target, source, env):
                   % (tgts, grepv, sed_d, h_file))
 # pylint: enable=unused-argument
 
-def cov_on(target, source, env):
-    covpath = env.get('COVPATH')
-    cmd = covpath + "/cov01 -1"
-    os.system(cmd)
-    cmd = covpath + "/cov01 -s"
-    os.system(cmd)
-
-def cov_off(target, source, env):
-    covpath = env.get('COVPATH')
-    cmd = covpath + "/cov01 -0"
-    os.system(cmd)
-    cmd = covpath + "/cov01 -s"
-    os.system(cmd)
-
 def scons():
     """Scons function"""
 
@@ -111,22 +97,21 @@ def scons():
     prereqs.require(denv, 'mercury', 'pmix')
     denv.AppendUnique(RPATH=['$PREFIX/lib'])
 
-    compiler = env.get('COMPILER').lower()
-    if compiler == 'covc':
-        denv.Execute(SCons.Action.Action(cov_on, None))
-
-    pp_env = Environment(TOOLS=['default', 'extra'])
-    pp_env.AppendUnique(CPPPATH=['src/include', 'src/cart'])
-    prereqs.require(pp_env, 'mercury', 'pmix', headers_only=True)
-
-    # pylint: disable=no-member
-    pp_files = pp_env.Preprocess(SRC)
-    pp_env.AddPostAction(pp_files, SCons.Action.Action(macro_expand, None))
-    # pylint: enable=no-member
-
     cart_targets = denv.SharedObject(SRC)
+
+    compiler = env.get('COMPILER').lower()
     if compiler != 'covc':
+        pp_env = Environment(TOOLS=['default', 'extra'])
+        pp_env.AppendUnique(CPPPATH=['src/include', 'src/cart'])
+        prereqs.require(pp_env, 'mercury', 'pmix', headers_only=True)
+
+        # pylint: disable=no-member
+        pp_files = pp_env.Preprocess(SRC)
+        pp_env.AddPostAction(pp_files, SCons.Action.Action(macro_expand, None))
+        # pylint: enable=no-member
+
         denv.Requires(cart_targets, pp_files)
+
     cart_lib = denv.SharedLibrary('libcart', [cart_targets, swim_targets])
     denv.Requires(cart_lib, [swim_targets, gurt_lib])
     denv.Install('$PREFIX/lib/', cart_lib)
