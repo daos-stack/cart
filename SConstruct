@@ -121,6 +121,13 @@ def scons():
                                                 ' '.join(env.get('CCFLAGS'))))
         print('c++ Compiler options: %s %s' % (env.get('CXX'),
                                                ' '.join(env.get('CCFLAGS'))))
+    compiler = env.get('COMPILER').lower()
+    if compiler == 'covc':
+        if os.path.isfile('test.cov'):
+            os.remove('test.cov')
+        covpath = '/opt/BullseyeCoverage/bin'
+        env.PrependUnique(COVPATH=covpath)
+        env.PrependENVPath('PATH', covpath)
 
     Export('env', 'prereqs')
     # generate targets in specific build dir to avoid polluting the source code
