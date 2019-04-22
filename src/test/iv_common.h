@@ -143,10 +143,10 @@ RPC_DECLARE(RPC_SHUTDOWN, iv_shutdown);
 #else
 #define PRF_ENTRY(x, y)			\
 {					\
-.prf_flags = 0,				\
-.prf_req_fmt = &x,			\
-.prf_hdlr = NULL,			\
-.prf_co_ops = NULL,			\
+	.prf_flags = 0,			\
+	.prf_req_fmt = &x,		\
+	.prf_hdlr = NULL,		\
+	.prf_co_ops = NULL,		\
 }
 
 #endif
