@@ -366,11 +366,11 @@ test_init(void)
 	if (test_g.t_is_service) {
 		rc = crt_proto_register(&my_proto_fmt_test_group1);
 		D_ASSERTF(rc == 0, "crt_proto_register() failed. rc: %d\n",
-				rc);
+			rc);
 	} else {
 		rc = crt_proto_register(&my_proto_fmt_test_group2);
 		D_ASSERTF(rc == 0, "crt_proto_register() failed. rc: %d\n",
-				rc);
+			rc);
 	}
 
 	for (i = 0; i < test_g.t_ctx_num; i++) {
@@ -495,7 +495,7 @@ test_fini()
 			server_ep.ep_rank = ii;
 			rc = crt_req_create(test_g.t_crt_ctx[0], &server_ep,
 				CRT_PROTO_OPC(TEST_GROUP_BASE,
-					TEST_GROUP_VER, 1), &rpc_req);
+				TEST_GROUP_VER, 1), &rpc_req);
 			D_ASSERTF(rc == 0 && rpc_req != NULL,
 				  "crt_req_create() failed. "
 				  "rc: %d, rpc_req: %p\n", rc, rpc_req);
