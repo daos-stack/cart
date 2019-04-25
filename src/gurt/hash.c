@@ -1027,19 +1027,10 @@ d_uhash_link_empty(struct d_ulink *ulink)
 void
 d_hhash_link_insert(struct d_hhash *hhtab, struct d_hlink *hlink, int type)
 {
-	int	n = 0;
-	int	count = 0;
-
 	D_ASSERT(hlink->hl_link.rl_initialized);
 
 	/* check if handle type fits in allocated bits */
-	n = type;
-	while (n) {
-		count++;
-		n >>= 1;
-	}
-
-	D_ASSERTF(count <= D_HTYPE_BITS,
+	D_ASSERTF(type < (1 << D_HTYPE_BITS),
 		  "Type (%d) does not fit D_HTYPE_BITS (%d)\n",
 		   type, D_HTYPE_BITS);
 
