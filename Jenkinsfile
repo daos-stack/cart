@@ -213,6 +213,7 @@ pipeline {
                     }
                 }
                 stage('Build master CentOS 7') {
+                    when { branch 'master' }
                     agent {
                         dockerfile {
                             filename 'Dockerfile.centos.7'
