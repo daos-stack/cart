@@ -879,7 +879,6 @@ crt_context_req_track(struct crt_rpc_priv *rpc_priv)
 	rpc_priv->crp_epi = epi;
 	RPC_ADDREF(rpc_priv);
 
-
 	if (crt_gdata.cg_credit_ep_ctx != 0 &&
 	    (epi->epi_req_num - epi->epi_reply_num) >=
 	     crt_gdata.cg_credit_ep_ctx) {
