@@ -65,7 +65,7 @@ struct test_global_t {
 	pthread_t		 tg_tid;
 	int			 tg_thread_id;
 	sem_t			 tg_token_to_proceed;
-	sem_t			 tg_front_queue_token;
+	sem_t			 tg_queue_front_token;
 	int			 tg_credits;
 	int			 tg_burst_count;
 	int			 tg_send_shutdown;
@@ -166,7 +166,7 @@ test_parse_args(int argc, char **argv)
 		{"is_service",	no_argument,		0, 's'},
 		{"credits",	required_argument,	0, 'c'},
 		{"burst",	required_argument,	0, 'b'},
-		{"front_queue",	no_argument,		0, 'f'},
+		{"queue_front",	no_argument,		0, 'f'},
 		{"shutdown",	no_argument,		0, 'q'},
 		{0, 0, 0, 0}
 	};

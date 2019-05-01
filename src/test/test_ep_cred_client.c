@@ -78,7 +78,7 @@ test_init()
 	rc = sem_init(&test.tg_token_to_proceed, 0, 0);
 	D_ASSERTF(rc == 0, "sem_init() failed.\n");
 
-	rc = sem_init(&test.tg_front_queue_token, 0, 0);
+	rc = sem_init(&test.tg_queue_front_token, 0, 0);
 	D_ASSERTF(rc == 0, "sem_init() failed.\n");
 
 	opt.cio_use_credits = 1;
@@ -114,7 +114,8 @@ static int sent_count;
 static void
 rpc_handle_reply(const struct crt_cb_info *info)
 {
-	assert(info->cci_rc == 0);
+	D_ASSERTF(info->cci_rc == 0, "rpc response failed. rc: %d\n",
+		info->cci_rc);
 	resp_count++;
 	D_DEBUG(DB_TRACE, "Response count=%d\n", resp_count);
 
@@ -128,8 +129,9 @@ static void
 rpc_handle_ping_front_q(const struct crt_cb_info *info)
 {
 	D_DEBUG(DB_TRACE, "Response from front queued rpc\n");
-	assert(info->cci_rc == 0);
-	sem_post(&test.tg_front_queue_token);
+	D_ASSERTF(info->cci_rc == 0, "rpc response failed. rc: %d\n",
+		info->cci_rc);
+	sem_post(&test.tg_queue_front_token);
 }
 
 static void
@@ -149,7 +151,7 @@ test_run()
 
 	for (i = 0; i < test.tg_burst_count; i++) {
 		rc = crt_req_create(test.tg_crt_ctx, &ep, OPC_PING, &rpc);
-		assert(rc == 0);
+		D_ASSERTF(rc == 0, "crt_req_create() failed. rc: %d\n", rc);
 
 		input = crt_req_get(rpc);
 
@@ -167,7 +169,7 @@ test_run()
 		}
 
 		rc = crt_req_send(rpc, rpc_handle_reply, NULL);
-		assert(rc == 0);
+		D_ASSERTF(rc == 0, "crt_req_send() failed. rc: %d\n", rc);
 		sent_count++;
 	}
 
@@ -179,13 +181,14 @@ test_run()
 	if (test.tg_send_queue_front) {
 		rc = crt_req_create(test.tg_crt_ctx, &ep, OPC_PING_FRONT,
 				&rpc);
-		assert(rc == 0);
+		D_ASSERTF(rc == 0, "crt_req_create() failed. rc: %d\n", rc);
 
 		rc = crt_req_send(rpc, rpc_handle_ping_front_q, NULL);
-		assert(rc == 0);
+		D_ASSERTF(rc == 0, "crt_req_send() failed. rc: %d\n", rc);
 
-		test_sem_timedwait(&test.tg_front_queue_token, 61, __LINE__);
-		assert(sent_count != resp_count);
+		test_sem_timedwait(&test.tg_queue_front_token, 61, __LINE__);
+		D_ASSERTF(sent_count != resp_count,
+			"Send count matches response count\n");
 	}
 
 	D_DEBUG(DB_TRACE, "Waiting for responses to %d rpcs\n",
@@ -227,7 +230,7 @@ test_fini()
 	rc = sem_destroy(&test.tg_token_to_proceed);
 	D_ASSERTF(rc == 0, "sem_destroy() failed.\n");
 
-	rc = sem_destroy(&test.tg_front_queue_token);
+	rc = sem_destroy(&test.tg_queue_front_token);
 	D_ASSERTF(rc == 0, "sem_destroy() failed.\n");
 
 	rc = crt_finalize();
