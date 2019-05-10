@@ -88,6 +88,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
+#include <sys/syscall.h>
 
 #include <netdb.h>
 #include <arpa/inet.h>
@@ -416,9 +417,20 @@ void d_vlog(int flags, const char *fmt, va_list ap)
 			 tm->tm_hour, tm->tm_min, tm->tm_sec,
 			 (long int) tv.tv_usec / 10000, mst.uts.nodename);
 
-	if (mst.oflags & DLOG_FLV_TAG)
-		hlen += snprintf(b + hlen, sizeof(b) - hlen,
-				 "%s ", d_log_xst.tag);
+	if (mst.oflags & DLOG_FLV_TAG) {
+		if (mst.oflags & DLOG_FLV_LOGPID) {
+			static __thread pid_t tid = -1;
+
+			if (tid == -1)
+				tid = (pid_t)syscall(SYS_gettid);
+
+			hlen += snprintf(b + hlen, sizeof(b) - hlen, "%s[%d] ",
+					 d_log_xst.tag, tid);
+		} else {
+			hlen += snprintf(b + hlen, sizeof(b) - hlen, "%s ",
+					 d_log_xst.tag);
+		}
+	}
 
 	hlen_pt1 = hlen;	/* save part 1 length */
 	if (hlen < sizeof(b)) {
@@ -567,8 +579,7 @@ int
 d_log_open(char *tag, int maxfac_hint, int default_mask, int stderr_mask,
 	      char *logfile, int flags)
 {
-	int	tagblen;
-	char	*newtag, *cp;
+	char	*cp;
 
 	/* quick sanity check (mst.tag is non-null if already open) */
 	if (d_log_xst.tag || !tag ||
@@ -579,18 +590,11 @@ d_log_open(char *tag, int maxfac_hint, int default_mask, int stderr_mask,
 	}
 	/* init working area so we can use dlog_cleanout to bail out */
 	memset(&mst, 0, sizeof(mst));
-	mst.logfd = -1;
 	/* start filling it in */
-	tagblen = strlen(tag) + DLOG_TAGPAD;	/* add a bit for pid */
-	newtag = calloc(1, tagblen);
-	if (!newtag) {
-		fprintf(stderr, "d_log_open calloc failed.\n");
-		return -1;
-	}
+	mst.logfd = -1;
 #ifdef DLOG_MUTEX		/* create lock */
 	if (D_MUTEX_INIT(&mst.clogmux, NULL) != 0) {
 		/* XXX: consider cvt to PTHREAD_MUTEX_INITIALIZER */
-		free(newtag);
 		fprintf(stderr, "d_log_open D_MUTEX_INIT failed.\n");
 		return -1;
 	}
@@ -601,10 +605,6 @@ d_log_open(char *tag, int maxfac_hint, int default_mask, int stderr_mask,
 
 	D_INIT_LIST_HEAD(&d_log_caches);
 
-	if (flags & DLOG_FLV_LOGPID)
-		snprintf(newtag, tagblen, "%s[%d]", tag, getpid());
-	else
-		snprintf(newtag, tagblen, "%s", tag);
 	mst.def_mask = default_mask;
 	mst.stderr_mask = stderr_mask;
 	if (logfile) {
@@ -638,14 +638,13 @@ d_log_open(char *tag, int maxfac_hint, int default_mask, int stderr_mask,
 	/* cache value of isatty() to avoid extra system calls */
 	mst.stdout_isatty = isatty(fileno(stdout));
 	mst.stderr_isatty = isatty(fileno(stderr));
-	d_log_xst.tag = newtag;
+	d_log_xst.tag = tag;
 	clog_unlock();
 	return 0;
 error:
 	/*
 	 * we failed.  dlog_cleanout can handle the cleanup for us.
 	 */
-	free(newtag);		/* was never installed */
 	clog_unlock();
 	dlog_cleanout();
 	return -1;
