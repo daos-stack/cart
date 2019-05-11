@@ -424,7 +424,7 @@ void d_vlog(int flags, const char *fmt, va_list ap)
 			if (tid == -1)
 				tid = (pid_t)syscall(SYS_gettid);
 
-			hlen += snprintf(b + hlen, sizeof(b) - hlen, "%s[%d] ",
+			hlen += snprintf(b + hlen, sizeof(b) - hlen, "%s/%d] ",
 					 d_log_xst.tag, tid);
 		} else {
 			hlen += snprintf(b + hlen, sizeof(b) - hlen, "%s ",
@@ -593,7 +593,7 @@ d_log_open(char *tag, int maxfac_hint, int default_mask, int stderr_mask,
 	memset(&mst, 0, sizeof(mst));
 	mst.logfd = -1;
 	/* start filling it in */
-	tagblen = strlen(tag);
+	tagblen = strlen(tag) + DLOG_TAGPAD;	/* add a bit for pid */
 	newtag = calloc(1, tagblen);
 	if (!newtag) {
 		fprintf(stderr, "d_log_open calloc failed.\n");
@@ -613,6 +613,10 @@ d_log_open(char *tag, int maxfac_hint, int default_mask, int stderr_mask,
 
 	D_INIT_LIST_HEAD(&d_log_caches);
 
+	if (flags & DLOG_FLV_LOGPID)
+		snprintf(newtag, tagblen, "%s[%d", tag, getpid());
+	else
+		snprintf(newtag, tagblen, "%s", tag);
 	mst.def_mask = default_mask;
 	mst.stderr_mask = stderr_mask;
 	if (logfile) {
