@@ -94,7 +94,7 @@ pipeline {
 
     options {
         // preserve stashes so that jobs can be started at the test stage
-        preserveStashes(buildCount: 5)
+        preserveStashes(buildCount: 1)
     }
 
     stages {
@@ -279,69 +279,6 @@ pipeline {
                         */
                     }
                 }
-                stage('Single-node-valgrind') {
-                    agent {
-                        label 'ci_vm1'
-                    }
-                    steps {
-                        singleNodeTest('memcheck')
-                    }
-                    post {
-                        always {
-                            /* Uncomment this on a day when unit testing works without
-                             * having to build the test in the test phase
-                            sh '''mv install/Linux/TESTING/testLogs{,_valgrind}
-                                  mv build/Linux/src/utest{,_valgrind}'''
-                            archiveArtifacts artifacts: '''install/Linux/TESTING/testLogs_valgrind/**,
-                                                           build/Linux/src/utest_valgrind/utest.log,
-                                                           build/Linux/src/utest_valgrind/test_output'''
-                             */
-                            sh 'mv install/Linux/TESTING/testLogs{,_valgrind}'
-                            publishValgrind (
-                                failBuildOnInvalidReports: true,
-                                failBuildOnMissingReports: true,
-                                failThresholdDefinitelyLost: '0',
-                                failThresholdInvalidReadWrite: '0',
-                                failThresholdTotal: '0',
-                                pattern: '**/*.memcheck',
-                                publishResultsForAbortedBuilds: false,
-                                publishResultsForFailedBuilds: false,
-                                sourceSubstitutionPaths: '',
-                                unstableThresholdDefinitelyLost: '',
-                                unstableThresholdInvalidReadWrite: '',
-                                unstableThresholdTotal: ''
-                                )
-
-                            archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs_valgrind/**,**/*.memcheck'
-                        /* when JENKINS-39203 is resolved, can probably use stepResult
-                           here and remove the remaining post conditions
-                           stepResult name: env.STAGE_NAME,
-                                   context: 'build/' + env.STAGE_NAME,
-                                    result: ${currentBuild.currentResult}
-                        */
-                        }
-                        /* temporarily moved into runTest->stepResult due to JENKINS-39203
-                        success {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status',
-                                         description: env.STAGE_NAME,
-                                         context: 'test/' + env.STAGE_NAME,
-                                         status: 'SUCCESS'
-                        }
-                        unstable {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status',
-                                         description: env.STAGE_NAME,
-                                         context: 'test/' + env.STAGE_NAME,
-                                         status: 'FAILURE'
-                        }
-                        failure {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status',
-                                         description: env.STAGE_NAME,
-                                         context: 'test/' + env.STAGE_NAME,
-                                         status: 'ERROR'
-                        }
-                        */
-                    }
-                }
                 stage('Two-node') {
                     agent {
                         label 'ci_vm2'
@@ -368,116 +305,6 @@ pipeline {
                         always {
                             junit 'CART_2-node_junit.xml'
                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs-2_node/**'
-                            /* when JENKINS-39203 is resolved, can probably use stepResult
-                               here and remove the remaining post conditions
-                               stepResult name: env.STAGE_NAME,
-                                          context: 'build/' + env.STAGE_NAME,
-                                          result: ${currentBuild.currentResult}
-                            */
-                        }
-                        /* temporarily moved into runTest->stepResult due to JENKINS-39203
-                        success {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status',
-                                         description: env.STAGE_NAME,
-                                         context: 'test/' + env.STAGE_NAME,
-                                         status: 'SUCCESS'
-                        }
-                        unstable {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status',
-                                         description: env.STAGE_NAME,
-                                         context: 'test/' + env.STAGE_NAME,
-                                         status: 'FAILURE'
-                        }
-                        failure {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status',
-                                         description: env.STAGE_NAME,
-                                         context: 'test/' + env.STAGE_NAME,
-                                         status: 'ERROR'
-                        }
-                        */
-                    }
-                }
-                stage('Three-node') {
-                    agent {
-                        label 'ci_vm3'
-                    }
-                    steps {
-                        provisionNodes NODELIST: env.NODELIST,
-                                       node_count: 3,
-                                       snapshot: true
-                        checkoutScm url: 'ssh://review.hpdd.intel.com:29418/exascale/jenkins',
-                                    checkoutDir: 'jenkins',
-                                    credentialsId: 'daos-gerrit-read'
-
-                        checkoutScm url: 'ssh://review.hpdd.intel.com:29418/coral/scony_python-junit',
-                                    checkoutDir: 'scony_python-junit',
-                                    credentialsId: 'daos-gerrit-read'
-
-                        runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
-                                           bash -x ./multi-node-test.sh 3 ''' +
-                                           env.NODELIST,
-                                junit_files: "CART_3-node_junit.xml"
-                    }
-                    post {
-                        always {
-                            junit 'CART_3-node_junit.xml'
-                            archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs-3_node/**'
-                            /* when JENKINS-39203 is resolved, can probably use stepResult
-                               here and remove the remaining post conditions
-                               stepResult name: env.STAGE_NAME,
-                                          context: 'build/' + env.STAGE_NAME,
-                                          result: ${currentBuild.currentResult}
-                            */
-                        }
-                        /* temporarily moved into runTest->stepResult due to JENKINS-39203
-                        success {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status',
-                                         description: env.STAGE_NAME,
-                                         context: 'test/' + env.STAGE_NAME,
-                                         status: 'SUCCESS'
-                        }
-                        unstable {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status',
-                                         description: env.STAGE_NAME,
-                                         context: 'test/' + env.STAGE_NAME,
-                                         status: 'FAILURE'
-                        }
-                        failure {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status',
-                                         description: env.STAGE_NAME,
-                                         context: 'test/' + env.STAGE_NAME,
-                                         status: 'ERROR'
-                        }
-                        */
-                    }
-                }
-                stage('Five-node') {
-                    agent {
-                        label 'ci_vm5'
-                    }
-                    steps {
-                        provisionNodes NODELIST: env.NODELIST,
-                                       node_count: 5,
-                                       snapshot: true
-                        checkoutScm url: 'ssh://review.hpdd.intel.com:29418/exascale/jenkins',
-                                    checkoutDir: 'jenkins',
-                                    credentialsId: 'daos-gerrit-read'
-
-                        checkoutScm url: 'ssh://review.hpdd.intel.com:29418/coral/scony_python-junit',
-                                    checkoutDir: 'scony_python-junit',
-                                    credentialsId: 'daos-gerrit-read'
-
-                        runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
-                                           bash -x ./multi-node-test.sh 5 ''' +
-                                           env.NODELIST,
-                                junit_files: "CART_5-node_junit.xml"
-                    }
-                    post {
-                        always {
-                            junit 'CART_5-node_junit.xml'
-                            archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs-5_node/**'
                             /* when JENKINS-39203 is resolved, can probably use stepResult
                                here and remove the remaining post conditions
                                stepResult name: env.STAGE_NAME,
