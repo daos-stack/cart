@@ -39,33 +39,6 @@
 set -e
 set -x
 
-# A list of tests to run as a single instance on Jenkins
-JENKINS_TEST_LIST=(scripts/cart_echo_test.yml                   \
-                   scripts/cart_echo_test_non_sep.yml           \
-                   scripts/cart_test_corpc_prefwd.yml           \
-                   scripts/cart_test_corpc_prefwd_non_sep.yml   \
-                   scripts/cart_test_group.yml                  \
-                   scripts/cart_test_group_non_sep.yml          \
-                   scripts/cart_test_barrier.yml                \
-                   scripts/cart_test_barrier_non_sep.yml        \
-                   scripts/cart_threaded_test.yml               \
-                   scripts/cart_threaded_test_non_sep.yml       \
-                   scripts/cart_test_rpc_error.yml              \
-                   scripts/cart_test_rpc_error_non_sep.yml      \
-                   scripts/cart_test_singleton.yml              \
-                   scripts/cart_test_singleton_non_sep.yml      \
-                   scripts/cart_test_corpc_version.yml          \
-                   scripts/cart_test_corpc_version_non_sep.yml  \
-                   scripts/cart_test_cart_ctl.yml               \
-                   scripts/cart_test_cart_ctl_non_sep.yml       \
-                   scripts/cart_test_ep_credits.yml		\
-                   scripts/cart_test_iv.yml                     \
-                   scripts/cart_test_iv_non_sep.yml             \
-                   scripts/cart_test_proto.yml                  \
-                   scripts/cart_test_proto_non_sep.yml          \
-                   scripts/cart_test_no_timeout.yml             \
-                   scripts/cart_test_no_timeout_non_sep.yml)
-
 # Check for symbol names in the library.
 if [ -d "utils" ]; then
   utils/test_cart_lib.sh
@@ -87,16 +60,55 @@ if [ -z "$COMP_PREFIX"  ]; then
   fi
 fi
 
+TEST_TAG="${1:-quick}"
+
+IFS=" " read -r -a nodes <<< "${2//,/ }"
+
+# put yaml files back
+restore_dist_files() {
+    local dist_files="$*"
+
+    for file in $dist_files; do
+        echo SCHAN15 - dist file is $file
+        if [ -f "$file".dist ]; then
+            mv -f "$file".dist "$file"
+        fi
+    done
+
+}
+
 TESTDIR=${COMP_PREFIX}/TESTING
+
+# set our machine names
+mapfile -t yaml_files < <(find $TESTDIR -name \*.yaml)
+
+trap 'set +e; restore_dist_files "${yaml_files[@]}"' EXIT
+
+# shellcheck disable=SC2086
+sed -i.dist -e "s/- boro-A/- ${nodes[0]}/g" \
+            -e "s/- boro-B/- ${nodes[1]}/g" \
+            -e "s/- boro-C/- ${nodes[2]}/g" \
+            -e "s/- boro-D/- ${nodes[3]}/g" \
+            -e "s/- boro-E/- ${nodes[4]}/g" \
+            -e "s/- boro-F/- ${nodes[5]}/g" \
+            -e "s/- boro-G/- ${nodes[6]}/g" \
+            -e "s/- boro-H/- ${nodes[7]}/g" "${yaml_files[@]}"
+
+# let's output to a dir in the tree
+rm -rf $TESTDIR/avocado ./*_results.xml
+mkdir -p $TESTDIR/avocado/job-results
+
+# shellcheck disable=SC2154
+trap 'set +e restore_dist_files "${yaml_files[@]}"' EXIT
 
 if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
   echo "Nothing to do yet, wish we could fail some tests"
   if ${RUN_UTEST:-true}; then
       scons utest
   fi
-  pushd ${TESTDIR}
-  python3 test_runner "${JENKINS_TEST_LIST[@]}"
-  popd
+  #pushd ${TESTDIR}
+  #python3 test_runner "${JENKINS_TEST_LIST[@]}"
+  #popd
 fi
 
 if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
@@ -104,11 +116,10 @@ if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
   if ${RUN_UTEST:-true}; then
     scons utest --utest-mode=memcheck
   fi
-  export TR_USE_VALGRIND=memcheck
-  pushd ${TESTDIR}
-  python3 test_runner "${JENKINS_TEST_LIST[@]}"
-
-  popd
+  #export TR_USE_VALGRIND=memcheck
+  #pushd ${TESTDIR}
+  #python3 test_runner "${JENKINS_TEST_LIST[@]}"
+  #popd
   RESULTS="valgrind_results"
   if [[ ! -e ${RESULTS} ]]; then mkdir ${RESULTS}; fi
 
@@ -117,3 +128,83 @@ if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
   rsync -rm --include="*/" --include="valgrind*xml" "--exclude=*" ${TESTDIR} ${RESULTS}
 
 fi
+
+CART_BASE=${SL_PREFIX%/install/Linux}
+# shellcheck disable=SC2029
+if ! ssh -i ci_key jenkins@"${nodes[0]}" "set -ex
+ulimit -c unlimited
+cd $CART_BASE
+
+mkdir -p ~/.config/avocado/
+cat <<EOF > ~/.config/avocado/avocado.conf
+[datadir.paths]
+logs_dir = $TESTDIR/avocado/job-results
+
+[sysinfo.collectibles]
+# File with list of commands that will be executed and have their output
+# collected
+commands = \$HOME/.config/avocado/sysinfo/commands
+EOF
+
+mkdir -p ~/.config/avocado/sysinfo/
+cat <<EOF > ~/.config/avocado/sysinfo/commands
+ps axf
+dmesg
+df -h
+EOF
+
+# apply fix for https://github.com/avocado-framework/avocado/issues/2908
+sudo ed <<EOF /usr/lib/python2.7/site-packages/avocado/core/runner.py
+/TIMEOUT_TEST_INTERRUPTED/s/[0-9]*$/60/
+wq
+EOF
+# apply fix for https://github.com/avocado-framework/avocado/pull/2922
+if grep \"testsuite.setAttribute('name', 'avocado')\" \
+    /usr/lib/python2.7/site-packages/avocado/plugins/xunit.py; then
+    sudo ed <<EOF /usr/lib/python2.7/site-packages/avocado/plugins/xunit.py
+/testsuite.setAttribute('name', 'avocado')/s/'avocado'/os.path.basename(os.path.dirname(result.logfile))/
+wq
+EOF
+fi
+pushd $TESTDIR
+
+# make sure no lingering corefiles or junit files exist
+rm -f core.* *_results.xml
+
+# now run it!
+export PYTHONPATH=./util
+if ! ./launch.py -s \"$TEST_TAG\"; then
+    rc=\${PIPESTATUS[0]}
+else
+    rc=0
+fi
+
+# get stacktraces for the core files
+if ls core.*; then
+    # this really should be a debuginfo-install command but our systems lag
+    # current releases
+    python_rpm=\$(rpm -q python)
+    python_debuginfo_rpm=\"\${python_rpm/-/-debuginfo-}\"
+
+    if ! rpm -q \$python_debuginfo_rpm; then
+        sudo yum -y install \
+ http://debuginfo.centos.org/7/x86_64/\$python_debuginfo_rpm.rpm
+    fi
+    sudo yum -y install gdb
+    for file in core.*; do
+        gdb -ex \"set pagination off\"                 \
+            -ex \"thread apply all bt full\"           \
+            -ex \"detach\"                             \
+            -ex \"quit\"                               \
+            /usr/bin/python2 \$file > \$file.stacktrace
+    done
+fi
+
+exit \$rc"; then
+    rc=${PIPESTATUS[0]}
+else
+    rc=0
+fi
+
+exit "$rc"
+
