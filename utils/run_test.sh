@@ -173,36 +173,12 @@ EOF
 fi
 pushd $TESTDIR
 
-# make sure no lingering corefiles or junit files exist
-rm -f core.* *_results.xml
-
 # now run it!
 export PYTHONPATH=./util
 if ! ./launch.py -s \"$TEST_TAG\"; then
     rc=\${PIPESTATUS[0]}
 else
     rc=0
-fi
-
-# get stacktraces for the core files
-if ls core.*; then
-    # this really should be a debuginfo-install command but our systems lag
-    # current releases
-    python_rpm=\$(rpm -q python)
-    python_debuginfo_rpm=\"\${python_rpm/-/-debuginfo-}\"
-
-    if ! rpm -q \$python_debuginfo_rpm; then
-        sudo yum -y install \
- http://debuginfo.centos.org/7/x86_64/\$python_debuginfo_rpm.rpm
-    fi
-    sudo yum -y install gdb
-    for file in core.*; do
-        gdb -ex \"set pagination off\"                 \
-            -ex \"thread apply all bt full\"           \
-            -ex \"detach\"                             \
-            -ex \"quit\"                               \
-            /usr/bin/python2 \$file > \$file.stacktrace
-    done
 fi
 
 exit \$rc"; then
