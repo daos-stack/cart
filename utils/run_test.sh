@@ -129,7 +129,12 @@ if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
 
 fi
 
-CART_BASE=${SL_PREFIX%/install/Linux}
+args="${1:-quick}"
+shift || true
+args+=" $*"
+
+CART_BASE=\${SL_PREFIX%/install*}
+
 # shellcheck disable=SC2029
 if ! ssh -i ci_key jenkins@"${nodes[0]}" "set -ex
 ulimit -c unlimited

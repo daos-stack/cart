@@ -61,7 +61,7 @@ def singleNodeTest(test_mode) {
                            sudo mount -t nfs \$HOSTNAME:\$PWD \$CART_BASE
                            export CART_TEST_MODE=$test_mode
                            cd \$CART_BASE
-                           if RUN_UTEST=false bash -x utils/run_test.sh; then
+                           if RUN_UTEST=false bash -x utils/run_test.sh "one_node"; then
                                echo \"run_test.sh exited successfully with \\\${PIPESTATUS[0]}\"
                            else
                                rc=\\\${PIPESTATUS[0]}
@@ -73,7 +73,7 @@ def singleNodeTest(test_mode) {
                        mkdir -p install/Linux/TESTING/
                        scp -i ci_key -r jenkins@\$NODE:\$CART_BASE/install/Linux/TESTING/testLogs \
                                         install/Linux/TESTING/
-                       exit \$rc""",
+                       exit \$rc""" + env.NODELIST,
           junit_files: null
 }
 
