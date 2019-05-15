@@ -67,7 +67,7 @@ restore_dist_files() {
 
 TEST_TAG="${1:-quick}"
 
-TESTDIR=${COMP_PREFIX}/TESTING
+TESTDIR=${SL_PREFIX}/TESTING
 
 LOGDIR="$TESTDIR/avocado/job-results/CART_${2}node"
 
