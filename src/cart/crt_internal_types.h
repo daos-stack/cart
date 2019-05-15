@@ -95,6 +95,8 @@ struct crt_gdata {
 				cg_pmix_disabled:1,
 				cg_grp_inited:1; /* group initialized */
 
+	uint32_t		cg_xid; /* transfer id for rpcs */
+
 	/* protects crt_gdata */
 	pthread_rwlock_t	cg_rwlock;
 };
