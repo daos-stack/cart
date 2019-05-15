@@ -234,51 +234,6 @@ pipeline {
         }
         stage('Test') {
             parallel {
-                stage('Single-node') {
-                    agent {
-                        label 'ci_vm1'
-                    }
-                    steps {
-                        singleNodeTest('native')
-                    }
-                    post {
-                        always {
-                            /* Uncomment this on a day when unit testing works without
-                             * having to build the test in the test phase
-                             archiveArtifacts artifacts: '''install/Linux/TESTING/testLogs/**,
-                                                            build/Linux/src/utest/utest.log,
-                                                            build/Linux/src/utest/test_output'''
-                             */
-                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs/**'
-                            /* when JENKINS-39203 is resolved, can probably use stepResult
-                               here and remove the remaining post conditions
-                               stepResult name: env.STAGE_NAME,
-                                          context: 'build/' + env.STAGE_NAME,
-                                          result: ${currentBuild.currentResult}
-                            */
-                        }
-                        /* temporarily moved into runTest->stepResult due to JENKINS-39203
-                        success {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status',
-                                         description: env.STAGE_NAME,
-                                         context: 'test/' + env.STAGE_NAME,
-                                         status: 'SUCCESS'
-                        }
-                        unstable {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status',
-                                         description: env.STAGE_NAME,
-                                         context: 'test/' + env.STAGE_NAME,
-                                         status: 'FAILURE'
-                        }
-                        failure {
-                            githubNotify credentialsId: 'daos-jenkins-commit-status',
-                                         description: env.STAGE_NAME,
-                                         context: 'test/' + env.STAGE_NAME,
-                                         status: 'ERROR'
-                        }
-                        */
-                    }
-                }
                 stage('Two-node') {
                     agent {
                         label 'ci_vm2'
