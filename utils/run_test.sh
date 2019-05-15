@@ -79,7 +79,7 @@ restore_dist_files() {
 TESTDIR=${COMP_PREFIX}/TESTING
 
 # set our machine names
-mapfile -t yaml_files < <(find "$TESTDIR" -name "\*.yaml")
+mapfile -t yaml_files < <(find "$TESTDIR" -name \*.yaml)
 
 trap 'set +e; restore_dist_files "${yaml_files[@]}"' EXIT
 
@@ -127,7 +127,7 @@ if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
 
   # Recursive copy to results, including all directories and matching files,
   # but pruning empty directories from the tree.
-  rsync -rm --include="*/" --include="valgrind*xml" "--exclude=*" ${TESTDIR} ${RESULTS}
+  rsync -rm --include="*/" --include="valgrind*xml" "--exclude=*" "${TESTDIR}" "${RESULTS}"
 
 fi
 
