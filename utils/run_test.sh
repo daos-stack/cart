@@ -98,6 +98,9 @@ sed -i.dist -e "s/- boro-A/- ${nodes[0]}/g" \
 rm -rf $TESTDIR/avocado ./*_results.xml
 mkdir -p $TESTDIR/avocado/job-results
 
+# remove test_runner dir until scons_local is updated
+rm -rf $TESTDIR/test_runner
+
 # shellcheck disable=SC2154
 trap 'set +e restore_dist_files "${yaml_files[@]}"' EXIT
 
@@ -128,10 +131,6 @@ if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
   rsync -rm --include="*/" --include="valgrind*xml" "--exclude=*" ${TESTDIR} ${RESULTS}
 
 fi
-
-args="${1:-quick}"
-shift || true
-args+=" $*"
 
 CART_BASE=\${SL_PREFIX%/install*}
 
