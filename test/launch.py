@@ -106,6 +106,10 @@ if __name__ == "__main__":
     else:
         printhelp()
 
+    # remove test_runner in install dir
+    # need patch in scons_local to exclude test_runner install
+    os.system("rm -rf test_runner")
+
     # make it easy to specify a directory as a parameter later
     test_directory = os.getcwd()
 
@@ -118,9 +122,6 @@ if __name__ == "__main__":
     SBINDIR = envdata['PREFIX'] + '/sbin'
     PATH = os.environ.get('PATH')
     os.environ['PATH'] = BINDIR + ':' + SBINDIR + ':' + PATH
-    #os.environ['DAOS_SINGLETON_CLI'] = "1"
-    #os.environ['CRT_CTX_SHARE_ADDR'] = "1"
-    #os.environ['CRT_ATTACH_INFO_PATH'] = envdata['PREFIX'] + '/tmp'
 
     # build a list of test classes
     test_files = filelist(test_directory)

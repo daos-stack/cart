@@ -51,7 +51,7 @@ trap 'echo "encountered an unchecked return code, exiting with error"' ERR
 # shellcheck disable=SC1091
 . .build_vars-Linux.sh
 
-IFS=" " read -r -a nodes <<< "${2//,/ }"
+IFS=" " read -r -a nodes <<< "${3//,/ }"
 
 # put yaml files back
 restore_dist_files() {
