@@ -60,8 +60,6 @@ if [ -z "$COMP_PREFIX"  ]; then
   fi
 fi
 
-TEST_TAG="${1:-quick}"
-
 IFS=" " read -r -a nodes <<< "${2//,/ }"
 
 # put yaml files back
@@ -76,7 +74,11 @@ restore_dist_files() {
 
 }
 
+TEST_TAG="${1:-quick}"
+
 TESTDIR=${COMP_PREFIX}/TESTING
+
+LOGDIR="$TESTDIR/avocado/job-results/CART_1node"
 
 # set our machine names
 mapfile -t yaml_files < <(find "$TESTDIR" -name \*.yaml)
@@ -95,7 +97,7 @@ sed -i.dist -e "s/- boro-A/- ${nodes[0]}/g" \
 
 # let's output to a dir in the tree
 rm -rf "$TESTDIR/avocado" "./*_results.xml"
-mkdir -p "$TESTDIR/avocado/job-results"
+mkdir -p "$LOGDIR"
 
 # remove test_runner dir until scons_local is updated
 rm -rf "$TESTDIR/test_runner"
@@ -108,9 +110,6 @@ if [[ "$CART_TEST_MODE" =~ (native|all) ]]; then
   if ${RUN_UTEST:-true}; then
       scons utest
   fi
-  #pushd ${TESTDIR}
-  #python3 test_runner "${JENKINS_TEST_LIST[@]}"
-  #popd
 fi
 
 if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
@@ -141,7 +140,7 @@ cd $CART_BASE
 mkdir -p ~/.config/avocado/
 cat <<EOF > ~/.config/avocado/avocado.conf
 [datadir.paths]
-logs_dir = $TESTDIR/avocado/job-results
+logs_dir = $LOGDIR
 
 [sysinfo.collectibles]
 # File with list of commands that will be executed and have their output
@@ -169,6 +168,7 @@ if grep \"testsuite.setAttribute('name', 'avocado')\" \
 wq
 EOF
 fi
+
 pushd $TESTDIR
 
 # now run it!
