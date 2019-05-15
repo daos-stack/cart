@@ -65,24 +65,18 @@
 /* A wrapper around D_TRACE_DEBUG that ensures the ptr option is a RPC */
 #define RPC_TRACE(mask, rpc, fmt, ...)					\
 	do {								\
-		/* no-op statement that type-checks the rpc pointer */	\
-		if (false && (rpc)->crp_refcount)			\
-			;						\
-		D_TRACE_DEBUG(mask, rpc, " [opc=0x%x xid=%x:%x] " fmt, 	\
-			rpc->crp_pub.cr_opc, rpc->crp_req_hdr.cch_rank, \
-			rpc->crp_req_hdr.cch_xid, 			\
+		D_TRACE_DEBUG(mask, rpc, " [opc=0x%x xid=%x:%x] " fmt,	\
+			rpc->crp_pub.cr_opc, rpc->crp_req_hdr.cch_rank,	\
+			rpc->crp_req_hdr.cch_xid,			\
 			## __VA_ARGS__);				\
 	} while (0)
 
 /* Log an error with a RPC descriptor */
 #define RPC_ERROR(rpc, fmt, ...)					\
 	do {								\
-		/* no-op statement that type-checks the rpc pointer */	\
-		if (false && (rpc)->crp_refcount)			\
-			;						\
-		D_TRACE_ERROR(rpc, " [opc=0x%x xid=%x:%x] " fmt, 	\
-			rpc->crp_pub.cr_opc, rpc->crp_req_hdr.cch_rank, \
-			rpc->crp_req_hdr.cch_xid, 			\
+		D_TRACE_ERROR(rpc, " [opc=0x%x xid=%x:%x] " fmt,	\
+			rpc->crp_pub.cr_opc, rpc->crp_req_hdr.cch_rank,	\
+			rpc->crp_req_hdr.cch_xid,			\
 			## __VA_ARGS__);				\
 	} while (0)
 
