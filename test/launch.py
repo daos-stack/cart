@@ -139,6 +139,7 @@ if __name__ == "__main__":
     else:
         category = ''
 
+    # pylint: disable=unsupported-membership-test
     # run only provided tagged tests.
     for _file in test_files:
         if test_request == 'all':

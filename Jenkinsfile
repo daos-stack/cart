@@ -73,7 +73,7 @@ def singleNodeTest(test_mode) {
                        mkdir -p install/Linux/TESTING/
                        scp -i ci_key -r jenkins@\$NODE:\$CART_BASE/install/Linux/TESTING/testLogs \
                                         install/Linux/TESTING/
-                       exit \$rc""" + env.NODELIST,
+                       exit \$rc""",
           junit_files: "install/Linux/TESTING/avocado/job-results/*/*.xml"
 }
 

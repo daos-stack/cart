@@ -69,7 +69,6 @@ restore_dist_files() {
     local dist_files="$*"
 
     for file in $dist_files; do
-        echo SCHAN15 - dist file is $file
         if [ -f "$file".dist ]; then
             mv -f "$file".dist "$file"
         fi
@@ -80,7 +79,7 @@ restore_dist_files() {
 TESTDIR=${COMP_PREFIX}/TESTING
 
 # set our machine names
-mapfile -t yaml_files < <(find $TESTDIR -name \*.yaml)
+mapfile -t yaml_files < <(find "$TESTDIR" -name "\*.yaml")
 
 trap 'set +e; restore_dist_files "${yaml_files[@]}"' EXIT
 
@@ -95,11 +94,11 @@ sed -i.dist -e "s/- boro-A/- ${nodes[0]}/g" \
             -e "s/- boro-H/- ${nodes[7]}/g" "${yaml_files[@]}"
 
 # let's output to a dir in the tree
-rm -rf $TESTDIR/avocado ./*_results.xml
-mkdir -p $TESTDIR/avocado/job-results
+rm -rf "$TESTDIR/avocado" "./*_results.xml"
+mkdir -p "$TESTDIR/avocado/job-results"
 
 # remove test_runner dir until scons_local is updated
-rm -rf $TESTDIR/test_runner
+rm -rf "$TESTDIR/test_runner"
 
 # shellcheck disable=SC2154
 trap 'set +e restore_dist_files "${yaml_files[@]}"' EXIT
@@ -132,7 +131,7 @@ if [[ "$CART_TEST_MODE" =~ (memcheck|all) ]]; then
 
 fi
 
-CART_BASE=\${SL_PREFIX%/install*}
+CART_BASE="\${SL_PREFIX%/install*}"
 
 # shellcheck disable=SC2029
 if ! ssh -i ci_key jenkins@"${nodes[0]}" "set -ex
