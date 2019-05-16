@@ -71,6 +71,7 @@
 			## __VA_ARGS__);				\
 	} while (0)
 
+
 /* Log an error with a RPC descriptor */
 #define RPC_ERROR(rpc, fmt, ...)					\
 	do {								\
