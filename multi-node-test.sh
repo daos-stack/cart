@@ -53,49 +53,6 @@ trap 'echo "encountered an unchecked return code, exiting with error"' ERR
 
 IFS=" " read -r -a nodes <<< "${3//,/ }"
 
-# put yaml files back
-restore_dist_files() {
-    local dist_files="$*"
-
-    for file in $dist_files; do
-        if [ -f "$file".dist ]; then
-            mv -f "$file".dist "$file"
-        fi
-    done
-
-}
-
-TEST_TAG="${1:-quick}"
-
-TESTDIR=${SL_PREFIX}/TESTING
-
-LOGDIR="$TESTDIR/avocado/job-results/CART_${2}node"
-
-# set our machine names
-mapfile -t yaml_files < <(find "$TESTDIR" -name \*.yaml)
-
-trap 'set +e; restore_dist_files "${yaml_files[@]}"' EXIT
-
-# shellcheck disable=SC2086
-sed -i.dist -e "s/- boro-A/- ${nodes[0]}/g" \
-            -e "s/- boro-B/- ${nodes[1]}/g" \
-            -e "s/- boro-C/- ${nodes[2]}/g" \
-            -e "s/- boro-D/- ${nodes[3]}/g" \
-            -e "s/- boro-E/- ${nodes[4]}/g" \
-            -e "s/- boro-F/- ${nodes[5]}/g" \
-            -e "s/- boro-G/- ${nodes[6]}/g" \
-            -e "s/- boro-H/- ${nodes[7]}/g" "${yaml_files[@]}"
-
-# let's output to a dir in the tree
-rm -rf "$TESTDIR/avocado" "./*_results.xml"
-mkdir -p "$LOGDIR"
-
-# remove test_runner dir until scons_local is updated
-rm -rf "$TESTDIR/test_runner"
-
-# shellcheck disable=SC2154
-trap 'set +e restore_dist_files "${yaml_files[@]}"' EXIT
-
 # shellcheck disable=SC1004
 # shellcheck disable=SC2154
 trap 'set +e
@@ -149,6 +106,49 @@ df -h" 2>&1 | dshbak -c; then
     echo "Cluster setup (i.e. provisioning) failed"
     exit 1
 fi
+
+# put yaml files back
+restore_dist_files() {
+    local dist_files="$*"
+
+    for file in $dist_files; do
+        if [ -f "$file".dist ]; then
+            mv -f "$file".dist "$file"
+        fi
+    done
+
+}
+
+TEST_TAG="${1:-quick}"
+
+TESTDIR=${SL_PREFIX}/TESTING
+
+LOGDIR="$TESTDIR/avocado/job-results/CART_${2}node"
+
+# set our machine names
+mapfile -t yaml_files < <(find "$TESTDIR" -name \*.yaml)
+
+trap 'set +e; restore_dist_files "${yaml_files[@]}"' EXIT
+
+# shellcheck disable=SC2086
+sed -i.dist -e "s/- boro-A/- ${nodes[0]}/g" \
+            -e "s/- boro-B/- ${nodes[1]}/g" \
+            -e "s/- boro-C/- ${nodes[2]}/g" \
+            -e "s/- boro-D/- ${nodes[3]}/g" \
+            -e "s/- boro-E/- ${nodes[4]}/g" \
+            -e "s/- boro-F/- ${nodes[5]}/g" \
+            -e "s/- boro-G/- ${nodes[6]}/g" \
+            -e "s/- boro-H/- ${nodes[7]}/g" "${yaml_files[@]}"
+
+# let's output to a dir in the tree
+rm -rf "$TESTDIR/avocado" "./*_results.xml"
+mkdir -p "$LOGDIR"
+
+# remove test_runner dir until scons_local is updated
+rm -rf "$TESTDIR/test_runner"
+
+# shellcheck disable=SC2154
+trap 'set +e restore_dist_files "${yaml_files[@]}"' EXIT
 
 # shellcheck disable=SC2029
 if ! ssh -i ci_key jenkins@"${nodes[0]}" "set -ex
