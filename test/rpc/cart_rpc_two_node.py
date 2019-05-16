@@ -33,7 +33,7 @@ sys.path.append('./util')
 
 from cart_utils import CartUtils
 
-class CartRpcTwoNodeTest(Test):
+class CartRpcOneNodeTest(Test):
     """
     Runs basic CaRT tests on one-node and two-node
 

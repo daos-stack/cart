@@ -4,7 +4,7 @@
 defaultENV:
   #!filter-only : /run/hosts/one_node
   #!filter-only : /run/envs/CRT_CTX_SHARE_ADDR_envs/sep
-  #!filter-only : /run/tests/proto
+  #!filter-only : /run/tests/ep_credits_4
   D_LOG_MASK: "DEBUG,MEM=ERR"
   CRT_PHY_ADDR_STR: "ofi+sockets"
   OFI_INTERFACE: "eth0"
@@ -57,7 +57,7 @@ tests: !mux
     srv_arg: "-n cred_group -s"
     srv_env: ""
     client: tests/test_ep_cred_client
-    cli_arg: "-a cred_group -c 5 -b 20 -q"
+    cli_arg: "-a cred_group -c 1 -b 20 -f -q"
     cli_env: ""
     status: PASS
   ep_credits_2:
@@ -66,7 +66,42 @@ tests: !mux
     srv_arg: "-n cred_group -s"
     srv_env: ""
     client: tests/test_ep_cred_client
-    cli_arg: "-a cred_group -c 1 -b 20 -f -q"
+    cli_arg: "-a cred_group -c 5 -b 20 -q"
     cli_env: ""
     status: PASS
-
+  ep_credits_3:
+    name: ep_credits_3
+    server: tests/test_ep_cred_server
+    srv_arg: "-n cred_group -s"
+    srv_env: ""
+    client: tests/test_ep_cred_client
+    cli_arg: "-a cred_group -c 10 -b 20 -q"
+    cli_env: ""
+    status: PASS
+  ep_credits_4:
+    name: ep_credits_4
+    server: tests/test_ep_cred_server
+    srv_arg: "-n cred_group -s"
+    srv_env: ""
+    client: tests/test_ep_cred_client
+    cli_arg: "-a cred_group -c 20 -b 20 -q"
+    cli_env: ""
+    status: PASS
+  ep_credits_5:
+    name: ep_credits_5
+    server: tests/test_ep_cred_server
+    srv_arg: "-n cred_group -s"
+    srv_env: ""
+    client: tests/test_ep_cred_client
+    cli_arg: "-a cred_group -c 255 -b 20 -q"
+    cli_env: ""
+    status: PASS
+  ep_credits_6:
+    name: ep_credits_6
+    server: tests/test_ep_cred_server
+    srv_arg: "-n cred_group -s"
+    srv_env: ""
+    client: tests/test_ep_cred_client
+    cli_arg: "-a cred_group -c 0 -b 20 -q"
+    cli_env: ""
+    status: PASS

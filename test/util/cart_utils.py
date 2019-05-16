@@ -36,7 +36,7 @@ class CartUtils():
     def create_uri_file(self):
         """ create uri file suitable for orterun """
 
-        path = "/tmp"
+        path = "./uri"
         unique = random.randint(1, 100000)
 
         if not os.path.exists(path):

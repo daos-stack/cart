@@ -132,12 +132,14 @@ TESTDIR=${SL_PREFIX}/TESTING
 
 LOGDIR="$TESTDIR/avocado/job-results/CART_${2}node"
 
-echo SCHAN15 - PWD $PWD
-echo SCHAN15 - HOST `hostname`
-echo SCHAN15 - LS `ls install`
-echo SCHAN15 - LS `ls install/Linux`
-echo SCHAN15 - LS `ls install/Linux/TESTING`
-echo SCHAN15 - LS `ls install/Linux/TESTING/rpc`
+#echo SCHAN15 - PWD $PWD
+#echo SCHAN15 - HOST `hostname`
+#echo SCHAN15 - LS `ls install`
+#echo SCHAN15 - LS `ls install/Linux`
+#echo SCHAN15 - LS `ls install/Linux/TESTING`
+#echo SCHAN15 - LS `ls install/Linux/TESTING/rpc`
+
+cd $CART_BASE
 
 # set our machine names
 mapfile -t yaml_files < <(find "$TESTDIR" -name \*.yaml)
