@@ -107,12 +107,12 @@ df -h" 2>&1 | dshbak -c; then
     exit 1
 fi
 
-if ! ssh -i ci_key jenkins@"${nodes[0]}" "set -x
-set -e
-sudo mkdir -p $CART_BASE
-sudo mount -t nfs $HOSTNAME:$PWD $CART_BASE"; then
-    rc=${PIPESTATUS[0]}
-fi
+#if ! ssh -i ci_key jenkins@"${nodes[0]}" "set -x
+#set -e
+#sudo mkdir -p $CART_BASE
+#sudo mount -t nfs $HOSTNAME:$PWD $CART_BASE"; then
+#    rc=${PIPESTATUS[0]}
+#fi
 
 # put yaml files back
 restore_dist_files() {
@@ -131,6 +131,10 @@ TEST_TAG="${3:-quick}"
 TESTDIR=${SL_PREFIX}/TESTING
 
 LOGDIR="$TESTDIR/avocado/job-results/CART_${2}node"
+
+echo SCHAN15 - PWD $PWD
+echo SCHAN15 - HOST `hostname`
+echo SCHAN15 - LS `ls`
 
 # set our machine names
 mapfile -t yaml_files < <(find "$TESTDIR" -name \*.yaml)
