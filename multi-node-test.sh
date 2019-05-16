@@ -107,6 +107,12 @@ df -h" 2>&1 | dshbak -c; then
     exit 1
 fi
 
+if ! ssh -i ci_key jenkins@"${nodes[0]}" "set -x
+set -e
+sudo mkdir -p \$CART_BASE
+sudo mount -t nfs \$HOSTNAME:\$PWD \$CART_BASE"
+fi
+
 # put yaml files back
 restore_dist_files() {
     local dist_files="$*"
