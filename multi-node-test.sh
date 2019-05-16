@@ -51,7 +51,7 @@ trap 'echo "encountered an unchecked return code, exiting with error"' ERR
 # shellcheck disable=SC1091
 . .build_vars-Linux.sh
 
-IFS=" " read -r -a nodes <<< "${3//,/ }"
+IFS=" " read -r -a nodes <<< "${2//,/ }"
 
 # shellcheck disable=SC1004
 # shellcheck disable=SC2154
@@ -119,7 +119,7 @@ restore_dist_files() {
 
 }
 
-TEST_TAG="${1:-quick}"
+TEST_TAG="${3:-quick}"
 
 TESTDIR=${SL_PREFIX}/TESTING
 

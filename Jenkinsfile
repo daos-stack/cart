@@ -252,8 +252,8 @@ pipeline {
 
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
                                 script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
-                                           bash -x ./multi-node-test.sh two_node 2 ''' +
-                                           env.NODELIST,
+                                           bash -x ./multi-node-test.sh 2 ''' +
+                                           env.NODELIST + ''' two_node''',
                                 junit_files: "install/Linux/TESTING/avocado/job-results/CART_2node/*/*.xml"
                     }
                     post {
