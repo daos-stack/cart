@@ -489,6 +489,11 @@ crt_proc_common_hdr(crt_proc_t proc, struct crt_common_hdr *hdr)
 		D_ERROR("hg proc error, hg_ret: %d.\n", hg_ret);
 		D_GOTO(out, rc = -DER_HG);
 	}
+	hg_ret = hg_proc_hg_uint32_t(hg_proc, &hdr->cch_xid);
+	if (hg_ret != HG_SUCCESS) {
+		D_ERROR("hg proc error, hg_ret: %d.\n", hg_ret);
+		rc = -DER_HG;
+	}
 	hg_ret = hg_proc_hg_uint32_t(hg_proc, &hdr->cch_rc);
 	if (hg_ret != HG_SUCCESS) {
 		D_ERROR("hg proc error, hg_ret: %d.\n", hg_ret);
