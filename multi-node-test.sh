@@ -109,8 +109,8 @@ fi
 
 if ! ssh -i ci_key jenkins@"${nodes[0]}" "set -x
 set -e
-sudo mkdir -p \$CART_BASE
-sudo mount -t nfs \$HOSTNAME:\$PWD \$CART_BASE"; then
+sudo mkdir -p $CART_BASE
+sudo mount -t nfs $HOSTNAME:$PWD $CART_BASE"; then
     rc=${PIPESTATUS[0]}
 fi
 
