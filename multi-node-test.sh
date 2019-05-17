@@ -191,28 +191,7 @@ rm -rf \"$TESTDIR/test_runner\"
 # shellcheck disable=SC2154
 trap 'set +e restore_dist_files \"\${yaml_files[@]}\"' EXIT
 
-if [[ \"$CART_TEST_MODE\" =~ (native|all) ]]; then
-  echo \"Nothing to do yet, wish we could fail some tests\"
-  if ${RUN_UTEST:-true}; then
-      scons utest
-  fi
-fi
-
-if [[ \"$CART_TEST_MODE\" =~ (memcheck|all) ]]; then
-  echo \"Nothing to do yet\"
-  if ${RUN_UTEST:-true}; then
-    scons utest --utest-mode=memcheck
-  fi
-  RESULTS=\"valgrind_results\"
-  if [[ ! -e ${RESULTS} ]]; then mkdir ${RESULTS}; fi
-
-  # Recursive copy to results, including all directories and matching files,
-  # but pruning empty directories from the tree.
-  rsync -rm --include=\"*/\" --include=\"valgrind*xml\" \"--exclude=*\" \"${TESTDIR}\" \"${RESULTS}\"
-
-fi
-
-pushd $TESTDIR
+pushd \"$TESTDIR\"
 
 # now run it!
 export PYTHONPATH=./util
