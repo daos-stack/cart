@@ -287,14 +287,6 @@ pipeline {
                         provisionNodes NODELIST: env.NODELIST,
                                        node_count: 2,
                                        snapshot: true
-                        checkoutScm url: 'ssh://review.hpdd.intel.com:29418/exascale/jenkins',
-                                    checkoutDir: 'jenkins',
-                                    credentialsId: 'daos-gerrit-read'
-
-                        checkoutScm url: 'ssh://review.hpdd.intel.com:29418/coral/scony_python-junit',
-                                    checkoutDir: 'scony_python-junit',
-                                    credentialsId: 'daos-gerrit-read'
-
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
                                 script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
                                            bash -x ./multi-node-test.sh 2 ''' +
@@ -303,7 +295,6 @@ pipeline {
                     }
                     post {
                         always {
-                            junit 'CART_2-node_junit.xml'
                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs-2_node/**'
                             /* when JENKINS-39203 is resolved, can probably use stepResult
                                here and remove the remaining post conditions

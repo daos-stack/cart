@@ -123,8 +123,9 @@ class CartUtils():
         server = " " + cartobj.params.get("server", '/run/tests/*/')
         srv_arg = " " + cartobj.params.get("srv_arg", '/run/tests/*/')
         srv_env = " " + cartobj.params.get("srv_env", '/run/tests/*/')
+        srv_ppn = " " + cartobj.params.get("srv_ppn", '/run/tests/*/')
 
-        srvcmd = "{} --mca btl self,tcp --report-uri {} -N 1 -H {} ".format(orterun_bin, urifile, srv_hoststr)
+        srvcmd = "{} --mca btl self,tcp --report-uri {} -N {} -H {} ".format(orterun_bin, urifile, srv_ppn, srv_hoststr)
         #srvcmd += cartobj.pass_enva
         srvcmd += env
         srvcmd += srv_env
@@ -148,8 +149,9 @@ class CartUtils():
         client = " " + cartobj.params.get("client", '/run/tests/*/')
         cli_arg = " " + cartobj.params.get("cli_arg", '/run/tests/*/')
         cli_env = " " + cartobj.params.get("cli_env", '/run/tests/*/')
+        cli_ppn = " " + cartobj.params.get("cli_ppn", '/run/tests/*/')
 
-        clicmd = "{} --mca btl self,tcp --ompi-server file:{} -N 1 -H {} ".format(orterun_bin, urifile, cli_hoststr)
+        clicmd = "{} --mca btl self,tcp --ompi-server file:{} -N {} -H {} ".format(orterun_bin, urifile, cli_ppn, cli_hoststr)
         #clicmd += cartobj.pass_enva
         clicmd += env
         clicmd += cli_env
