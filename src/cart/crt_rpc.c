@@ -1367,9 +1367,7 @@ crt_common_hdr_init(struct crt_rpc_priv *rpc_priv, crt_opcode_t opc)
 	rc = crt_group_rank(0, &rank);
 	D_ASSERT(rc == 0);
 
-	D_RWLOCK_WRLOCK(&crt_gdata.cg_rwlock);
-	xid = crt_gdata.cg_xid++;
-	D_RWLOCK_UNLOCK(&crt_gdata.cg_rwlock);
+	xid = atomic_fetch_add(&crt_gdata.cg_xid, 1);
 
 	rpc_priv->crp_req_hdr.cch_opc = opc;
 	rpc_priv->crp_req_hdr.cch_rank = rank;
