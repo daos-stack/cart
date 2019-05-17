@@ -94,6 +94,8 @@ struct crt_common_hdr {
 	uint64_t	cch_hlc;
 	/* gid and rank identify the rpc request sender */
 	d_rank_t	cch_rank;
+	/* tag to which rpc request was sent to */
+	d_rank_t	cch_tag;
 	/* Transfer id */
 	uint32_t	cch_xid;
 	/* used in crp_reply_hdr to propagate rpc failure back to sender */
