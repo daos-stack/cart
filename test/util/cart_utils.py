@@ -92,16 +92,14 @@ class CartUtils():
         crt_phy_addr = cartobj.params.get("CRT_PHY_ADDR_STR", '/run/defaultENV/')
         ofi_interface = cartobj.params.get("OFI_INTERFACE", '/run/defaultENV/')
         ofi_share_addr = cartobj.params.get("CRT_CTX_SHARE_ADDR", '/run/env_CRT_CTX_SHARE_ADDR/*/')
-        ofi_ctx_num = cartobj.params.get("CRT_CTX_NUM", '/run/defaultENV/')
 
         env = " --output-filename {!s}".format(log_path)
         env += ' -x D_LOG_MASK={!s} -x D_LOG_FILE={!s}' \
                         ' -x CRT_PHY_ADDR_STR={!s}' \
                         ' -x OFI_INTERFACE={!s}' \
-                        ' -x CRT_CTX_SHARE_ADDR={!s} -x CRT_CTX_NUM={!s}' \
+                        ' -x CRT_CTX_SHARE_ADDR={!s}' \
                             .format(log_mask, log_file, crt_phy_addr, \
-                                    ofi_interface, ofi_share_addr, \
-                                    ofi_ctx_num)
+                                    ofi_interface, ofi_share_addr)
 
         if not os.path.exists(log_path):
             os.makedirs(log_path)
@@ -122,12 +120,14 @@ class CartUtils():
 
         server = " " + cartobj.params.get("server", '/run/tests/*/')
         srv_arg = " " + cartobj.params.get("srv_arg", '/run/tests/*/')
-        srv_env = " " + cartobj.params.get("srv_env", '/run/tests/*/')
         srv_ppn = " " + cartobj.params.get("srv_ppn", '/run/tests/*/')
+        srv_env = " " + cartobj.params.get("srv_env", '/run/tests/*/')
+        srv_ctx = " -x CRT_CTX_NUM=" + cartobj.params.get("srv_CRT_CTX_NUM", '/run/defaultENV/')
 
         srvcmd = "{} --mca btl self,tcp --report-uri {} -N {} -H {} ".format(orterun_bin, urifile, srv_ppn, srv_hoststr)
         #srvcmd += cartobj.pass_enva
         srvcmd += env
+        srvcmd += srv_ctx
         srvcmd += srv_env
         srvcmd += server
         srvcmd += srv_arg
@@ -150,10 +150,12 @@ class CartUtils():
         cli_arg = " " + cartobj.params.get("cli_arg", '/run/tests/*/')
         cli_env = " " + cartobj.params.get("cli_env", '/run/tests/*/')
         cli_ppn = " " + cartobj.params.get("cli_ppn", '/run/tests/*/')
+        cli_ctx = " -x CRT_CTX_NUM=" + cartobj.params.get("cli_CRT_CTX_NUM", '/run/defaultENV/')
 
         clicmd = "{} --mca btl self,tcp --ompi-server file:{} -N {} -H {} ".format(orterun_bin, urifile, cli_ppn, cli_hoststr)
         #clicmd += cartobj.pass_enva
         clicmd += env
+        clicmd += cli_ctx
         clicmd += cli_env
         clicmd += client
         clicmd += cli_arg

@@ -3,11 +3,12 @@
 
 defaultENV:
   #!filter-only : /run/envs_CRT_CTX_SHARE_ADDR/sep
-  #!filter-only : /run/tests/proto
+  #!filter-only : /run/tests/threaded
   D_LOG_MASK: "DEBUG,MEM=ERR"
   CRT_PHY_ADDR_STR: "ofi+sockets"
   OFI_INTERFACE: "eth0"
-  CRT_CTX_NUM: "16"
+  srv_CRT_CTX_NUM: "16"
+  cli_CRT_CTX_NUM: "1"
 env_CRT_CTX_SHARE_ADDR: !mux
   sep:
     env: sep
@@ -42,7 +43,7 @@ tests: !mux
     srv_ppn: "1"
     client: tests/crt_echo_cli
     cli_arg: ""
-    cli_env: ""
+    cli_env: "-x CRT_CTX_NUM=16"
     cli_ppn: "1"
     status: PASS
   test_group:
@@ -119,6 +120,28 @@ tests: !mux
     srv_ppn: "1"
     client: tests/test_ep_cred_client
     cli_arg: "-a cred_group -c 0 -b 20 -q"
+    cli_env: ""
+    cli_ppn: "1"
+    status: PASS
+  no_timeout:
+    name: no_timeout_basic
+    server: tests/test_group
+    srv_arg: "--name service_group  --is_service"
+    srv_env: "-x CRT_TIMEOUT=10"
+    srv_ppn: "1"
+    client: tests/test_no_timeout
+    cli_arg: " --name client_group --attach_to service_group"
+    cli_env: "-x CRT_TIMEOUT=10"
+    cli_ppn: "1"
+    status: PASS
+  threaded:
+    name: no_timeout_basic
+    server: tests/threaded_server
+    srv_arg: ""
+    srv_env: ""
+    srv_ppn: "1"
+    client: tests/threaded_client
+    cli_arg: ""
     cli_env: ""
     cli_ppn: "1"
     status: PASS
