@@ -111,7 +111,7 @@ TEST_TAG="${3:-quick}"
 
 TESTDIR=${SL_PREFIX}/TESTING
 
-LOGDIR="$TESTDIR/avocado/job-results/CART_${2}node"
+LOGDIR="$TESTDIR/avocado/job-results/CART_${1}node"
 
 # shellcheck disable=SC2029
 if ! ssh -i ci_key jenkins@"${nodes[0]}" "set -ex
