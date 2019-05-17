@@ -219,11 +219,11 @@ pipeline {
                         always {
                             /* Uncomment this on a day when unit testing works without
                              * having to build the test in the test phase
-                             archiveArtifacts artifacts: '''install/Linux/TESTING/testLogs-1node/**,
+                             archiveArtifacts artifacts: '''install/Linux/TESTING/testLogs-1_node/**,
                                                             build/Linux/src/utest/utest.log,
                                                             build/Linux/src/utest/test_output'''
                              */
-                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs-1node/**'
+                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs-1_node/**'
                             /* when JENKINS-39203 is resolved, can probably use stepResult
                                here and remove the remaining post conditions
                                stepResult name: env.STAGE_NAME,
