@@ -98,8 +98,6 @@ class TestEcho(commontestsuite.CommonTestSuite):
         """tear down the test"""
         self.logger.info("tearDown begin")
         self.logger.info("tearDown end\n")
-	
-
 
     def test_echo_one_node(self):
         """Simple process set test one node"""
