@@ -76,7 +76,6 @@ class LogRaw():
         LogLine
         """
         return self.line
-# pylint: enable=too-few-public-methods
 
 # pylint: disable=too-many-instance-attributes
 class LogLine():
@@ -275,7 +274,6 @@ class LogLine():
         """Returns True if line is a call to free"""
         return self.get_field(2) == 'free'
 
-# pylint: enable=too-few-public-methods
 
 # pylint: disable=too-many-branches
 class StateIter():
