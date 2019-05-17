@@ -205,8 +205,12 @@ else
     rc=0
 fi
 
-mkdir -p install/Linux/TESTING/
-scp -i ci_key -r jenkins@"${nodes[0]}":$CART_BASE/install/Linux/TESTING/testLogs-${1}_node \
+mkdir -p install/Linux/TESTING/avocado/job-results
+
+scp -i ci_key -r jenkins@"${nodes[0]}":$TESTDIR/testLogs-${1}_node \
                                         install/Linux/TESTING/
+
+scp -i ci_key -r jenkins@"${nodes[0]}":$LOGDIR \
+                                        install/Linux/TESTING/avocado/job-results
 
 exit "$rc"
