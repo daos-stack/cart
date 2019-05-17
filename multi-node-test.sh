@@ -197,7 +197,7 @@ else
     rc=0
 fi
 
-mv testLogs testLogs-${3}_node
+mv testLogs testLogs-${1}_node
 
 exit \$rc"; then
     rc=${PIPESTATUS[0]}
@@ -206,7 +206,7 @@ else
 fi
 
 mkdir -p install/Linux/TESTING/
-scp -i ci_key -r jenkins@"${nodes[0]}":$CART_BASE/install/Linux/TESTING/testLogs-${3}_node \
+scp -i ci_key -r jenkins@"${nodes[0]}":$CART_BASE/install/Linux/TESTING/testLogs-${1}_node \
                                         install/Linux/TESTING/
 
 exit "$rc"
