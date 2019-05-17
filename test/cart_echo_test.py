@@ -167,4 +167,3 @@ class TestEcho(commontestsuite.CommonTestSuite):
                        "server %d" % srv_rtn)
 
         self._log_check()
-

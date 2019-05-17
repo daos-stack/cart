@@ -275,6 +275,8 @@ class LogLine():
         """Returns True if line is a call to free"""
         return self.get_field(2) == 'free'
 
+# pylint: enable=too-few-public-methods
+
 # pylint: disable=too-many-branches
 class StateIter():
     """Helper class for LogIter to add a statefull iterator.
@@ -348,6 +350,8 @@ class StateIter():
 
         return line
 # pylint: disable=too-many-branches
+
+# pylint: disable=too-few-public-methods
 
 class LogIter():
     """Class for parsing CaRT log files
