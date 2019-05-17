@@ -203,4 +203,8 @@ else
     rc=0
 fi
 
+mkdir -p install/Linux/TESTING/
+scp -i ci_key -r jenkins@"${nodes[0]}":$CART_BASE/install/Linux/TESTING/testLogs-2_node \
+                                        install/Linux/TESTING/
+
 exit "$rc"
