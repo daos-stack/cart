@@ -120,6 +120,10 @@ enum {
 	D_FOREACH_PRIO_MASK(D_PRIO_ENUM, D_NOOP)
 };
 
+enum d_log_flag_bits {
+	D_LOG_SET_AS_DEFAULT	= 1U,
+};
+
 #define DLOG_PRISHIFT   24		/**< to get non-debug level */
 #define DLOG_DPRISHIFT  8		/**< to get debug level */
 #define DLOG_FACMASK    0x000000ff	/**< facility mask */
@@ -250,7 +254,7 @@ int d_log_dbg_grp_dealloc(char *grpname);
  *
  * \return		0 on success, -1 on error
  */
-int d_log_dbg_grp_alloc(d_dbug_t dbgmask, char *grpname);
+int d_log_dbg_grp_alloc(d_dbug_t dbgmask, char *grpname, uint32_t flags);
 
 /**
  * log a message using stdarg list without checking filtering

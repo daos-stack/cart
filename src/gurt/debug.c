@@ -297,6 +297,54 @@ d_log_dbg_grp_dealloc(char *name)
 	return -1;
 }
 
+static void
+debug_mask_load(const char *mask_name)
+{
+	char			*mask_str;
+	char			*cur;
+	int			 i;
+	struct d_debug_bit	*d;
+	struct d_debug_grp	*g;
+
+	D_STRNDUP(mask_str, mask_name, DBG_ENV_MAX_LEN);
+	if (mask_str == NULL) {
+		D_PRINT_ERR("D_STRNDUP of debug mask failed");
+		return;
+	}
+
+	cur = strtok(mask_str, DD_SEP);
+	d_dbglog_data.dd_mask = 0;
+	while (cur != NULL) {
+		for (i = 0; i < NUM_DBG_BIT_ENTRIES; i++) {
+			d = &d_dbg_bit_dict[i];
+			if (d->db_name != NULL &&
+			    strncasecmp(cur, d->db_name,
+					d->db_name_size) == 0) {
+				d_dbglog_data.dd_mask |= *(d->db_bit);
+				break;
+			}
+			if (d->db_lname != NULL &&
+			    strncasecmp(cur, d->db_lname,
+					d->db_lname_size) == 0) {
+				d_dbglog_data.dd_mask |= *(d->db_bit);
+				break;
+			}
+		}
+		/* check if DD_MASK entry is a group name */
+		for (i = 0; i < NUM_DBG_GRP_ENTRIES; i++) {
+			g = &d_dbg_grp_dict[i];
+			if (g->dg_name != NULL &&
+			    strncasecmp(cur, g->dg_name,
+					g->dg_name_size) == 0) {
+				d_dbglog_data.dd_mask |= g->dg_mask;
+				break;
+			}
+		}
+		cur = strtok(NULL, DD_SEP);
+	}
+	D_FREE(mask_str);
+}
+
 /**
  * Create an identifier/group name for muliple debug bits
  *
@@ -306,16 +354,18 @@ d_log_dbg_grp_dealloc(char *name)
  * \return			0 on success, -1 on error
  */
 int
-d_log_dbg_grp_alloc(d_dbug_t dbgmask, char *grpname)
+d_log_dbg_grp_alloc(d_dbug_t dbgmask, char *grpname, uint32_t flags)
 {
-	int		   i;
-	size_t		   name_sz;
-	struct d_debug_grp *g;
+	int			 i;
+	size_t			 name_sz;
+	struct d_debug_grp	*g;
+	bool			 set_as_default;
 
 	if (grpname == NULL || dbgmask == 0)
 		return -1;
 
 	name_sz = strlen(grpname) + 1;
+	set_as_default = flags & D_LOG_SET_AS_DEFAULT;
 
 	/**
 	 * Allocate debug group in gurt for given debug mask name.
@@ -334,6 +384,9 @@ d_log_dbg_grp_alloc(d_dbug_t dbgmask, char *grpname)
 			g->dg_name = grpname;
 			g->dg_name_size = name_sz;
 			g->dg_mask = dbgmask;
+			if (set_as_default)
+				debug_mask_load(grpname);
+
 			return 0;
 		}
 	}
@@ -371,53 +424,12 @@ static void
 debug_mask_load_env(void)
 {
 	char		    *mask_env;
-	char		    *mask_str;
-	char		    *cur;
-	int		    i;
-	struct d_debug_bit *d;
-	struct d_debug_grp *g;
 
 	mask_env = getenv(DD_MASK_ENV);
 	if (mask_env == NULL)
 		return;
 
-	D_STRNDUP(mask_str, mask_env, DBG_ENV_MAX_LEN);
-	if (mask_str == NULL) {
-		D_PRINT_ERR("D_STRNDUP of debug mask failed");
-		return;
-	}
-
-	cur = strtok(mask_str, DD_SEP);
-	d_dbglog_data.dd_mask = 0;
-	while (cur != NULL) {
-		for (i = 0; i < NUM_DBG_BIT_ENTRIES; i++) {
-			d = &d_dbg_bit_dict[i];
-			if (d->db_name != NULL &&
-			    strncasecmp(cur, d->db_name,
-					d->db_name_size) == 0) {
-				d_dbglog_data.dd_mask |= *(d->db_bit);
-				break;
-			}
-			if (d->db_lname != NULL &&
-			    strncasecmp(cur, d->db_lname,
-					d->db_lname_size) == 0) {
-				d_dbglog_data.dd_mask |= *(d->db_bit);
-				break;
-			}
-		}
-		/* check if DD_MASK entry is a group name */
-		for (i = 0; i < NUM_DBG_GRP_ENTRIES; i++) {
-			g = &d_dbg_grp_dict[i];
-			if (g->dg_name != NULL &&
-			    strncasecmp(cur, g->dg_name,
-					g->dg_name_size) == 0) {
-				d_dbglog_data.dd_mask |= g->dg_mask;
-				break;
-			}
-		}
-		cur = strtok(NULL, DD_SEP);
-	}
-	D_FREE(mask_str);
+	debug_mask_load(mask_env);
 }
 
 void
