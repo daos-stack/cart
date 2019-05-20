@@ -49,7 +49,7 @@ class CartBarrierOneNodeTest(Test):
 
     def test_cart_rpc(self):
         """
-        Test CaRT
+        Test CaRT barrier
 
         :avocado: tags=all,barrier,one_node
         """
