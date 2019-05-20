@@ -49,7 +49,7 @@ class CartRpcTwoNodeTest(Test):
 
     def test_cart_rpc(self):
         """
-        Test CaRT
+        Test CaRT RPC
 
         :avocado: tags=all,rpc,two_node
         """
