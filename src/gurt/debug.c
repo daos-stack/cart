@@ -348,8 +348,11 @@ debug_mask_load(const char *mask_name)
 /**
  * Create an identifier/group name for muliple debug bits
  *
- * \param[in]	grpname		debug mask group name
  * \param[in]	dbgmask		group mask
+ * \param[in]	grpname		debug mask group name
+ * \param[in]	flags		bit flags. e.g. D_LOG_SET_AS_DEFAULT sets
+ *				grpname as the default mask. See
+ *				\ref d_log_flag_bits for supported flags.
  *
  * \return			0 on success, -1 on error
  */
