@@ -172,14 +172,14 @@ mapfile -t yaml_files < <(find \"$TESTDIR\" -name \\*.yaml)
 trap 'set +e; restore_dist_files \"\${yaml_files[@]}\"' EXIT
 
 # shellcheck disable=SC2086
-sed -i.dist -e \"s/- boro-A/- ${nodes[0]}/g\" \
-            -e \"s/- boro-B/- ${nodes[1]}/g\" \
-            -e \"s/- boro-C/- ${nodes[2]}/g\" \
-            -e \"s/- boro-D/- ${nodes[3]}/g\" \
-            -e \"s/- boro-E/- ${nodes[4]}/g\" \
-            -e \"s/- boro-F/- ${nodes[5]}/g\" \
-            -e \"s/- boro-G/- ${nodes[6]}/g\" \
-            -e \"s/- boro-H/- ${nodes[7]}/g\" \"\${yaml_files[@]}\"
+sed -i.dist -e \"s/boro-A/${nodes[0]}/g\" \
+            -e \"s/boro-B/${nodes[1]}/g\" \
+            -e \"s/boro-C/${nodes[2]}/g\" \
+            -e \"s/boro-D/${nodes[3]}/g\" \
+            -e \"s/boro-E/${nodes[4]}/g\" \
+            -e \"s/boro-F/${nodes[5]}/g\" \
+            -e \"s/boro-G/${nodes[6]}/g\" \
+            -e \"s/boro-H/${nodes[7]}/g\" \"\${yaml_files[@]}\"
 
 # let's output to a dir in the tree
 rm -rf \"$TESTDIR/avocado\" \"./*_results.xml\"
