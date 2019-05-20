@@ -33,11 +33,11 @@ sys.path.append('./util')
 
 from cart_utils import CartUtils
 
-class CartRpcTwoNodeTest(Test):
+class CartBarrierTwoNodeTest(Test):
     """
     Runs basic CaRT tests on one-node and two-node
 
-    :avocado: tags=all,rpc,two_node
+    :avocado: tags=all,barrier,two_node
     """
     def setUp(self):
         print("Running setup\n")
@@ -49,23 +49,19 @@ class CartRpcTwoNodeTest(Test):
 
     def test_cart_rpc(self):
         """
-        Test CaRT RPC
+        Test CaRT
 
-        :avocado: tags=all,rpc,two_node
+        :avocado: tags=all,barrier,two_node
         """
 
-        urifile = self.utils.create_uri_file()
+        cmd = self.utils.build_cmd(self, self.env)
 
-        srvcmd = self.utils.build_srv_cmd(self, urifile, self.env)
-        clicmd = self.utils.build_cli_cmd(self, urifile, self.env)
-
-        print("\nServer cmd : %s\n" % srvcmd)
-        print("\nClient cmd : %s\n" % clicmd)
+        print("\nTest cmd : %s\n" % cmd)
 
         ret = -1
 
         try:
-            ret = self.utils.launch_srv_cli(self, srvcmd, clicmd)
+            ret = self.utils.launch_cmd(self, cmd)
         except Exception as e:
             print("Exception in launching test : {}".format(e))
 
