@@ -42,8 +42,13 @@ def scons():
     Import('env')
 
     # move the test files (.py) to the TESTING scrpits directory
-    env.Install("$PREFIX/TESTING/scripts", Glob("*.py"))
-    env.Install("$PREFIX/TESTING/scripts", Glob("*.yml"))
+    env.Install("$PREFIX/TESTING", Glob("launch.py"))
+    env.Install("$PREFIX/TESTING/rpc", Glob("rpc/*.py"))
+    env.Install("$PREFIX/TESTING/rpc", Glob("rpc/*.yaml"))
+    env.Install("$PREFIX/TESTING/barrier", Glob("barrier/*.py"))
+    env.Install("$PREFIX/TESTING/barrier", Glob("barrier/*.yaml"))
+    env.Install("$PREFIX/TESTING/util", Glob("util/*.py"))
+    env.Install("$PREFIX/TESTING/util", Glob("util/*.yaml"))
 
 if __name__ == 'SCons.Script':
     scons()
