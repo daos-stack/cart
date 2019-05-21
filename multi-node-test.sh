@@ -202,7 +202,7 @@ else
     rc=0
 fi
 
-mkdir -p i\"testLogs-${1}_node\"
+mkdir -p \"testLogs-${1}_node\"
 
 cp -r testLogs/* \"testLogs-${1}_node\"
 
@@ -214,10 +214,10 @@ fi
 
 mkdir -p install/Linux/TESTING/avocado/job-results
 
-scp -i ci_key -r jenkins@"${nodes[0]}":"$TESTDIR"/testLogs-${1}_node \
+scp -i ci_key -r jenkins@${nodes[0]}:$TESTDIR/testLogs-${1}_node \
                                       install/Linux/TESTING/
 
-scp -i ci_key -r jenkins@"${nodes[0]}":"$LOGDIR" \
+scp -i ci_key -r jenkins@${nodes[0]}:$LOGDIR \
                                       install/Linux/TESTING/avocado/job-results
 
 exit "$rc"
