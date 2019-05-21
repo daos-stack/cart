@@ -149,7 +149,8 @@ EOF
 if grep \"testsuite.setAttribute('name', 'avocado')\" \
     /usr/lib/python2.7/site-packages/avocado/plugins/xunit.py; then
     sudo ed <<EOF /usr/lib/python2.7/site-packages/avocado/plugins/xunit.py
-/testsuite.setAttribute('name', 'avocado')/s/'avocado'/os.path.basename(os.path.dirname(result.logfile))/
+/testsuite.setAttribute('name', 'avocado')/s/'avocado'/\
+os.path.basename(os.path.dirname(result.logfile))/
 wq
 EOF
 fi
@@ -183,7 +184,7 @@ sed -i.dist -e \"s/- boro-A/- ${nodes[0]}/g\" \
 
 # let's output to a dir in the tree
 rm -rf \"$TESTDIR/avocado\" \"./*_results.xml\"
-mkdir -p "$LOGDIR"
+mkdir -p \"$LOGDIR\"
 
 # remove test_runner dir until scons_local is updated
 rm -rf \"$TESTDIR/test_runner\"
@@ -201,9 +202,9 @@ else
     rc=0
 fi
 
-mkdir -p testLogs-${1}_node
+mkdir -p i\"testLogs-${1}_node\"
 
-cp -r testLogs/* testLogs-${1}_node
+cp -r testLogs/* \"testLogs-${1}_node\"
 
 exit \$rc"; then
     rc=${PIPESTATUS[0]}
@@ -213,10 +214,10 @@ fi
 
 mkdir -p install/Linux/TESTING/avocado/job-results
 
-scp -i ci_key -r jenkins@"${nodes[0]}":$TESTDIR/testLogs-${1}_node \
-                                        install/Linux/TESTING/
+scp -i ci_key -r jenkins@"${nodes[0]}":"$TESTDIR"/testLogs-${1}_node \
+                                      install/Linux/TESTING/
 
-scp -i ci_key -r jenkins@"${nodes[0]}":$LOGDIR \
-                                        install/Linux/TESTING/avocado/job-results
+scp -i ci_key -r jenkins@"${nodes[0]}":"$LOGDIR" \
+                                      install/Linux/TESTING/avocado/job-results
 
 exit "$rc"
