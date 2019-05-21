@@ -47,7 +47,7 @@ class CartBarrierTwoNodeTest(Test):
     def tearDown(self):
         print("Run TearDown\n")
 
-    def test_cart_rpc(self):
+    def test_cart_barrier(self):
         """
         Test CaRT
 

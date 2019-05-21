@@ -18,7 +18,9 @@ env_CRT_CTX_SHARE_ADDR: !mux
 hosts: !mux
   hosts_1:
     config: two_node
-    testhost: boro-A,boro-B
+    testhost:
+      - boro-A
+      - boro-B
 tests: !mux
   barrier:
     name: barrier_basic

@@ -19,8 +19,10 @@ env_CRT_CTX_SHARE_ADDR: !mux
 hosts: !mux
   hosts_1:
     config: two_node
-    server: boro-A
-    client: boro-B
+    server:
+      - boro-A
+    client:
+      - boro-B
 tests: !mux
   proto:
     name: proto_basic
