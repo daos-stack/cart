@@ -95,8 +95,8 @@ class LogLine():
         # message.  The hostname and pid fields are both variable width
         idx = 29 + len(fields[1]) + len(fields[2])
         pidtid = fields[2][5:-1]
-        pid,tid = pidtid.split("/")
-        self.pid = int(pid)
+        pid = pidtid.split("/")
+        self.pid = int(pid[0])
         self._preamble = line[:idx]
         self.index = index
         self.mask = fields[3]
