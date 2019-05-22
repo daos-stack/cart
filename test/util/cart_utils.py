@@ -96,8 +96,6 @@ class CartUtils():
             try:
                 proc.terminate()
                 proc.wait(2)
-            except ProcessLookupError:
-                pass
             except Exception:
                 proc.kill()
 
@@ -131,7 +129,7 @@ class CartUtils():
 
         return env
 
-    def build_srv_cmd(self, cartobj, urifile, env):
+    def build_srv_cmd(self, cartobj, urifile, env, host):
         """ build server command """
         srvcmd = ""
 
@@ -141,13 +139,13 @@ class CartUtils():
 
         orterun_bin = os.path.join(build_paths["OMPI_PREFIX"], "bin", "orterun")
 
-        srv_bin = " " + cartobj.params.get("srv_bin", '/run/tests/*/')
-        srv_arg = " " + cartobj.params.get("srv_arg", '/run/tests/*/')
-        srv_env = " " + cartobj.params.get("srv_env", '/run/tests/*/')
+        srv_bin = " " + cartobj.params.get("{}_bin".format(host), '/run/tests/*/')
+        srv_arg = " " + cartobj.params.get("{}_arg".format(host), '/run/tests/*/')
+        srv_env = " " + cartobj.params.get("{}_env".format(host), '/run/tests/*/')
         srv_ctx = " -x CRT_CTX_NUM=" + cartobj.params.get("srv_CRT_CTX_NUM", '/run/defaultENV/')
 
         srv_host = cartobj.params.get("server", '/run/hosts/*/')
-        srv_ppn = cartobj.params.get("srv_ppn", '/run/tests/*/')
+        srv_ppn = cartobj.params.get("{}_ppn".format(host), '/run/tests/*/')
         hostfile = self.write_host_file(srv_host,srv_ppn)
 
         srvcmd = "{} --mca btl self,tcp --report-uri {} -N {} --hostfile {} ".format(orterun_bin, urifile, srv_ppn, hostfile)
@@ -160,7 +158,7 @@ class CartUtils():
 
         return srvcmd
 
-    def build_cli_cmd(self, cartobj, urifile, env):
+    def build_cli_cmd(self, cartobj, urifile, env, host):
         """ build client command """
         clicmd = ""
 
@@ -170,13 +168,13 @@ class CartUtils():
 
         orterun_bin = os.path.join(build_paths["OMPI_PREFIX"], "bin", "orterun")
 
-        cli_bin = " " + cartobj.params.get("cli_bin", '/run/tests/*/')
-        cli_arg = " " + cartobj.params.get("cli_arg", '/run/tests/*/')
-        cli_env = " " + cartobj.params.get("cli_env", '/run/tests/*/')
+        cli_bin = " " + cartobj.params.get("{}_bin".format(host), '/run/tests/*/')
+        cli_arg = " " + cartobj.params.get("{}_arg".format(host), '/run/tests/*/')
+        cli_env = " " + cartobj.params.get("{}_env".format(host), '/run/tests/*/')
         cli_ctx = " -x CRT_CTX_NUM=" + cartobj.params.get("cli_CRT_CTX_NUM", '/run/defaultENV/')
 
         cli_host = cartobj.params.get("client", '/run/hosts/*/')
-        cli_ppn = cartobj.params.get("cli_ppn", '/run/tests/*/')
+        cli_ppn = cartobj.params.get("{}_ppn".format(host), '/run/tests/*/')
         hostfile = self.write_host_file(cli_host,cli_ppn)
 
         clicmd = "{} --mca btl self,tcp --ompi-server file:{} -N {} --hostfile {} ".format(orterun_bin, urifile, cli_ppn, hostfile)
@@ -189,7 +187,7 @@ class CartUtils():
 
         return clicmd
 
-    def build_cmd(self, cartobj, env):
+    def build_cmd(self, cartobj, env, host):
         """ build command """
         cmd = ""
 
@@ -199,13 +197,13 @@ class CartUtils():
 
         orterun_bin = os.path.join(build_paths["OMPI_PREFIX"], "bin", "orterun")
 
-        tst_bin = " " + cartobj.params.get("tst_bin", '/run/tests/*/')
-        tst_arg = " " + cartobj.params.get("tst_arg", '/run/tests/*/')
-        tst_env = " " + cartobj.params.get("tst_env", '/run/tests/*/')
+        tst_bin = " " + cartobj.params.get("{}_bin".format(host), '/run/tests/*/')
+        tst_arg = " " + cartobj.params.get("{}_arg".format(host), '/run/tests/*/')
+        tst_env = " " + cartobj.params.get("{}_env".format(host), '/run/tests/*/')
         tst_ctx = " -x CRT_CTX_NUM=" + cartobj.params.get("CRT_CTX_NUM", '/run/defaultENV/')
 
         tst_host = cartobj.params.get("testhost", '/run/hosts/*/')
-        tst_ppn = cartobj.params.get("tst_ppn", '/run/tests/*/')
+        tst_ppn = cartobj.params.get("{}_ppn".format(host), '/run/tests/*/')
         hostfile = self.write_host_file(tst_host,tst_ppn)
 
         cmd = "{} --mca btl self,tcp -N {} --hostfile {} ".format(orterun_bin, tst_ppn, hostfile)
@@ -220,12 +218,7 @@ class CartUtils():
     def launch_srv_cli(self, cartobj, srvcmd, clicmd):
         """ launches sever in the background and client in the foreground """
 
-        srv_cmd = shlex.split(srvcmd)
-        srv_rtn = subprocess.Popen(srv_cmd)
-
-        if srv_rtn is None:
-            cartobj.fail("Server launch failed, return code %s" \
-                       % srv_rtn.returncode)
+        srv_rtn = self.launch_cmd_bg(cartobj, srvcmd)
 
         # Verify the server is still running.
         if not self.check_process(srv_rtn):
@@ -233,8 +226,7 @@ class CartUtils():
             cartobj.fail("Server did not launch, return code %s" \
                        % procrtn)
 
-        cli_cmd = shlex.split(clicmd)
-        cli_rtn = subprocess.call(cli_cmd)
+        cli_rtn = self.launch_cmd(cartobj, clicmd)
 
         srv_rtn = self.stop_process(srv_rtn)
 
@@ -254,3 +246,15 @@ class CartUtils():
             cartobj.fail("Failed, return codes %d " % rtn)
 
         return 0
+
+    def launch_cmd_bg(self, cartobj, cmd):
+        """ launches the given cmd in background """
+
+        cmd = shlex.split(cmd)
+        rtn = subprocess.Popen(cmd)
+
+        if rtn is None:
+            cartobj.fail("Background process launch failed, \
+                          return codes %d " % rtn.returncode)
+
+        return rtn

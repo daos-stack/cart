@@ -54,7 +54,7 @@ class CartBarrierTwoNodeTest(Test):
         :avocado: tags=all,barrier,two_node
         """
 
-        cmd = self.utils.build_cmd(self, self.env)
+        cmd = self.utils.build_cmd(self, self.env, "srv")
 
         print("\nTest cmd : %s\n" % cmd)
 

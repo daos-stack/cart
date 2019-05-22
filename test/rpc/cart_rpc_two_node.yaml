@@ -3,7 +3,7 @@
 
 defaultENV:
   #!filter-only : /run/envs_CRT_CTX_SHARE_ADDR/sep
-  #!filter-only : /run/tests/threaded
+  #!filter-only : /run/tests/rpc_error
   D_LOG_MASK: "DEBUG,MEM=ERR"
   CRT_PHY_ADDR_STR: "ofi+sockets"
   OFI_INTERFACE: "eth0"
@@ -65,7 +65,7 @@ tests: !mux
     cli_env: "-x CRT_TIMEOUT=10"
     cli_ppn: "1"
   threaded:
-    name: no_threaded_basic
+    name: threaded_basic
     srv_bin: tests/threaded_server
     srv_arg: ""
     srv_env: ""

@@ -23,7 +23,7 @@ hosts: !mux
 tests: !mux
   barrier:
     name: barrier_basic
-    tst_bin: tests/test_crt_barrier
-    tst_arg: ""
-    tst_env: ""
-    tst_ppn: "8"
+    srv_bin: tests/test_crt_barrier
+    srv_arg: ""
+    srv_env: ""
+    srv_ppn: "8"
