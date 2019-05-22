@@ -94,7 +94,9 @@ class LogLine():
         # Work out the end of the fixed-width portion, and the beginning of the
         # message.  The hostname and pid fields are both variable width
         idx = 29 + len(fields[1]) + len(fields[2])
-        self.pid = int(fields[2][5:-1])
+        pidtid = fields[2][5:-1]
+        pid,tid = pidtid.split("/")
+        self.pid = int(pid)
         self._preamble = line[:idx]
         self.index = index
         self.mask = fields[3]
