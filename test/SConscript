@@ -47,6 +47,8 @@ def scons():
     env.Install("$PREFIX/TESTING/rpc", Glob("rpc/*.yaml"))
     env.Install("$PREFIX/TESTING/barrier", Glob("barrier/*.py"))
     env.Install("$PREFIX/TESTING/barrier", Glob("barrier/*.yaml"))
+    env.Install("$PREFIX/TESTING/ctl", Glob("ctl/*.py"))
+    env.Install("$PREFIX/TESTING/ctl", Glob("ctl/*.yaml"))
     env.Install("$PREFIX/TESTING/util", Glob("util/*.py"))
     env.Install("$PREFIX/TESTING/util", Glob("util/*.yaml"))
 
