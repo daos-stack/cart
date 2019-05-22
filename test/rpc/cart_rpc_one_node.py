@@ -56,8 +56,8 @@ class CartRpcOneNodeTest(Test):
 
         urifile = self.utils.create_uri_file()
 
-        srvcmd = self.utils.build_srv_cmd(self, urifile, self.env)
-        clicmd = self.utils.build_cli_cmd(self, urifile, self.env)
+        srvcmd = self.utils.build_srv_cmd(self, urifile, self.env, "srv")
+        clicmd = self.utils.build_cli_cmd(self, urifile, self.env, "cli")
 
         print("\nServer cmd : %s\n" % srvcmd)
         print("\nClient cmd : %s\n" % clicmd)
