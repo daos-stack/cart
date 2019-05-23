@@ -80,12 +80,22 @@ def run_checks(env):
 
     config.Finish()
 
+def add_options():
+    """Add CaRT specific options"""
+    AddOption('--gen-headers',
+              dest='gen_headers',
+              action='store_true',
+              default=False,
+              help='Generate header header files and exit.')
+
 def scons():
     """Scons function"""
     platform = os.uname()[0]
     opts_file = os.path.join(Dir('#').abspath, 'cart-%s.conf' % platform)
 
-    env = DefaultEnvironment()
+    add_options()
+
+    env = Environment(TOOLS=['default', 'extra'])
 
     opts = Variables(opts_file)
     prereqs = PreReqComponent(env, opts, arch=platform)
@@ -122,11 +132,12 @@ def scons():
     arch_dir = 'build/%s' % platform
     VariantDir(arch_dir, '.', duplicate=0)
     SConscript('%s/src/SConscript' % arch_dir)
-    SConscript('%s/test/SConscript' % arch_dir)
-    SConscript('%s/scons_local/test_runner/SConscript' % arch_dir)
+    if not GetOption("gen_headers"):
+        SConscript('%s/test/SConscript' % arch_dir)
+        SConscript('%s/scons_local/test_runner/SConscript' % arch_dir)
 
-    env.Install('$PREFIX/etc', ['utils/memcheck-cart.supp',
-                                'utils/fault-inject-cart.yaml'])
+        env.Install('$PREFIX/etc', ['utils/memcheck-cart.supp',
+                                    'utils/fault-inject-cart.yaml'])
 
     # Put this after all SConscript calls so that any imports they require can
     # be included.

@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2019 Intel Corporation
+/* Copyright (C) 2017-2019 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,43 +36,37 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /**
- * This file is part of GURT.
+ * \file
+ *
+ * GURT Error numbers template to generate errno_gen.h
+ * Use scons --gen-headers to generate the file after updating this file.
  */
-#include "gurt/errno_macros.h"
-#include "gurt/debug.h"
 
-#define D_DEFINE_GURT_ERRSTR(name, value) #name,
+#ifndef __GURT_ERRNO_TEMPLATE_H__
+#define __GURT_ERRNO_TEMPLATE_H__
+/** @addtogroup GURT
+ * @{
+ */
 
-#define D_DEFINE_COMP_ERRSTR(name, base)				\
-	static const char * const g_##name##_errstr[] = {		\
-		D_FOREACH_##name##_ERR(D_DEFINE_GURT_ERRSTR)		\
-	};								\
-	D_CASSERT((sizeof(g_##name##_errstr) /			\
-			 sizeof(g_##name##_errstr[0])) ==		\
-	      ((DER_ERR_##name##_LIMIT - DER_ERR_##name##_BASE - 1)),	\
-			#name "is not contiguous");
+#include <gurt/errno_macros.h>
 
-D_FOREACH_ERR_RANGE(D_DEFINE_COMP_ERRSTR)
+#define D_DEFINE_GURT_ERRNO(name, value) name = value,
 
-#define D_CHECK_RANGE(name, base)				\
-	do {							\
-		int first = DER_ERR_##name##_BASE + 1;		\
-		if (rc <= DER_ERR_##name##_BASE ||		\
-		    rc >= DER_ERR_##name##_LIMIT)		\
-			break;					\
-		return g_##name##_errstr[rc - first];		\
-	} while (0);
+#define D_DEFINE_RANGE_ERRNO(name, base)		\
+	DER_ERR_##name##_BASE		=	(base),	\
+	D_FOREACH_##name##_ERR(D_DEFINE_GURT_ERRNO)	\
+	DER_ERR_##name##_LIMIT,
 
-#define D_ABS(value) ((value) > 0 ? (value) : (-value))
+typedef enum {
+	DER_SUCCESS	=	0,
+	D_FOREACH_ERR_RANGE(D_DEFINE_RANGE_ERRNO)
+	DER_UNKNOWN	=	DER_ERR_GURT_BASE + 500000,
+} d_errno_t;
 
-const char *d_errstr(int rc)
-{
-	if (rc == 0)
-		return "DER_SUCCESS";
+#undef D_DEFINE_GURT_ERRNO
 
-	rc = D_ABS(rc);
+const char *d_errstr(int rc);
 
-	D_FOREACH_ERR_RANGE(D_CHECK_RANGE)
-
-	return "DER_UNKNOWN";
-}
+/** @}
+ */
+#endif /*  __GURT_ERRNO_TEMPLATE_H__ */
