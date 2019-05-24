@@ -135,10 +135,10 @@ class LogLine():
 
     def __getattr__(self, attr):
         if attr == 'parent':
-            if self._fields[2] == 'Registered':
-                return self._fields[6]
-            if self._fields[2] == 'Link':
-                return self._fields[5]
+            if self._fields[2+3] == 'Registered':
+                return self._fields[6+3]
+            if self._fields[2+3] == 'Link':
+                return self._fields[5+3]
         if attr == 'filename':
             try:
                 (filename, _) = self._fields[0].split(':')
@@ -171,7 +171,7 @@ class LogLine():
         # without creating too much output.
 
         fields = []
-        for entry in self._fields[2:]:
+        for entry in self._fields[2+3:]:
             if entry.startswith('Gah('):
                 (root, _, _) = entry[4:-1].split('.')
                 fields.append('Gah({}.-.-)'.format(root))
@@ -207,7 +207,7 @@ class LogLine():
 
         # Check that the contents of two arrays are equal, using text as is and
         # selecting only the correct entries of the fields array.
-        return text == self._fields[2:2+len(text)]
+        return text == self._fields[2+3:2+3+len(text)]
 
     def is_new(self):
         """Returns True if line is new descriptor"""
@@ -255,26 +255,26 @@ class LogLine():
 
     def is_calloc(self):
         """Returns True if line is a allocation point"""
-        return self.get_field(2).startswith('alloc(')
+        return self.get_field(2+3).startswith('alloc(')
 
     def is_realloc(self):
         """Returns True if line is a call to"""
-        return self.get_field(2) == 'realloc'
+        return self.get_field(2+3) == 'realloc'
 
     def calloc_size(self):
         """Returns the size of the allocation"""
-        if self.get_field(5) == '*':
+        if self.get_field(5+3) == '*':
             if self.is_realloc():
                 field = -5
             else:
                 field = -3
             count = int(self.get_field(field).split(':')[-1])
-            return count * int(self.get_field(4))
-        return int(self.get_field(4))
+            return count * int(self.get_field(4+3))
+        return int(self.get_field(4+3))
 
     def is_free(self):
         """Returns True if line is a call to free"""
-        return self.get_field(2) == 'free'
+        return self.get_field(2+3) == 'free'
 
 
 # pylint: disable=too-many-branches
@@ -338,7 +338,7 @@ class StateIter():
                 if not line.rpc:
                     line.pparent = self.active_desc[line.descriptor].pparent
                 line.pdesc = self.active_desc[line.descriptor].pdesc
-                line.rpc_opcode = self.active_desc[line.descriptor].get_field(3)
+                line.rpc_opcode = self.active_desc[line.descriptor].get_field(3+3)
             else:
                 line.pdesc = line.descriptor
                 line.rpc = False
