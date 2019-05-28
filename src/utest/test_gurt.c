@@ -48,6 +48,7 @@
 #include "gurt/dlog.h"
 #include "gurt/hash.h"
 #include "gurt/atomic.h"
+#include "gurt/errno_macros.h"
 
 /* machine epsilon */
 #define EPSILON (1.0E-16)
