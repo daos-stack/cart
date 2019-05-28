@@ -91,7 +91,7 @@ class TestEcho(commontestsuite.CommonTestSuite):
 
         cl = cart_logparse.LogIter(self.get_cart_long_log_name())
         c_log_test = cart_logtest.LogTest(cl)
-        strict_test = False
+        strict_test = True
         c_log_test.check_log_file(strict_test)
 
     def tearDown(self):
