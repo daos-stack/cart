@@ -45,7 +45,7 @@ HEADERS_GURT = ['dlog.h', 'debug.h', 'common.h', 'hash.h', 'list.h',
                 'debug_setup.h', 'types.h', 'atomic.h']
 HEADERS_GEN = {'gurt/errno_gen.h':'gurt/errno_template.h'}
 
-def copy_header(target, source, env, origin):
+def copy_header(target, source, _env, origin):
     """Copy the header and add Copyright"""
     year = datetime.datetime.now().year
     with open(target[0].abspath, "w") as output:
@@ -98,6 +98,7 @@ def copy_header(target, source, env, origin):
 
 def generate_headers(env):
     """Auto-generate headers for better ctags"""
+    origin = None # pylint wants this variable defined outside of the loop
     src_dir = os.path.join(Dir('.').srcnode().path, 'include')
     for target, src in HEADERS_GEN.items():
         origin = os.path.join(src_dir, src)
