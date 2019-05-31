@@ -46,6 +46,7 @@
 #define CRT_HLC_MASK 0xFFFFULL
 
 static ATOMIC uint64_t crt_hlc;
+static uint64_t crt_hlc_threshold = 2 * NSEC_PER_SEC;
 
 /** Get local physical time */
 static inline uint64_t crt_hlc_localtime_get(void)
@@ -81,6 +82,13 @@ uint64_t crt_hlc_get_msg(uint64_t msg)
 {
 	uint64_t pt = crt_hlc_localtime_get();
 	uint64_t hlc, ret, ml = msg & ~CRT_HLC_MASK;
+
+	if (pt + crt_hlc_threshold < ml) {
+		/* remote node is far in future */
+		D_DEBUG(DB_ALL, "HLC is out of sync (%lu + %lu  < %lu)\n",
+			pt, crt_hlc_threshold, ml);
+		return ~0ULL;
+	}
 
 	do {
 		hlc = crt_hlc;

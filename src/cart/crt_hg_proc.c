@@ -531,6 +531,7 @@ crt_hg_unpack_header(hg_handle_t handle, struct crt_rpc_priv *rpc_priv,
 	struct crt_context	*ctx;
 	struct crt_hg_context	*hg_ctx;
 	hg_proc_t		hg_proc = HG_PROC_NULL;
+	uint64_t		hlc;
 
 	/* Get input buffer */
 	hg_ret = HG_Get_input_buf(handle, &in_buf, &in_buf_size);
@@ -556,7 +557,9 @@ crt_hg_unpack_header(hg_handle_t handle, struct crt_rpc_priv *rpc_priv,
 		D_ERROR("crt_proc_common_hdr failed rc: %d.\n", rc);
 		D_GOTO(out, rc);
 	}
-	(void)crt_hlc_get_msg(rpc_priv->crp_req_hdr.cch_hlc);
+	hlc = crt_hlc_get_msg(rpc_priv->crp_req_hdr.cch_hlc);
+	if (hlc == ~0ULL)
+		D_GOTO(out, rc = -DER_TIME_SYNC);
 	rpc_priv->crp_flags = rpc_priv->crp_req_hdr.cch_flags;
 	if (rpc_priv->crp_flags & CRT_RPC_FLAG_COLL) {
 		rc = crt_proc_corpc_hdr(hg_proc, &rpc_priv->crp_coreq_hdr);
@@ -798,6 +801,7 @@ crt_proc_out_common(crt_proc_t proc, crt_rpc_output_t *data)
 {
 	struct crt_rpc_priv	*rpc_priv;
 	crt_proc_op_t		 proc_op;
+	uint64_t		 hlc;
 	int			 rc = 0;
 
 	if (proc == CRT_PROC_NULL)
@@ -822,8 +826,11 @@ crt_proc_out_common(crt_proc_t proc, crt_rpc_output_t *data)
 				  "crt_proc_common_hdr failed rc: %d\n", rc);
 			D_GOTO(out, rc);
 		}
-		if (proc_op == CRT_PROC_DECODE)
-			(void)crt_hlc_get_msg(rpc_priv->crp_reply_hdr.cch_hlc);
+		if (proc_op == CRT_PROC_DECODE) {
+			hlc = crt_hlc_get_msg(rpc_priv->crp_reply_hdr.cch_hlc);
+			if (hlc == ~0ULL)
+				D_GOTO(out, rc = -DER_TIME_SYNC);
+		}
 		if (rpc_priv->crp_reply_hdr.cch_rc != 0) {
 			RPC_ERROR(rpc_priv,
 				  "RPC failed to execute on target. error code: %d\n",

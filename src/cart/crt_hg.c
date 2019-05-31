@@ -837,7 +837,7 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 	rc = crt_hg_unpack_header(hg_hdl, &rpc_tmp, &proc);
 	if (rc != 0) {
 		D_ERROR("crt_hg_unpack_header failed, rc: %d.\n", rc);
-		crt_hg_reply_error_send(&rpc_tmp, -DER_MISC);
+		crt_hg_reply_error_send(&rpc_tmp, rc);
 		/** safe to return here because relevant portion of rpc_tmp is
 		 * already serialized by Mercury. Same for below.
 		 */
@@ -1134,7 +1134,7 @@ crt_hg_req_send_cb(const struct hg_cb_info *hg_cbinfo)
 				RPC_ERROR(rpc_priv,
 					  "HG_Get_output failed, hg_ret: %d\n",
 					  hg_ret);
-				rc = -DER_HG;
+				rc = (hg_ret == -DER_TIME_SYNC) ? hg_ret : -DER_HG;
 			}
 		}
 	}

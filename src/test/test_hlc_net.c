@@ -163,6 +163,8 @@ static void test_cli_cb(const struct crt_cb_info *cb_info)
 
 		D_ASSERT(rpc_input->hlc < rpc_output->hlc);
 		D_ASSERT(rpc_output->hlc < hlc);
+	} else if (cb_info->cci_rc == -DER_TIME_SYNC) {
+		D_ERROR("HLC is out of sync\n");
 	}
 }
 
