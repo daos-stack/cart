@@ -85,9 +85,7 @@ class TestEcho(commontestsuite.CommonTestSuite):
                             self.ofi_ctx_num)
 
     def _log_check(self):
-        """Check log files for consistency
-
-        """
+        """Check log files for consistency """
 
         cl = cart_logparse.LogIter(self.get_cart_long_log_name())
         c_log_test = cart_logtest.LogTest(cl)
