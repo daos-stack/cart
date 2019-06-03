@@ -93,9 +93,9 @@ extern "C" {
 		}							\
 		if ((cond) && (ptr) != NULL) {				\
 			if (count <= 1)					\
-			D_DEBUG(DB_MEM,			        	\
-			"alloc(" #func ") '" name "': %i at %p.\n",     \
-					(int)(size), (ptr));		\
+				D_DEBUG(DB_MEM,			        	\
+				"alloc(" #func ") '" name "': %i at %p.\n",     \
+				(int)(size), (ptr));		\
 			else						\
 				D_DEBUG(DB_MEM,				\
 	"alloc(" #func ") '" name "': %i * '" cname "':%i at %p.\n",    \
