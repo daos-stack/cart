@@ -163,14 +163,11 @@ extern "C" {
 		if ((newptr) != NULL) {					\
 			if ((cnt) <= 1)					\
 				D_DEBUG(DB_MEM,				\
-					"realloc '" #newptr "': %i at   \
-					%p (old '" #oldptr "':%p).\n",  \
+					"realloc '" #newptr "': %i at %p (old '" #oldptr "':%p).\n",  \
 					_esz, (newptr), (oldptr));	\
 			else						\
 				D_DEBUG(DB_MEM,				\
-					"realloc '" #newptr "': %i * '" \
-					#cnt "':%i at %p (old '"        \
-					#oldptr "':%p).\n",             \
+					"realloc '" #newptr "': %i * '" #cnt "':%i at %p (old '" #oldptr "':%p).\n",	\
 					_esz, (cnt), (newptr),          \
 					(oldptr));	                \
 			(oldptr) = NULL;				\
