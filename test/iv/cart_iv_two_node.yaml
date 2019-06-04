@@ -2,12 +2,13 @@
 # required quantity is indicated by the placeholders
 
 defaultENV:
-  #!filter-only : /run/envs_CRT_CTX_SHARE_ADDR/sep
-  #!filter-only : /run/tests/barrier
+  #!filter-only : /run/env_CRT_CTX_SHARE_ADDR/no_sep
+  #!filter-only : /run/tests/iv
   D_LOG_MASK: "DEBUG,MEM=ERR"
   CRT_PHY_ADDR_STR: "ofi+sockets"
   OFI_INTERFACE: "eth0"
   srv_CRT_CTX_NUM: "16"
+  cli_CRT_CTX_NUM: "1"
 env_CRT_CTX_SHARE_ADDR: !mux
   sep:
     env: sep
@@ -17,14 +18,21 @@ env_CRT_CTX_SHARE_ADDR: !mux
     CRT_CTX_SHARE_ADDR: "0"
 hosts: !mux
   hosts_1:
-    config: two_node
+    config: one_node
     server:
       - boro-A
       - boro-B
+    client:
+      - boro-A
 tests: !mux
-  barrier:
-    name: barrier_basic
-    srv_bin: tests/test_crt_barrier
-    srv_arg: ""
-    srv_env: ""
-    srv_ppn: "8"
+  iv:
+    name: iv_basic
+    srv_bin: tests/iv_server
+    srv_arg: "-v 3"
+    srv_env: "-x CRT_ALLOW_SINGLETON=1"
+    srv_ppn: "1"
+
+    cli_bin: tests/iv_client
+    cli_arg: ""
+    cli_env: "-x CRT_ALLOW_SINGLETON=1"
+    cli_ppn: "1"

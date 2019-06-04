@@ -66,7 +66,7 @@ class CartCtlOneNodeTest(Test):
 
         urifile = self.utils.create_uri_file()
 
-        srvcmd = self.utils.build_srv_cmd(self, urifile, self.env, "srv")
+        srvcmd = self.utils.build_srv_cmd(self, self.env, "srv", urifile)
 
         print("\nServer cmd : %s\n" % srvcmd)
 
@@ -82,17 +82,17 @@ class CartCtlOneNodeTest(Test):
             self.fail("Server did not launch, return code %s" \
                        % procrtn)
 
-        clicmd = self.utils.build_cli_cmd(self, urifile, self.env, "cli1")
+        clicmd = self.utils.build_cli_cmd(self, self.env, "cli1", urifile)
         self.runClient(clicmd)
-        clicmd = self.utils.build_cli_cmd(self, urifile, self.env, "cli2")
+        clicmd = self.utils.build_cli_cmd(self, self.env, "cli2", urifile)
         self.runClient(clicmd)
-        clicmd = self.utils.build_cli_cmd(self, urifile, self.env, "cli3")
+        clicmd = self.utils.build_cli_cmd(self, self.env, "cli3", urifile)
         self.runClient(clicmd)
-        clicmd = self.utils.build_cli_cmd(self, urifile, self.env, "cli4")
+        clicmd = self.utils.build_cli_cmd(self, self.env, "cli4", urifile)
         self.runClient(clicmd)
-        clicmd = self.utils.build_cli_cmd(self, urifile, self.env, "cli5")
+        clicmd = self.utils.build_cli_cmd(self, self.env, "cli5", urifile)
         self.runClient(clicmd)
-        clicmd = self.utils.build_cli_cmd(self, urifile, self.env, "cli6")
+        clicmd = self.utils.build_cli_cmd(self, self.env, "cli6", urifile)
         self.runClient(clicmd)
 
 if __name__ == "__main__":

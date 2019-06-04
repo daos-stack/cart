@@ -7,7 +7,7 @@ defaultENV:
   D_LOG_MASK: "DEBUG,MEM=ERR"
   CRT_PHY_ADDR_STR: "ofi+sockets"
   OFI_INTERFACE: "eth0"
-  CRT_CTX_NUM: "16"
+  srv_CRT_CTX_NUM: "16"
 env_CRT_CTX_SHARE_ADDR: !mux
   sep:
     env: sep
@@ -18,7 +18,7 @@ env_CRT_CTX_SHARE_ADDR: !mux
 hosts: !mux
   hosts_1:
     config: one_node
-    testhost:
+    server:
       - boro-A
 tests: !mux
   corpc_prefwd:
