@@ -74,7 +74,7 @@ class TestNoPmix(commontestsuite.CommonTestSuite):
         crt_phy_addr = os.getenv("CRT_PHY_ADDR_STR", "ofi+sockets")
         ofi_interface = os.getenv("OFI_INTERFACE", "eth0")
         ofi_share_addr = os.getenv("CRT_CTX_SHARE_ADDR", "0")
-        ofi_ctx_num = os.getenv("CRT_CTX_NUM", "0")
+        ofi_ctx_num = os.getenv("CRT_CTX_NUM", "8")
 
         # TODO: Wrong log file name is generated. need to investigate
         self.pass_env = {"CRT_PHY_ADDR_STR": crt_phy_addr,
