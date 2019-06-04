@@ -233,23 +233,6 @@ crt_opc_hash_legacy(struct crt_opc_map_legacy *map, crt_opcode_t opc)
 	return opc & ((1U << map->com_bits) - 1);
 }
 
-static inline void
-crt_opc_info_init_legacy(struct crt_opc_info *info)
-{
-	D_ASSERT(info != NULL);
-	D_INIT_LIST_HEAD(&info->coi_link);
-	/* D_ALLOC zeroed the content already. */
-	/*
-	info->coi_opc = 0;
-	info->coi_proc_init = 0;
-	info->coi_rpccb_init = 0;
-	info->coi_input_size = 0;
-	info->coi_output_size = 0;
-	info->coi_crf = NULL;
-	*/
-}
-/* end for legacy opcode map */
-
 struct crt_opc_info *
 crt_opc_lookup_legacy(struct crt_opc_map_legacy *map,
 		      crt_opcode_t opc, int locked)
