@@ -94,13 +94,12 @@ extern "C" {
 		if ((cond) && (ptr) != NULL) {				\
 			if (count <= 1)					\
 				D_DEBUG(DB_MEM,				\
-				"alloc(" #func ") '" name "': %i at %p.\n",	\
-				(int)(size), (ptr));			\
+					"alloc(" #func ") '" name "': %i at %p.\n", \
+					(int)(size), (ptr));		\
 			else						\
 				D_DEBUG(DB_MEM,				\
-	"alloc(" #func ") '" name "': %i * '" cname "':%i at %p.\n",    \
-					(int)(size), (int)(count),      \
-					(ptr));                         \
+					"alloc(" #func ") '" name "': %i * '" cname "':%i at %p.\n", \
+					(int)(size), (int)(count), (ptr)); \
 			break;						\
 		}							\
 		(void)(on_error);					\
@@ -157,19 +156,18 @@ extern "C" {
 		int _esz = (int)(size);					\
 		int _sz = (int)(size) * (cnt);				\
 		/* Compiler check to ensure type match */		\
-		__typeof__(newptr) optr = oldptr;			\
+		__typeof__(newptr) optr = oldptr;				\
 		D_ASSERT((void *)&(newptr) != &(oldptr));		\
 		(newptr) =  realloc(optr, (_sz));			\
 		if ((newptr) != NULL) {					\
 			if ((cnt) <= 1)					\
 				D_DEBUG(DB_MEM,				\
-					"realloc '" #newptr "': %i at %p (old '" #oldptr "':%p).\n",  \
+					"realloc '" #newptr "': %i at %p (old '" #oldptr "':%p).\n", \
 					_esz, (newptr), (oldptr));	\
 			else						\
 				D_DEBUG(DB_MEM,				\
-					"realloc '" #newptr "': %i * '" #cnt "':%i at %p (old '" #oldptr "':%p).\n",	\
-					_esz, (cnt), (newptr),          \
-					(oldptr));	                \
+					"realloc '" #newptr "': %i * '" #cnt "':%i at %p (old '" #oldptr "':%p).\n", \
+					_esz, (cnt), (newptr), (oldptr));	\
 			(oldptr) = NULL;				\
 			break;						\
 		}							\
@@ -205,7 +203,7 @@ extern "C" {
 
 #define D_GOTO(label, rc)			\
 	do {					\
-		__typeof__(rc) __rc = (rc);	\
+		__typeof__(rc) __rc = (rc);		\
 		(void)(__rc);			\
 		goto label;			\
 	} while (0)
