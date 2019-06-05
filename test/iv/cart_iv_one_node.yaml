@@ -19,9 +19,9 @@ env_CRT_CTX_SHARE_ADDR: !mux
 hosts: !mux
   hosts_1:
     config: one_node
-    server:
+    srv:
       - boro-A
-    client:
+    cli:
       - boro-A
 tests: !mux
   iv:
