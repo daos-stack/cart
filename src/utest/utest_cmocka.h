@@ -39,7 +39,6 @@
 #ifndef __UTEST_CMOCKA_H__
 # define __UTEST_CMOCKA_H__
 
-
 #include "wrap_cmocka.h"
 # ifdef __cplusplus
 extern "C" {
