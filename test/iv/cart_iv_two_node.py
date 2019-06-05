@@ -216,7 +216,7 @@ class CartIvOneNodeTest(Test):
         :avocado: tags=all,iv,two_node
         """
 
-        srvcmd = self.utils.build_srv_cmd(self, self.env, "srv")
+        srvcmd = self.utils.build_cmd(self, self.env, "srv")
 
         print("\nServer cmd : %s\n" % srvcmd)
 
@@ -252,7 +252,7 @@ class CartIvOneNodeTest(Test):
 
         failed = False
 
-        clicmd = self.utils.build_cli_cmd(self, self.env, "cli")
+        clicmd = self.utils.build_cmd(self, self.env, "cli")
 
         ########## Launch Client Actions ##########
 
@@ -264,7 +264,7 @@ class CartIvOneNodeTest(Test):
 
         ########## Shutdown Servers ##########
 
-        num_servers = self.utils.get_srv_cnt(self)
+        num_servers = self.utils.get_srv_cnt(self, "srv")
 
         srv_ppn = self.params.get("srv_ppn", '/run/tests/*/')
 
