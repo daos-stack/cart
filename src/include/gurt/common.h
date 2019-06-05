@@ -156,7 +156,7 @@ extern "C" {
 		int _esz = (int)(size);					\
 		int _sz = (int)(size) * (cnt);				\
 		/* Compiler check to ensure type match */		\
-		__typeof__(newptr) optr = oldptr;				\
+	__typeof__(newptr) optr = oldptr;				\
 		D_ASSERT((void *)&(newptr) != &(oldptr));		\
 		(newptr) =  realloc(optr, (_sz));			\
 		if ((newptr) != NULL) {					\
