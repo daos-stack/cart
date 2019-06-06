@@ -647,7 +647,7 @@ static inline bool
 crt_rpc_cb_customized(struct crt_context *crt_ctx,
 		      crt_rpc_t *rpc_pub)
 {
-	return crt_ctx->cc_rpc_cb != NULL; 
+	return crt_ctx->cc_rpc_cb != NULL;
 }
 
 /* crt_rpc.c */
