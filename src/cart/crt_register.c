@@ -58,40 +58,6 @@ crt_opc_map_L2_create(struct crt_opc_map_L2 *L2_entry)
 	return DER_SUCCESS;
 }
 
-int
-crt_opc_map_create_legacy(unsigned int bits)
-{
-	struct crt_opc_map_legacy	*map = NULL;
-	int				 rc = 0, i;
-
-	D_ALLOC_PTR(map);
-	if (map == NULL)
-		return -DER_NOMEM;
-
-	map->com_pid = getpid();
-	map->com_bits = bits;
-	D_ALLOC_ARRAY(map->com_hash, (1 << bits));
-	if (map->com_hash == NULL)
-		D_GOTO(out, rc = -DER_NOMEM);
-
-	for (i = 0; i < (1 << bits); i++)
-		D_INIT_LIST_HEAD(&map->com_hash[i]);
-
-	rc = D_RWLOCK_INIT(&map->com_rwlock, NULL);
-	if (rc != 0) {
-		D_ERROR("Failed to create mutex for CaRT opc map.\n");
-		D_GOTO(out, rc);
-	}
-
-	map->com_lock_init = 1;
-	crt_gdata.cg_opc_map_legacy = map;
-
-out:
-	if (rc != 0)
-		crt_opc_map_destroy_legacy(map);
-	return rc;
-}
-
 /* bits is the number of bits for protocol portion of the opcode */
 int
 crt_opc_map_create(unsigned int bits)
@@ -172,34 +138,6 @@ crt_opc_map_L2_destroy(struct crt_opc_map_L2 *L2_entry)
 }
 
 void
-crt_opc_map_destroy_legacy(struct crt_opc_map_legacy *map)
-{
-	struct crt_opc_info	*info;
-	int			i;
-
-	/* map = crt_gdata.cg_opc_map; */
-	D_ASSERT(map != NULL);
-	if (map->com_hash == NULL)
-		D_GOTO(skip, 0);
-
-	for (i = 0; i < (1 << map->com_bits); i++) {
-		while ((info = d_list_pop_entry(&map->com_hash[i],
-						struct crt_opc_info,
-						coi_link))) {
-			D_FREE(info);
-		}
-	}
-	D_FREE(map->com_hash);
-
-skip:
-	if (map->com_lock_init && map->com_pid == getpid())
-		D_RWLOCK_DESTROY(&map->com_rwlock);
-
-	crt_gdata.cg_opc_map_legacy = NULL;
-	D_FREE(map);
-}
-
-void
 crt_opc_map_destroy(struct crt_opc_map *map)
 {
 	/* struct crt_opc_info	*info; */
@@ -223,42 +161,6 @@ skip:
 
 	crt_gdata.cg_opc_map = NULL;
 	D_FREE(map);
-}
-
-/* for legacy opcode map */
-static inline unsigned int
-crt_opc_hash_legacy(struct crt_opc_map_legacy *map, crt_opcode_t opc)
-{
-	D_ASSERT(map != NULL);
-	return opc & ((1U << map->com_bits) - 1);
-}
-
-struct crt_opc_info *
-crt_opc_lookup_legacy(struct crt_opc_map_legacy *map,
-		      crt_opcode_t opc, int locked)
-{
-	struct crt_opc_info *info = NULL;
-	unsigned int         hash;
-
-	hash = crt_opc_hash_legacy(map, opc);
-
-	if (locked == 0)
-		D_RWLOCK_RDLOCK(&map->com_rwlock);
-
-	d_list_for_each_entry(info, &map->com_hash[hash], coi_link) {
-		if (info->coi_opc == opc) {
-			if (locked == 0)
-				D_RWLOCK_UNLOCK(&map->com_rwlock);
-			return info;
-		}
-		if (info->coi_opc > opc)
-			break;
-	}
-
-	if (locked == 0)
-		D_RWLOCK_UNLOCK(&map->com_rwlock);
-
-	return NULL;
 }
 
 static int
