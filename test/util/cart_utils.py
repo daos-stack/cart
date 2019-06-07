@@ -78,6 +78,21 @@ class CartUtils():
             return True
         return False
 
+    def wait_process(self, proc, wait_time):
+        """ wait for process to terminate """
+        i = wait_time
+        procrtn = None
+        while i:
+            proc.poll()
+            procrtn = proc.returncode
+            if procrtn is not None:
+                break
+            else:
+                time.sleep(1)
+                i = i - 1
+
+        return procrtn
+
     def stop_process(self, proc):
         """ wait for process to terminate """
         i = 60
@@ -95,7 +110,6 @@ class CartUtils():
             procrtn = -1
             try:
                 proc.terminate()
-                proc.wait(2)
             except Exception:
                 proc.kill()
 
@@ -203,7 +217,7 @@ class CartUtils():
         if rtn:
             cartobj.fail("Failed, return codes %d " % rtn)
 
-        return 0
+        return rtn 
 
     def launch_cmd_bg(self, cartobj, cmd):
         """ launches the given cmd in background """
