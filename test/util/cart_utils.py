@@ -78,7 +78,6 @@ class CartUtils():
             return True
         return False
 
-<<<<<<< HEAD
     def wait_process(self, proc, wait_time):
         """ wait for process to terminate """
         i = wait_time
@@ -94,8 +93,6 @@ class CartUtils():
 
         return procrtn
 
-=======
->>>>>>> ef7f7da6df1f8d7948288564e7aac7056c63dd88
     def stop_process(self, proc):
         """ wait for process to terminate """
         i = 60
@@ -113,10 +110,6 @@ class CartUtils():
             procrtn = -1
             try:
                 proc.terminate()
-<<<<<<< HEAD
-=======
-                proc.wait(2)
->>>>>>> ef7f7da6df1f8d7948288564e7aac7056c63dd88
             except Exception:
                 proc.kill()
 
