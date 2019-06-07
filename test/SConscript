@@ -59,6 +59,8 @@ def scons():
     env.Install("$PREFIX/TESTING/singleton", Glob("singleton/*.yaml"))
     env.Install("$PREFIX/TESTING/no_pmix", Glob("no_pmix/*.py"))
     env.Install("$PREFIX/TESTING/no_pmix", Glob("no_pmix/*.yaml"))
+    env.Install("$PREFIX/TESTING/self_test", Glob("self_test/*.py"))
+    env.Install("$PREFIX/TESTING/self_test", Glob("self_test/*.yaml"))
 
 if __name__ == 'SCons.Script':
     scons()

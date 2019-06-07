@@ -217,11 +217,11 @@ pipeline {
                     }
                     post {
                         always {
-                            sh '''rm -rf install/Linux/TESTING/avocado/*/html/
+                            sh '''rm -rf install/Linux/TESTING/avocado/job-results/CART_1node/*/html/
                                   if [ -n "$STAGE_NAME" ]; then
                                       rm -rf "$STAGE_NAME/"
                                       mkdir "$STAGE_NAME/"
-                                      mv install/Linux/TESTING/avocado/* \
+                                      mv install/Linux/TESTING/avocado/job-results/CART_1node/* \
                                          "$STAGE_NAME/"
                                   else
                                       echo "The STAGE_NAME environment variable is missing!"
