@@ -228,8 +228,8 @@ pipeline {
                                       false
                                   fi'''
                             junit env.STAGE_NAME + '/*/results.xml'
-                            archiveArtifacts artifacts: env.STAGE_NAME + '/**'
-                            #archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs-1_node/**'
+                            archiveArtifacts artifacts: [env.STAGE_NAME + '/**',
+                                                         'install/Linux/TESTING/testLogs-1_node/**']
                         }
                         /* temporarily moved into runTest->stepResult due to JENKINS-39203
                         success {
