@@ -222,14 +222,14 @@ pipeline {
                                       rm -rf "$STAGE_NAME/"
                                       mkdir "$STAGE_NAME/"
                                       mv install/Linux/TESTING/avocado/job-results/CART_1node/* \
+                                         install/Linux/TESTING/testLogs-1_node \
                                          "$STAGE_NAME/"
                                   else
                                       echo "The STAGE_NAME environment variable is missing!"
                                       false
                                   fi'''
                             junit env.STAGE_NAME + '/*/results.xml'
-                            archiveArtifacts artifacts: [env.STAGE_NAME + '/**',
-                                                         'install/Linux/TESTING/testLogs-1_node/**']
+                            archiveArtifacts artifacts: env.STAGE_NAME + '/**'
                         }
                         /* temporarily moved into runTest->stepResult due to JENKINS-39203
                         success {
@@ -270,13 +270,19 @@ pipeline {
                     }
                     post {
                         always {
-                            archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs-2_node/**'
-                            /* when JENKINS-39203 is resolved, can probably use stepResult
-                               here and remove the remaining post conditions
-                               stepResult name: env.STAGE_NAME,
-                                          context: 'build/' + env.STAGE_NAME,
-                                          result: ${currentBuild.currentResult}
-                            */
+                            sh '''rm -rf install/Linux/TESTING/avocado/job-results/CART_2node/*/html/
+                                  if [ -n "$STAGE_NAME" ]; then
+                                      rm -rf "$STAGE_NAME/"
+                                      mkdir "$STAGE_NAME/"
+                                      mv install/Linux/TESTING/avocado/job-results/CART_2node/* \
+                                         install/Linux/TESTING/testLogs-2_node \
+                                         "$STAGE_NAME/"
+                                  else
+                                      echo "The STAGE_NAME environment variable is missing!"
+                                      false
+                                  fi'''
+                            junit env.STAGE_NAME + '/*/results.xml'
+                            archiveArtifacts artifacts: env.STAGE_NAME + '/**'
                         }
                         /* temporarily moved into runTest->stepResult due to JENKINS-39203
                         success {

@@ -20,9 +20,9 @@ hosts: !mux
   hosts_1:
     config: two_node
     srv:
-      - wolf-69
+      - boro-A
     cli:
-      - wolf-65
+      - boro-B
 tests: !mux
   self:
     name: self_test
