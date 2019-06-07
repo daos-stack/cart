@@ -75,9 +75,7 @@ CRT_RPC_DECLARE(crt_linkage, CRT_ISEQ_LINKAGE, CRT_OSEQ_LINKAGE);
 CRT_RPC_DEFINE(crt_linkage, CRT_ISEQ_LINKAGE, CRT_OSEQ_LINKAGE);
 
 enum {
-	/* Client issues fetch call */
 	LINKAGE_TEST_OPC = CRT_PROTO_OPC(TEST_LINKAGE_BASE, TEST_LINKAGE_VER, 0)
-	 /* Client issues update call */
 };
 
 
