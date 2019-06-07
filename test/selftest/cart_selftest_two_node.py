@@ -47,7 +47,7 @@ class CartSelfTwoNodeTest(Test):
     def tearDown(self):
         print("Run TearDown\n")
 
-    def test_cart_rpc(self):
+    def test_cart_selftest(self):
         """
         Test CaRT Self Test
 
