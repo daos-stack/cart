@@ -96,7 +96,7 @@ class CartSingletonTwoNodeTest(Test):
         cli_rtn = self.utils.launch_cmd(self, clicmd)
 
         # Stop the server
-        print("Stopping server process {}".format(srv_rtn))        
+        print("Stopping server process {}".format(srv_rtn))
         procrtn = self.utils.stop_process(srv_rtn)
 
         if cli_rtn or procrtn:

@@ -217,7 +217,7 @@ class CartUtils():
         if rtn:
             cartobj.fail("Failed, return codes %d " % rtn)
 
-        return rtn 
+        return rtn
 
     def launch_cmd_bg(self, cartobj, cmd):
         """ launches the given cmd in background """
