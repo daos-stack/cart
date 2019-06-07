@@ -217,19 +217,19 @@ pipeline {
                     }
                     post {
                         always {
-                            /* Uncomment this on a day when unit testing works without
-                             * having to build the test in the test phase
-                             archiveArtifacts artifacts: '''install/Linux/TESTING/testLogs-1_node/**,
-                                                            build/Linux/src/utest/utest.log,
-                                                            build/Linux/src/utest/test_output'''
-                             */
-                             archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs-1_node/**'
-                            /* when JENKINS-39203 is resolved, can probably use stepResult
-                               here and remove the remaining post conditions
-                               stepResult name: env.STAGE_NAME,
-                                          context: 'build/' + env.STAGE_NAME,
-                                          result: ${currentBuild.currentResult}
-                            */
+                            sh '''rm -rf install/Linux/TESTING/avocado/*/html/
+                                  if [ -n "$STAGE_NAME" ]; then
+                                      rm -rf "$STAGE_NAME/"
+                                      mkdir "$STAGE_NAME/"
+                                      mv install/Linux/TESTING/avocado/* \
+                                         "$STAGE_NAME/"
+                                  else
+                                      echo "The STAGE_NAME environment variable is missing!"
+                                      false
+                                  fi'''
+                            junit env.STAGE_NAME + '/*/results.xml'
+                            archiveArtifacts artifacts: env.STAGE_NAME + '/**'
+                            #archiveArtifacts artifacts: 'install/Linux/TESTING/testLogs-1_node/**'
                         }
                         /* temporarily moved into runTest->stepResult due to JENKINS-39203
                         success {
