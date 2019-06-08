@@ -1,0 +1,95 @@
+# change host names to your reserved nodes, the
+# required quantity is indicated by the placeholders
+
+defaultENV:
+  #!filter-only : /run/env_CRT_CTX_SHARE_ADDR/sep
+  #!filter-only : /run/tests/ctl
+  D_LOG_MASK: "DEBUG,MEM=ERR"
+  CRT_PHY_ADDR_STR: "ofi+sockets"
+  OFI_INTERFACE: "eth0"
+  srv_CRT_CTX_NUM: "16"
+  cli1_CRT_CTX_NUM: "1"
+  cli2_CRT_CTX_NUM: "1"
+  cli3_CRT_CTX_NUM: "1"
+  cli4_CRT_CTX_NUM: "1"
+  cli5_CRT_CTX_NUM: "1"
+  cli6_CRT_CTX_NUM: "1"
+  cli7_CRT_CTX_NUM: "1"
+  cli8_CRT_CTX_NUM: "1"
+env_CRT_CTX_SHARE_ADDR: !mux
+  no_sep:
+    env: no_sep
+    CRT_CTX_SHARE_ADDR: "0"
+hosts: !mux
+  hosts_1:
+    config: one_node
+    srv:
+      - boro-A
+      - boro-B
+      - boro-C
+      - boro-D
+      - boro-E
+    cli1:
+      - boro-A
+    cli2:
+      - boro-A
+    cli3:
+      - boro-A
+    cli4:
+      - boro-A
+    cli5:
+      - boro-A
+    cli6:
+      - boro-A
+    cli7:
+      - boro-A
+    cli8:
+      - boro-A
+tests: !mux
+  ctl:
+    name: ctl_basic
+    srv_bin: tests/test_group
+    srv_arg: "--name service-group --is_service"
+    srv_env: ""
+    srv_ppn: "1"
+
+    cli1_bin: ../bin/cart_ctl
+    cli1_arg: "get_uri_cache --group-name service-group --rank 0,2-3,4"
+    cli1_env: ""
+    cli1_ppn: "1"
+
+    cli2_bin: ../bin/cart_ctl
+    cli2_arg: "list_ctx --group-name service-group --rank 0,2-3,4"
+    cli2_env: ""
+    cli2_ppn: "1"
+
+    cli3_bin: ../bin/cart_ctl
+    cli3_arg: "get_uri_cache --group-name service-group --rank 0"
+    cli3_env: ""
+    cli3_ppn: "1"
+
+    cli4_bin: ../bin/cart_ctl
+    cli4_arg: "list_ctx --group-name service-group --rank 0"
+    cli4_env: ""
+    cli4_ppn: "1"
+
+    cli5_bin: ../bin/cart_ctl
+    cli5_arg: "enable_fi --group-name service-group --rank 0"
+    cli5_env: ""
+    cli5_ppn: "1"
+
+    cli_6bin: ../bin/cart_ctl
+    cli_6arg: "set_fi_attr --attr 1911,5,0,1,100 --group-name \
+               service-group --rank 0"
+    cli_6env: ""
+    cli_6ppn: "1"
+
+    cli_7bin: ../bin/cart_ctl
+    cli_7arg: "disable_fi --group-name service-group --rank 0"
+    cli_7env: ""
+    cli_7ppn: "1"
+
+    cli_8bin: tests/test_group
+    cli_8arg: "--name client-group --attach_to service-group --shut_only"
+    cli_8env: ""
+    cli_8ppn: "1"
