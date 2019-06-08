@@ -33,9 +33,9 @@ sys.path.append('./util')
 
 from cart_utils import CartUtils
 
-class CartCoRpcTwoNodeTest(Test):
+class CartCoRpcFiveNodeTest(Test):
     """
-    Runs basic CaRT tests on one-node and two-node
+    Runs basic CaRT CoRPC tests
 
     :avocado: tags=all,corpc,five_node
     """
@@ -47,7 +47,7 @@ class CartCoRpcTwoNodeTest(Test):
     def tearDown(self):
         print("Run TearDown\n")
 
-    def test_cart_rpc(self):
+    def test_cart_corpc(self):
         """
         Test CaRT
 
