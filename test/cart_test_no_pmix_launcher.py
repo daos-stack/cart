@@ -56,9 +56,8 @@ set TR_USE_VALGRIND in cart_test_no_pmix_launcher.yml to callgrind
 """
 # pylint: disable=fixme
 import os
-import subprocess
-import commontestsuite
 from socket import gethostname
+import commontestsuite
 
 class TestNoPmix(commontestsuite.CommonTestSuite):
     """ Execute non-pmix tests """
@@ -70,17 +69,13 @@ class TestNoPmix(commontestsuite.CommonTestSuite):
         # too much data during node addition.
 
         # log_mask = os.getenv("D_LOG_MASK", "INFO")
-        log_file = self.get_cart_long_log_name()
-        print("LOG file is {}".format(log_file))
         crt_phy_addr = os.getenv("CRT_PHY_ADDR_STR", "ofi+sockets")
         ofi_interface = os.getenv("OFI_INTERFACE", "eth0")
-        ofi_share_addr = os.getenv("CRT_CTX_SHARE_ADDR", "0")
-        ofi_ctx_num = os.getenv("CRT_CTX_NUM", "8")
 
         # TODO: Wrong log file name is generated. need to investigate
         self.pass_env = ' -x CRT_PHY_ADDR_STR={!s}' \
                         ' -x OFI_INTERFACE={!s} -x D_LOG_MASK=ERR'.format(
-                        crt_phy_addr, ofi_interface)
+                            crt_phy_addr, ofi_interface)
 
     def tearDown(self):
         """tear down the test"""
@@ -113,7 +108,7 @@ class TestNoPmix(commontestsuite.CommonTestSuite):
         cmd_rtn = self.execute_cmd(testmsg, cmdstr)
 
         if cmd_rtn:
-            self.fail("no_pmix_launcher test fialed. return code %d" % cmd_rn)
+            self.fail("no_pmix_launcher test fialed. return code %d" % cmd_rtn)
 
 
         return 0
