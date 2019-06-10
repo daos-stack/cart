@@ -25,6 +25,7 @@
 from __future__ import print_function
 
 import sys
+import time
 
 from avocado       import Test
 from avocado       import main
@@ -33,11 +34,11 @@ sys.path.append('./util')
 
 from cart_utils import CartUtils
 
-class CartCtlOneNodeTest(Test):
+class CartCtlFiveNodeTest(Test):
     """
-    Runs basic CaRT tests on one-node
+    Runs basic CaRT tests on five-node
 
-    :avocado: tags=all,ctl,one_node
+    :avocado: tags=all,ctl,five_node
     """
     def setUp(self):
         print("Running setup\n")
@@ -51,7 +52,7 @@ class CartCtlOneNodeTest(Test):
         """
         Test CaRT RPC
 
-        :avocado: tags=all,ctl,one_node
+        :avocado: tags=all,ctl,five_node
         """
 
         urifile = self.utils.create_uri_file()
@@ -72,24 +73,16 @@ class CartCtlOneNodeTest(Test):
             self.fail("Server did not launch, return code %s" \
                        % procrtn)
 
+        time.sleep(5)
+
         clicmd = self.utils.build_cmd(self, self.env, "cli1", False, urifile)
         print("\nClient cmd : %s\n" % clicmd)
         self.utils.launch_cmd(self, clicmd, srv_rtn)
         clicmd = self.utils.build_cmd(self, self.env, "cli2", False, urifile)
         print("\nClient cmd : %s\n" % clicmd)
         self.utils.launch_cmd(self, clicmd, srv_rtn)
-        clicmd = self.utils.build_cmd(self, self.env, "cli3", False, urifile)
-        print("\nClient cmd : %s\n" % clicmd)
-        self.utils.launch_cmd(self, clicmd, srv_rtn)
-        clicmd = self.utils.build_cmd(self, self.env, "cli4", False, urifile)
-        print("\nClient cmd : %s\n" % clicmd)
-        self.utils.launch_cmd(self, clicmd, srv_rtn)
-        clicmd = self.utils.build_cmd(self, self.env, "cli5", False, urifile)
-        print("\nClient cmd : %s\n" % clicmd)
-        self.utils.launch_cmd(self, clicmd, srv_rtn)
-        clicmd = self.utils.build_cmd(self, self.env, "cli6", False, urifile)
-        print("\nClient cmd : %s\n" % clicmd)
-        self.utils.launch_cmd(self, clicmd, srv_rtn)
+
+        self.utils.stop_process(srv_rtn)
 
 if __name__ == "__main__":
     main()
