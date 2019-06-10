@@ -9,9 +9,9 @@ defaultENV:
   OFI_INTERFACE: "eth0"
   srv_CRT_CTX_NUM: "16"
 env_CRT_CTX_SHARE_ADDR: !mux
-  no_sep:
-    env: no_sep
-    CRT_CTX_SHARE_ADDR: "0"
+  sep:
+    env: sep
+    CRT_CTX_SHARE_ADDR: "1"
 hosts: !mux
   hosts_1:
     config: two_node

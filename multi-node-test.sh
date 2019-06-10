@@ -214,10 +214,10 @@ fi
 
 mkdir -p install/Linux/TESTING/avocado/job-results
 
-scp -i ci_key -r jenkins@"${nodes[0]}":"$TESTDIR/testLogs-${1}_node" \
-                                       "install/Linux/TESTING/"
+scp -i ci_key -r jenkins@${nodes[0]}:"$TESTDIR/testLogs-${1}_node" \
+                                      install/Linux/TESTING/
 
-scp -i ci_key -r jenkins@"${nodes[0]}":"$LOGDIR/install/Linux/" \
-                                       "TESTING/avocado/job-results"
+scp -i ci_key -r jenkins@${nodes[0]}:"$LOGDIR" \
+                                      install/Linux/TESTING/avocado/job-results
 
 exit "$rc"
