@@ -208,13 +208,16 @@ class CartUtils():
 
         return 0
 
-    def launch_cmd(self, cartobj, cmd):
+    def launch_cmd(self, cartobj, cmd, srv_proc=None):
         """ launches the given cmd """
 
         cmd = shlex.split(cmd)
         rtn = subprocess.call(cmd)
 
         if rtn:
+            if srv_proc is not None:
+                self.stop_process(srv_proc)
+
             cartobj.fail("Failed, return codes %d " % rtn)
 
         return rtn
