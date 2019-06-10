@@ -104,11 +104,9 @@ class TestNoPmix(commontestsuite.CommonTestSuite):
             cmd, hosts, self.pass_env, prefix, server_bin,
             self.pass_env, prefix, client_bin)
 
-
         cmd_rtn = self.execute_cmd(testmsg, cmdstr)
 
         if cmd_rtn:
             self.fail("no_pmix_launcher test fialed. return code %d" % cmd_rtn)
-
 
         return 0
