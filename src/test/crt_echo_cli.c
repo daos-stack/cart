@@ -273,7 +273,7 @@ echo_bulk_test(crt_group_t *grp, d_rank_t myrank, bool bulk_bind)
 	assert(rc == 0);
 	free(iovs[0].iov_buf);
 	free(iovs[1].iov_buf);
-	free(iovs);
+	//free(iovs);
 	D_FREE(pchar);
 
 	return rc;
