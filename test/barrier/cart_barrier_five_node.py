@@ -33,11 +33,11 @@ sys.path.append('./util')
 
 from cart_utils import CartUtils
 
-class CartBarrierTwoNodeTest(Test):
+class CartBarrierFiveNodeTest(Test):
     """
-    Runs basic CaRT tests on one-node and two-node
+    Runs basic CaRT tests on one-node and five-node
 
-    :avocado: tags=all,barrier,two_node
+    :avocado: tags=all,barrier,five_node
     """
     def setUp(self):
         print("Running setup\n")
@@ -51,7 +51,7 @@ class CartBarrierTwoNodeTest(Test):
         """
         Test CaRT
 
-        :avocado: tags=all,barrier,two_node
+        :avocado: tags=all,barrier,five_node
         """
 
         cmd = self.utils.build_cmd(self, self.env, "srv")
