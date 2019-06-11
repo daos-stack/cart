@@ -113,10 +113,10 @@ def scons():
         denv.Requires(cart_targets, pp_files)
 
     cart_lib = denv.SharedLibrary('libcart', [cart_targets, swim_targets],
-        SHLIBVERSION=CART_VERSION)
+                                  SHLIBVERSION=CART_VERSION)
     denv.Requires(cart_lib, [swim_targets, gurt_lib])
     denv.InstallVersionedLib('$PREFIX/lib/', cart_lib,
-        SHLIBVERSION=CART_VERSION)
+                             SHLIBVERSION=CART_VERSION)
 
     Default(cart_lib)
     Export('cart_lib', 'cart_targets')
