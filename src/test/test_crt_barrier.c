@@ -180,7 +180,7 @@ int main(int argc, char **argv)
 
 	d_log_fini();
 
-	free(info);
+	/*free(info);*/
 
 	return rc;
 }
