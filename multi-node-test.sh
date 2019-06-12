@@ -52,7 +52,7 @@ trap 'echo "encountered an unchecked return code, exiting with error"' ERR
 . .build_vars-Linux.sh
 
 if [ -z "$CART_TEST_MODE"  ]; then
-  CART_TEST_MODE="none"
+  CART_TEST_MODE="native"
 fi
 
 IFS=" " read -r -a nodes <<< "${2//,/ }"
@@ -196,6 +196,7 @@ pushd \"$TESTDIR\"
 
 # now run it!
 export PYTHONPATH=./util
+export CART_TEST_MODE=\"$CART_TEST_MODE\"
 if ! ./launch.py -s \"$TEST_TAG\"; then
     rc=\${PIPESTATUS[0]}
 else
