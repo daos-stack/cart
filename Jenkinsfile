@@ -264,7 +264,7 @@ pipeline {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
                                 script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
                                            export CART_TEST_MODE=memcheck
-                                           bash -x ./multi-node-test.sh 1vgd ''' +
+                                           bash -x ./multi-node-test.sh 1 ''' +
                                            env.NODELIST + ''' one_node''',
                                 junit_files: "install/Linux/TESTING/avocado/job-results/CART_1vgdnode/*/*.xml"
                     }
