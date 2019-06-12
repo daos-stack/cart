@@ -55,6 +55,12 @@ if [ -z "$CART_TEST_MODE"  ]; then
   CART_TEST_MODE="native"
 fi
 
+if [ "$CART_TEST_MODE" == "memcheck" ]; then
+  CART_DIR="${1}vgd"
+else
+  CART_DIR="${1}"
+fi
+
 IFS=" " read -r -a nodes <<< "${2//,/ }"
 
 # shellcheck disable=SC1004
@@ -115,7 +121,7 @@ TEST_TAG="${3:-quick}"
 
 TESTDIR=${SL_PREFIX}/TESTING
 
-LOGDIR="$TESTDIR/avocado/job-results/CART_${1}node"
+LOGDIR="$TESTDIR/avocado/job-results/CART_${CART_DIR}node"
 
 # shellcheck disable=SC2029
 if ! ssh -i ci_key jenkins@"${nodes[0]}" "set -ex
@@ -203,9 +209,9 @@ else
     rc=0
 fi
 
-mkdir -p \"testLogs-${1}_node\"
+mkdir -p \"testLogs-${CART_DIR}_node\"
 
-cp -r testLogs/* \"testLogs-${1}_node\"
+cp -r testLogs/* \"testLogs-${CART_DIR}_node\"
 
 exit \$rc"; then
     rc=${PIPESTATUS[0]}
@@ -215,7 +221,7 @@ fi
 
 mkdir -p install/Linux/TESTING/avocado/job-results
 
-scp -i ci_key -r jenkins@${nodes[0]}:"$TESTDIR/testLogs-${1}_node" \
+scp -i ci_key -r jenkins@${nodes[0]}:"$TESTDIR/testLogs-${CART_DIR}_node" \
                                       install/Linux/TESTING/
 
 scp -i ci_key -r jenkins@${nodes[0]}:"$LOGDIR" \
