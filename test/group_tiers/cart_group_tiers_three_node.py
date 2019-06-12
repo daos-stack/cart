@@ -108,8 +108,8 @@ class CartGroupTiersThreeNodeTest(Test):
             self.fail("Test failed. Client 1 ret code {}, \
                        client 2 ret code {} \
                        server 1 ret code {} \
-                       server 2 ret code {}".format(cli_rtn1, cli_rtn2, procrtn1, 
-                                                    procrtn2))
+                       server 2 ret code {}".format(cli_rtn1, cli_rtn2,
+                                                    procrtn1, procrtn2))
 
 if __name__ == "__main__":
     main()
