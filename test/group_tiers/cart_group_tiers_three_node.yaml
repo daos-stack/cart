@@ -32,12 +32,12 @@ hosts: !mux
 tests: !mux
   group_tiers:
     name: group_tiers
-    srv1_bin: tests/test_group 
+    srv1_bin: tests/test_group
     srv1_arg: "--name service_group_01 --is_service"
     srv1_env: ""
     srv1_ppn: "1"
 
-    srv2_bin: tests/test_group 
+    srv2_bin: tests/test_group
     srv2_arg: "--name service_group_02 --is_service"
     srv2_env: ""
     srv2_ppn: "1"
@@ -47,7 +47,7 @@ tests: !mux
     cli1_env: ""
     cli1_ppn: "1"
 
-    cli2_bin: tests/test_group 
+    cli2_bin: tests/test_group
     cli2_arg: "--name client_group --attach_to service_group_01"
     cli2_env: ""
     cli2_ppn: "1"
