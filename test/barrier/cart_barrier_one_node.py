@@ -35,16 +35,18 @@ from cart_utils import CartUtils
 
 class CartBarrierOneNodeTest(Test):
     """
-    Runs basic CaRT tests on one-node and two-node
+    Runs basic CaRT barrier tests
 
     :avocado: tags=all,barrier,one_node
     """
     def setUp(self):
+        """ Test setup """
         print("Running setup\n")
         self.utils = CartUtils()
         self.env = self.utils.get_env(self)
 
     def tearDown(self):
+        """ Test tear down """
         print("Run TearDown\n")
 
     def test_cart_barrier(self):
@@ -58,16 +60,7 @@ class CartBarrierOneNodeTest(Test):
 
         print("\nTest cmd : %s\n" % cmd)
 
-        ret = -1
-
-        try:
-            ret = self.utils.launch_cmd(self, cmd)
-        except Exception as e:
-            print("Exception in launching test : {} ret {}".format(e, ret))
-            self.fail("Test failed.\n")
-
-        if (ret != 0):
-            self.fail("Test failed.\n")
+        self.utils.launch_cmd(self, cmd)
 
 if __name__ == "__main__":
     main()

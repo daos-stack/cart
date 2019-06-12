@@ -163,7 +163,7 @@ class CartUtils():
         """ build command """
         tst_cmd = ""
 
-        tst_vgd = "valgrind --xml=yes " + \
+        tst_vgd = " valgrind --xml=yes " + \
                   "--xml-file={}/".format(cartobj.log_path) + \
                                 "valgrind.%q\{PMIX_ID\}.memcheck " + \
                   "--fair-sched=try  --partial-loads-ok=yes " + \

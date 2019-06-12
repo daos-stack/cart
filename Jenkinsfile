@@ -264,18 +264,18 @@ pipeline {
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
                                 script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
                                            export CART_TEST_MODE=memcheck
-                                           bash -x ./multi-node-test.sh 1 ''' +
+                                           bash -x ./multi-node-test.sh 1vgd ''' +
                                            env.NODELIST + ''' one_node''',
-                                junit_files: "install/Linux/TESTING/avocado/job-results/CART_1node/*/*.xml"
+                                junit_files: "install/Linux/TESTING/avocado/job-results/CART_1vgdnode/*/*.xml"
                     }
                     post {
                         always {
-                            sh '''rm -rf install/Linux/TESTING/avocado/job-results/CART_1node/*/html/
+                            sh '''rm -rf install/Linux/TESTING/avocado/job-results/CART_1vgdnode/*/html/
                                   if [ -n "$STAGE_NAME" ]; then
                                       rm -rf "$STAGE_NAME/"
                                       mkdir "$STAGE_NAME/"
-                                      mv install/Linux/TESTING/avocado/job-results/CART_1node/* \
-                                         install/Linux/TESTING/testLogs-1_node \
+                                      mv install/Linux/TESTING/avocado/job-results/CART_1vgdnode/* \
+                                         install/Linux/TESTING/testLogs-1vgd_node \
                                          "$STAGE_NAME/"
                                   else
                                       echo "The STAGE_NAME environment variable is missing!"
@@ -295,7 +295,6 @@ pipeline {
                                 unstableThresholdInvalidReadWrite: '',
                                 unstableThresholdTotal: ''
                                 )
-                            junit env.STAGE_NAME + '/*/results.xml'
                             archiveArtifacts artifacts: env.STAGE_NAME + '/**'
                         }
                         /* temporarily moved into runTest->stepResult due to JENKINS-39203

@@ -35,21 +35,23 @@ from cart_utils import CartUtils
 
 class CartBarrierFiveNodeTest(Test):
     """
-    Runs basic CaRT tests on one-node and five-node
+    Runs basic CaRT barrier tests
 
     :avocado: tags=all,barrier,five_node
     """
     def setUp(self):
+        """ Test setup """
         print("Running setup\n")
         self.utils = CartUtils()
         self.env = self.utils.get_env(self)
 
     def tearDown(self):
+        """ Test tear down """
         print("Run TearDown\n")
 
     def test_cart_barrier(self):
         """
-        Test CaRT
+        Test CaRT barrier
 
         :avocado: tags=all,barrier,five_node
         """
@@ -58,16 +60,7 @@ class CartBarrierFiveNodeTest(Test):
 
         print("\nTest cmd : %s\n" % cmd)
 
-        ret = -1
-
-        try:
-            ret = self.utils.launch_cmd(self, cmd)
-        except Exception as e:
-            print("Exception in launching test : {}".format(e))
-            self.fail("Test failed.\n")
-
-        if (ret != 0):
-            self.fail("Test failed.\n")
+        self.utils.launch_cmd(self, cmd)
 
 if __name__ == "__main__":
     main()

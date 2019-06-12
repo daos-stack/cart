@@ -40,16 +40,18 @@ class CartBarrierTwoNodeTest(Test):
     :avocado: tags=all,barrier,two_node
     """
     def setUp(self):
+        """ Test setup """
         print("Running setup\n")
         self.utils = CartUtils()
         self.env = self.utils.get_env(self)
 
     def tearDown(self):
+        """ Test tear down """
         print("Run TearDown\n")
 
     def test_cart_barrier(self):
         """
-        Test CaRT
+        Test CaRT barrier
 
         :avocado: tags=all,barrier,two_node
         """
@@ -58,16 +60,7 @@ class CartBarrierTwoNodeTest(Test):
 
         print("\nTest cmd : %s\n" % cmd)
 
-        ret = -1
-
-        try:
-            ret = self.utils.launch_cmd(self, cmd)
-        except Exception as e:
-            print("Exception in launching test : {}".format(e))
-            self.fail("Test failed.\n")
-
-        if (ret != 0):
-            self.fail("Test failed.\n")
+        self.utils.launch_cmd(self, cmd)
 
 if __name__ == "__main__":
     main()
