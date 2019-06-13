@@ -121,8 +121,12 @@ class CartUtils():
         test_name = cartobj.params.get("name", "/run/tests/*/")
         host_cfg = cartobj.params.get("config", "/run/hosts/*/")
 
-        log_dir = "{}-{}-{}-{}".format(test_name, host_cfg, cartobj.id(),
-                                       env_CCSA)
+        if env_CCSA is not None:
+            log_dir = "{}-{}-{}-{}".format(test_name, host_cfg, cartobj.id(),
+                                           env_CCSA)
+        else:
+            log_dir = "{}-{}-{}".format(test_name, host_cfg, cartobj.id())
+
         log_path = os.path.join("testLogs", log_dir)
         log_file = os.path.join(log_path, "output.log")
 
@@ -134,12 +138,20 @@ class CartUtils():
                                             "/run/env_CRT_CTX_SHARE_ADDR/*/")
 
         env = " --output-filename {!s}".format(log_path)
-        env += " -x D_LOG_MASK={!s} -x D_LOG_FILE={!s}" \
-                        " -x CRT_PHY_ADDR_STR={!s}" \
-                        " -x OFI_INTERFACE={!s}" \
-                        " -x CRT_CTX_SHARE_ADDR={!s}" \
-                            .format(log_mask, log_file, crt_phy_addr, \
-                                    ofi_interface, ofi_share_addr)
+
+        env += " -x D_LOG_FILE={!s}".format(log_file)
+
+        if log_mask is not None:
+            env += " -x D_LOG_MASK={!s}".format(log_mask)
+
+        if crt_phy_addr is not None:
+            env += " -x CRT_PHY_ADDR_STR={!s}".format(crt_phy_addr)
+
+        if ofi_interface is not None:
+            env += " -x OFI_INTERFACE={!s}".format(ofi_interface)
+
+        if ofi_share_addr is not None:
+            env += " -x CRT_CTX_SHARE_ADDR={!s}".format(ofi_share_addr)
 
         cartobj.log_path = log_path
 
@@ -177,19 +189,24 @@ class CartUtils():
 
         orterun_bin = os.path.join(build_paths["OMPI_PREFIX"], "bin", "orterun")
 
-        tst_bin = " " + cartobj.params.get("{}_bin".format(host),
+        tst_bin = cartobj.params.get("{}_bin".format(host),
                                            "/run/tests/*/")
-        tst_arg = " " + cartobj.params.get("{}_arg".format(host),
+        tst_arg = cartobj.params.get("{}_arg".format(host),
                                            "/run/tests/*/")
-        tst_env = " " + cartobj.params.get("{}_env".format(host),
+        tst_env = cartobj.params.get("{}_env".format(host),
                                            "/run/tests/*/")
-        tst_ctx = " -x CRT_CTX_NUM=" + \
-                  cartobj.params.get("{}_CRT_CTX_NUM".format(host),
+        tst_slt = cartobj.params.get("{}_slt".format(host),
+                                           "/run/tests/*/")
+        tst_ctx = cartobj.params.get("{}_CRT_CTX_NUM".format(host),
                                      "/run/defaultENV/")
 
         tst_host = cartobj.params.get("{}".format(host), "/run/hosts/*/")
         tst_ppn = cartobj.params.get("{}_ppn".format(host), "/run/tests/*/")
-        hostfile = self.write_host_file(tst_host,tst_ppn)
+
+        if tst_slt is not None:
+            hostfile = self.write_host_file(tst_host,tst_slt)
+        else:
+            hostfile = self.write_host_file(tst_host,tst_ppn)
 
         tst_cmd = "{} --mca btl self,tcp -N {} --hostfile {} "\
                   .format(orterun_bin, tst_ppn, hostfile)
@@ -199,16 +216,24 @@ class CartUtils():
                 tst_cmd += "--report-uri {} ".format(urifile)
             else:
                 tst_cmd += "--ompi-server file:{} ".format(urifile)
+
         tst_cmd += env
-        tst_cmd += tst_ctx
-        tst_cmd += tst_env
+
+        if tst_ctx is not None:
+            tst_cmd += " -x CRT_CTX_NUM=" + tst_ctx
+
+        if tst_env is not None:
+            tst_cmd += " " + tst_env
 
         tst_mod = os.getenv("CART_TEST_MODE", "native")
         if tst_mod == "memcheck":
             tst_cmd += tst_vgd
 
-        tst_cmd += tst_bin
-        tst_cmd += tst_arg
+        if tst_bin is not None:
+            tst_cmd += " " + tst_bin
+
+        if tst_arg is not None:
+            tst_cmd += " " + tst_arg
 
         return tst_cmd
 
