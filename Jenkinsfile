@@ -319,6 +319,165 @@ pipeline {
                         */
                     }
                 }
+                stage('Two-node') {
+                    agent {
+                        label 'ci_vm2'
+                    }
+                    steps {
+                        provisionNodes NODELIST: env.NODELIST,
+                                       node_count: 2,
+                                       snapshot: true
+                        runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
+                                script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
+                                           export CART_TEST_MODE=none
+                                           bash -x ./multi-node-test.sh 2 ''' +
+                                           env.NODELIST + ''' two_node''',
+                                junit_files: "install/Linux/TESTING/avocado/job-results/CART_2node/*/*.xml"
+                    }
+                    post {
+                        always {
+                            sh '''rm -rf install/Linux/TESTING/avocado/job-results/CART_2node/*/html/
+                                  if [ -n "$STAGE_NAME" ]; then
+                                      rm -rf "$STAGE_NAME/"
+                                      mkdir "$STAGE_NAME/"
+                                      mv install/Linux/TESTING/avocado/job-results/CART_2node/* \
+                                         install/Linux/TESTING/testLogs-2_node \
+                                         "$STAGE_NAME/"
+                                  else
+                                      echo "The STAGE_NAME environment variable is missing!"
+                                      false
+                                  fi'''
+                            junit env.STAGE_NAME + '/*/results.xml'
+                            archiveArtifacts artifacts: env.STAGE_NAME + '/**'
+                        }
+                        /* temporarily moved into runTest->stepResult due to JENKINS-39203
+                        success {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'test/' + env.STAGE_NAME,
+                                         status: 'SUCCESS'
+                        }
+                        unstable {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'test/' + env.STAGE_NAME,
+                                         status: 'FAILURE'
+                        }
+                        failure {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'test/' + env.STAGE_NAME,
+                                         status: 'ERROR'
+                        }
+                        */
+                    }
+                }
+                stage('Three-node') {
+                    agent {
+                        label 'ci_vm3'
+                    }
+                    steps {
+                        provisionNodes NODELIST: env.NODELIST,
+                                       node_count: 3,
+                                       snapshot: true
+                        runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
+                                script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
+                                           export CART_TEST_MODE=none
+                                           bash -x ./multi-node-test.sh 3 ''' +
+                                           env.NODELIST + ''' three_node''',
+                                junit_files: "install/Linux/TESTING/avocado/job-results/CART_3node/*/*.xml"
+                    }
+                    post {
+                        always {
+                            sh '''rm -rf install/Linux/TESTING/avocado/job-results/CART_3node/*/html/
+                                  if [ -n "$STAGE_NAME" ]; then
+                                      rm -rf "$STAGE_NAME/"
+                                      mkdir "$STAGE_NAME/"
+                                      mv install/Linux/TESTING/avocado/job-results/CART_3node/* \
+                                         install/Linux/TESTING/testLogs-3_node \
+                                         "$STAGE_NAME/"
+                                  else
+                                      echo "The STAGE_NAME environment variable is missing!"
+                                      false
+                                  fi'''
+                            junit env.STAGE_NAME + '/*/results.xml'
+                            archiveArtifacts artifacts: env.STAGE_NAME + '/**'
+                        }
+                        /* temporarily moved into runTest->stepResult due to JENKINS-39203
+                        success {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'test/' + env.STAGE_NAME,
+                                         status: 'SUCCESS'
+                        }
+                        unstable {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'test/' + env.STAGE_NAME,
+                                         status: 'FAILURE'
+                        }
+                        failure {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'test/' + env.STAGE_NAME,
+                                         status: 'ERROR'
+                        }
+                        */
+                    }
+                }
+                stage('Five-node') {
+                    agent {
+                        label 'ci_vm5'
+                    }
+                    steps {
+                        provisionNodes NODELIST: env.NODELIST,
+                                       node_count: 5,
+                                       snapshot: true
+                        runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
+                                script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
+                                           export CART_TEST_MODE=none
+                                           bash -x ./multi-node-test.sh 5 ''' +
+                                           env.NODELIST + ''' five_node''',
+                                junit_files: "install/Linux/TESTING/avocado/job-results/CART_5node/*/*.xml"
+                    }
+                    post {
+                        always {
+                            sh '''rm -rf install/Linux/TESTING/avocado/job-results/CART_5node/*/html/
+                                  if [ -n "$STAGE_NAME" ]; then
+                                      rm -rf "$STAGE_NAME/"
+                                      mkdir "$STAGE_NAME/"
+                                      mv install/Linux/TESTING/avocado/job-results/CART_5node/* \
+                                         install/Linux/TESTING/testLogs-5_node \
+                                         "$STAGE_NAME/"
+                                  else
+                                      echo "The STAGE_NAME environment variable is missing!"
+                                      false
+                                  fi'''
+                            junit env.STAGE_NAME + '/*/results.xml'
+                            archiveArtifacts artifacts: env.STAGE_NAME + '/**'
+                        }
+                        /* temporarily moved into runTest->stepResult due to JENKINS-39203
+                        success {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'test/' + env.STAGE_NAME,
+                                         status: 'SUCCESS'
+                        }
+                        unstable {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'test/' + env.STAGE_NAME,
+                                         status: 'FAILURE'
+                        }
+                        failure {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'test/' + env.STAGE_NAME,
+                                         status: 'ERROR'
+                        }
+                        */
+                    }
+                }
             }
         }
     }
