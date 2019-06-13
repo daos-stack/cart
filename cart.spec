@@ -105,7 +105,7 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %files
 %defattr(-, root, root, -)
 %{_bindir}/*
-%{_libdir}/*
+%{_libdir}/*.so.*
 %{carthome}/utils
 %{_prefix}%{_sysconfdir}/*
 %doc
