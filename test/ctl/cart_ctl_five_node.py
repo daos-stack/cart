@@ -36,21 +36,23 @@ from cart_utils import CartUtils
 
 class CartCtlFiveNodeTest(Test):
     """
-    Runs basic CaRT tests on five-node
+    Runs basic CaRT ctl tests
 
     :avocado: tags=all,ctl,five_node
     """
     def setUp(self):
+        """ Test setup """
         print("Running setup\n")
         self.utils = CartUtils()
         self.env = self.utils.get_env(self)
 
     def tearDown(self):
+        """ Test tear down """
         print("Run TearDown\n")
 
     def test_cart_ctl(self):
         """
-        Test CaRT RPC
+        Test CaRT ctl
 
         :avocado: tags=all,ctl,five_node
         """
@@ -77,10 +79,10 @@ class CartCtlFiveNodeTest(Test):
 
         clicmd = self.utils.build_cmd(self, self.env, "cli1", False, urifile)
         print("\nClient cmd : %s\n" % clicmd)
-        self.utils.launch_cmd(self, clicmd, srv_rtn)
+        self.utils.launch_test(self, clicmd, srv_rtn)
         clicmd = self.utils.build_cmd(self, self.env, "cli2", False, urifile)
         print("\nClient cmd : %s\n" % clicmd)
-        self.utils.launch_cmd(self, clicmd, srv_rtn)
+        self.utils.launch_test(self, clicmd, srv_rtn)
 
         self.utils.stop_process(srv_rtn)
 

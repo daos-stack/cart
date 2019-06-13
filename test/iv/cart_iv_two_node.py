@@ -31,6 +31,8 @@ import json
 import os
 import struct
 import codecs
+import subprocess
+import shlex
 
 from avocado       import Test
 from avocado       import main
@@ -91,14 +93,16 @@ class CartIvOneNodeTest(Test):
     """
     Runs basic CaRT tests on one-node
 
-    :avocado: tags=all,iv,two_node
+    :avocado: tags=all,iv,one_node
     """
     def setUp(self):
+        """ Test setup """
         print("Running setup\n")
         self.utils = CartUtils()
         self.env = self.utils.get_env(self)
 
     def tearDown(self):
+        """ Test tear down """
         print("Run TearDown\n")
 
     def _verify_action(self, action):
@@ -148,7 +152,7 @@ class CartIvOneNodeTest(Test):
                 clicmd += command
 
                 print("\nClient cmd : %s\n" % clicmd)
-                cli_rtn = self.utils.launch_cmd(self, clicmd)
+                cli_rtn = subprocess.call(shlex.split(clicmd))
 
                 if cli_rtn != 0:
                     raise ValueError('Error code {!s} running command "{!s}"' \
@@ -191,7 +195,7 @@ class CartIvOneNodeTest(Test):
                 clicmd += command
 
                 print("\nClient cmd : %s\n" % clicmd)
-                cli_rtn = self.utils.launch_cmd(self, clicmd)
+                cli_rtn = subprocess.call(shlex.split(clicmd))
 
                 if cli_rtn != 0:
                     raise ValueError('Error code {!s} running command "{!s}"' \
@@ -203,7 +207,7 @@ class CartIvOneNodeTest(Test):
                 clicmd += command
 
                 print("\nClient cmd : %s\n" % clicmd)
-                cli_rtn = self.utils.launch_cmd(self, clicmd)
+                cli_rtn = subprocess.call(shlex.split(clicmd))
 
                 if cli_rtn != 0:
                     raise ValueError('Error code {!s} running command "{!s}"' \
@@ -213,7 +217,7 @@ class CartIvOneNodeTest(Test):
         """
         Test CaRT IV
 
-        :avocado: tags=all,iv,two_node
+        :avocado: tags=all,iv,one_node
         """
 
         srvcmd = self.utils.build_cmd(self, self.env, "srv")
@@ -274,7 +278,7 @@ class CartIvOneNodeTest(Test):
             clicmd += " -o shutdown -r " + str(rank)
             print("\nClient cmd : %s\n" % clicmd)
             try:
-                self.utils.launch_cmd(self, clicmd)
+                subprocess.call(shlex.split(clicmd))
             except Exception as e:
                 failed = True
                 print("Exception in launching client : {}".format(e))
@@ -285,7 +289,7 @@ class CartIvOneNodeTest(Test):
         clicmd += " -o shutdown -r 0"
         print("\nClient cmd : %s\n" % clicmd)
         try:
-            self.utils.launch_cmd(self, clicmd)
+            subprocess.call(shlex.split(clicmd))
         except Exception as e:
             failed = True
             print("Exception in launching client : {}".format(e))

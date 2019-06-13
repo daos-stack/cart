@@ -8,8 +8,8 @@ defaultENV:
   CRT_PHY_ADDR_STR: "ofi+sockets"
   OFI_INTERFACE: "eth0"
   srv_CRT_CTX_NUM: "16"
-  cli1_CRT_CTX_NUM: "1"
-  cli2_CRT_CTX_NUM: "1"
+  cli1_CRT_CTX_NUM: "16"
+  cli2_CRT_CTX_NUM: "16"
 env_CRT_CTX_SHARE_ADDR: !mux
   no_sep:
     env: no_sep

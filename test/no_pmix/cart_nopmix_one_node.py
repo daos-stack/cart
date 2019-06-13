@@ -37,11 +37,12 @@ from cart_utils import CartUtils
 
 class CartNoPmixOneNodeTest(Test):
     """
-    Runs basic CaRT tests on one-node
+    Runs basic CaRT no_pmix tests
 
     :avocado: tags=all,no_pmix,one_node
     """
     def setUp(self):
+        """ Test setup """
         print("Running setup\n")
         self.utils = CartUtils()
         self.env = self.utils.get_env(self)
@@ -57,6 +58,7 @@ class CartNoPmixOneNodeTest(Test):
                          "CRT_CTX_NUM": ofi_ctx_num}
 
     def tearDown(self):
+        """ Test tear down """
         print("Run TearDown\n")
 
     def test_cart_no_pmix(self):

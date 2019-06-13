@@ -35,16 +35,18 @@ from cart_utils import CartUtils
 
 class CartSelfTwoNodeTest(Test):
     """
-    Runs basic CaRT tests on one-node and two-node
+    Runs basic CaRT self test
 
     :avocado: tags=all,selftest,two_node
     """
     def setUp(self):
+        """ Test setup """
         print("Running setup\n")
         self.utils = CartUtils()
         self.env = self.utils.get_env(self)
 
     def tearDown(self):
+        """ Test tear down """
         print("Run TearDown\n")
 
     def test_cart_selftest(self):
@@ -69,12 +71,9 @@ class CartSelfTwoNodeTest(Test):
             procrtn = self.utils.stop_process(srv_rtn)
             self.fail("Server did not launch, return code %s" % procrtn)
 
-        cli_rtn = self.utils.launch_cmd(self, clicmd)
+        self.utils.launch_test(self, clicmd, srv_rtn)
 
         self.utils.stop_process(srv_rtn)
-
-        if cli_rtn:
-            self.fail("Failed, return codes client %d " % cli_rtn)
 
 if __name__ == "__main__":
     main()

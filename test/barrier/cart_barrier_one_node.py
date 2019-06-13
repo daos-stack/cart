@@ -60,7 +60,7 @@ class CartBarrierOneNodeTest(Test):
 
         print("\nTest cmd : %s\n" % cmd)
 
-        self.utils.launch_cmd(self, cmd)
+        self.utils.launch_test(self, cmd)
 
 if __name__ == "__main__":
     main()

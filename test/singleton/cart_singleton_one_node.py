@@ -39,17 +39,19 @@ from cart_utils import CartUtils
 
 class CartSingletonOneNodeTest(Test):
     """
-    Runs basic CaRT tests on one-node
+    Runs basic CaRT singleton tests
 
     :avocado: tags=all,singleton,one_node
     """
     def setUp(self):
+        """ Test setup """
         print("Running setup\n")
         self.utils = CartUtils()
         self.env = self.utils.get_env(self)
         self.tempdir = tempfile.mkdtemp()
 
     def tearDown(self):
+        """ Test tear down """
         print("Run TearDown\n")
         shutil.rmtree(self.tempdir)
 
@@ -72,6 +74,8 @@ class CartSingletonOneNodeTest(Test):
             print("Exception in launching server : {}".format(e))
             self.fail("Test failed.\n")
 
+        time.sleep(5)
+
         # Verify the server is still running.
         if not self.utils.check_process(srv_rtn):
             procrtn = self.utils.stop_process(srv_rtn)
@@ -93,15 +97,14 @@ class CartSingletonOneNodeTest(Test):
 
         print("\nClient cmd : %s\n" % clicmd)
 
-        cli_rtn = self.utils.launch_cmd(self, clicmd)
+        self.utils.launch_test(self, clicmd, srv_rtn)
 
         # Stop the server
         print("Stopping server process {}".format(srv_rtn))
         procrtn = self.utils.stop_process(srv_rtn)
 
-        if cli_rtn or procrtn:
-            self.fail("Test failed. Client ret code {}, \
-                       server ret code {}".format(cli_rtn, procrtn))
+        if procrtn:
+            self.fail("Test failed. Server ret code {}".format(procrtn))
 
 if __name__ == "__main__":
     main()

@@ -8,7 +8,7 @@ defaultENV:
   CRT_PHY_ADDR_STR: "ofi+sockets"
   OFI_INTERFACE: "eth0"
   srv_CRT_CTX_NUM: "16"
-  cli_CRT_CTX_NUM: "1"
+  cli_CRT_CTX_NUM: "16"
 env_CRT_CTX_SHARE_ADDR: !mux
   sep:
     env: sep
@@ -42,7 +42,7 @@ tests: !mux
     srv_ppn: "1"
     cli_bin: tests/crt_echo_cli
     cli_arg: ""
-    cli_env: "-x CRT_CTX_NUM=16"
+    cli_env: ""
     cli_ppn: "1"
   test_group:
     name: test_group_basic
