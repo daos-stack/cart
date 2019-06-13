@@ -89,11 +89,11 @@ def _check_key(key_rank, key_idx, received_key_hex):
 
     return (rank == key_rank) and (idx == key_idx)
 
-class CartIvOneNodeTest(Test):
+class CartIvTwoNodeTest(Test):
     """
     Runs basic CaRT tests on one-node
 
-    :avocado: tags=all,iv,one_node
+    :avocado: tags=all,iv,two_node
     """
     def setUp(self):
         """ Test setup """
@@ -110,19 +110,19 @@ class CartIvOneNodeTest(Test):
         if (('operation' not in action) or
                 ('rank' not in action) or
                 ('key' not in action)):
-            self.logger.error("Error happened during action check")
+            print("Error happened during action check")
             raise ValueError("Each action must contain an operation," \
                              " rank, and key")
 
         if len(action['key']) != 2:
-            self.logger.error("Error key should be tuple of (rank, idx)")
+            print("Error key should be tuple of (rank, idx)")
             raise ValueError("key should be a tuple of (rank, idx)")
 
     def _verify_fetch_operation(self, action):
         """verify fetch operation"""
         if (('return_code' not in action) or
                 ('expected_value' not in action)):
-            self.logger.error("Error: fetch operation was malformed")
+            print("Error: fetch operation was malformed")
             raise ValueError("Fetch operation malformed")
 
     def _iv_test_actions(self, cmd, actions):
@@ -217,7 +217,7 @@ class CartIvOneNodeTest(Test):
         """
         Test CaRT IV
 
-        :avocado: tags=all,iv,one_node
+        :avocado: tags=all,iv,two_node
         """
 
         srvcmd = self.utils.build_cmd(self, self.env, "srv")
@@ -264,7 +264,7 @@ class CartIvOneNodeTest(Test):
             self._iv_test_actions(clicmd, actions)
         except ValueError as exception:
             failed = True
-            self.logger.error("TEST FAILED: %s", str(exception))
+            print("TEST FAILED: %s", str(exception))
 
         ########## Shutdown Servers ##########
 

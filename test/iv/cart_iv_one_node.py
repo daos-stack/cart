@@ -110,19 +110,19 @@ class CartIvOneNodeTest(Test):
         if (('operation' not in action) or
                 ('rank' not in action) or
                 ('key' not in action)):
-            self.logger.error("Error happened during action check")
+            print("Error happened during action check")
             raise ValueError("Each action must contain an operation," \
                              " rank, and key")
 
         if len(action['key']) != 2:
-            self.logger.error("Error key should be tuple of (rank, idx)")
+            print("Error key should be tuple of (rank, idx)")
             raise ValueError("key should be a tuple of (rank, idx)")
 
     def _verify_fetch_operation(self, action):
         """verify fetch operation"""
         if (('return_code' not in action) or
                 ('expected_value' not in action)):
-            self.logger.error("Error: fetch operation was malformed")
+            print("Error: fetch operation was malformed")
             raise ValueError("Fetch operation malformed")
 
     def _iv_test_actions(self, cmd, actions):
@@ -264,7 +264,7 @@ class CartIvOneNodeTest(Test):
             self._iv_test_actions(clicmd, actions)
         except ValueError as exception:
             failed = True
-            self.logger.error("TEST FAILED: %s", str(exception))
+            print("TEST FAILED: %s", str(exception))
 
         ########## Shutdown Servers ##########
 
