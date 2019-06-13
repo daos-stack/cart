@@ -121,7 +121,7 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %{carthome}/.build_vars-Linux.sh
 
 %changelog
-* Wed June 12 2019 Vikram Chhabra  <vikram.chhabra@intel.com>
+* Wed Jun 12 2019 Vikram Chhabra  <vikram.chhabra@intel.com>
 - added versioning for libcart and libgurt
 
 * Tue May 07 2019 Brian J. Murrell <brian.murrell@intel.com>
