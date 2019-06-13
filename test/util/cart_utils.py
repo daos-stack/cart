@@ -212,7 +212,7 @@ class CartUtils():
 
         return tst_cmd
 
-    def launch_srv_cli(self, cartobj, srvcmd, clicmd):
+    def launch_srv_cli_test(self, cartobj, srvcmd, clicmd):
         """ launches sever in the background and client in the foreground """
 
         srv_rtn = self.launch_cmd_bg(cartobj, srvcmd)
@@ -223,25 +223,28 @@ class CartUtils():
             cartobj.fail("Server did not launch, return code %s" \
                        % procrtn)
 
-        cli_rtn = self.launch_cmd(cartobj, clicmd)
+        self.launch_test(cartobj, clicmd, srv_rtn)
 
         srv_rtn = self.stop_process(srv_rtn)
 
-        if cli_rtn or srv_rtn:
+        if srv_rtn:
             cartobj.fail("Failed, return codes client %d " % cli_rtn + \
                       "server %d" % srv_rtn)
 
         return 0
 
-    def launch_cmd(self, cartobj, cmd, srv_proc=None):
-        """ launches the given cmd """
+    def launch_test(self, cartobj, cmd, srv1=None, srv2=None):
+        """ launches test """
 
         cmd = shlex.split(cmd)
         rtn = subprocess.call(cmd)
 
         if rtn:
-            if srv_proc is not None:
-                self.stop_process(srv_proc)
+            if srv1 is not None:
+                self.stop_process(srv1)
+
+            if srv2 is not None:
+                self.stop_process(srv2)
 
             cartobj.fail("Failed, return codes %d " % rtn)
 
@@ -254,7 +257,6 @@ class CartUtils():
         rtn = subprocess.Popen(cmd)
 
         if rtn is None:
-            cartobj.fail("Background process launch failed, \
-                          return codes %d " % rtn.returncode)
+            return -1
 
         return rtn

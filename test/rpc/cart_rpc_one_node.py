@@ -35,16 +35,18 @@ from cart_utils import CartUtils
 
 class CartRpcOneNodeTest(Test):
     """
-    Runs basic CaRT tests on one-node and two-node
+    Runs basic CaRT RPC tests
 
     :avocado: tags=all,rpc,one_node
     """
     def setUp(self):
+        """ Test setup """
         print("Running setup\n")
         self.utils = CartUtils()
         self.env = self.utils.get_env(self)
 
     def tearDown(self):
+        """ Test tear down """
         print("Run TearDown\n")
 
     def test_cart_rpc(self):
@@ -62,16 +64,7 @@ class CartRpcOneNodeTest(Test):
         print("\nServer cmd : %s\n" % srvcmd)
         print("\nClient cmd : %s\n" % clicmd)
 
-        ret = -1
-
-        try:
-            ret = self.utils.launch_srv_cli(self, srvcmd, clicmd)
-        except Exception as e:
-            print("Exception in launching test : {}".format(e))
-            self.fail("Test failed.\n")
-
-        if (ret != 0):
-            self.fail("Test failed.\n")
+        self.utils.launch_srv_cli_test(self, srvcmd, clicmd)
 
 if __name__ == "__main__":
     main()

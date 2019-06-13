@@ -39,16 +39,18 @@ from cart_utils import CartUtils
 
 class CartGroupTiersThreeNodeTest(Test):
     """
-    Runs basic CaRT tests on three-node
+    Runs basic CaRT group tier tests
 
     :avocado: tags=all,group_tiers,three_node
     """
     def setUp(self):
+        """ Test setup """
         print("Running setup\n")
         self.utils = CartUtils()
         self.env = self.utils.get_env(self)
 
     def tearDown(self):
+        """ Test tear down """
         print("Run TearDown\n")
 
     def test_group_tier(self):
@@ -89,13 +91,13 @@ class CartGroupTiersThreeNodeTest(Test):
 
         print("\nClient 1 cmd : %s\n" % clicmd)
 
-        cli_rtn1 = self.utils.launch_cmd(self, clicmd)
+        self.utils.launch_test(self, clicmd, srv_rtn, srv2_rtn)
 
         clicmd = self.utils.build_cmd(self, self.env, "cli2", False, urifile1)
 
         print("\nClient 2 cmd : %s\n" % clicmd)
 
-        cli_rtn2 = self.utils.launch_cmd(self, clicmd)
+        self.utils.launch_test(self, clicmd, srv_rtn, srv2_rtn)
 
         # Stop the server
         print("Stopping server process 2 {}".format(srv2_rtn))
@@ -104,12 +106,10 @@ class CartGroupTiersThreeNodeTest(Test):
         print("Stopping server process 1 {}".format(srv_rtn))
         procrtn1 = self.utils.stop_process(srv_rtn)
 
-        if cli_rtn1 or cli_rtn2 or procrtn2 or procrtn1:
-            self.fail("Test failed. Client 1 ret code {}, \
-                       client 2 ret code {} \
+        if procrtn2 or procrtn1:
+            self.fail("Test failed. \
                        server 1 ret code {} \
-                       server 2 ret code {}".format(cli_rtn1, cli_rtn2,
-                                                    procrtn1, procrtn2))
+                       server 2 ret code {}".format(procrtn1, procrtn2))
 
 if __name__ == "__main__":
     main()

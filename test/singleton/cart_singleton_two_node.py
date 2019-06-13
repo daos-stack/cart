@@ -39,11 +39,12 @@ from cart_utils import CartUtils
 
 class CartSingletonTwoNodeTest(Test):
     """
-    Runs basic CaRT tests on two-node
+    Runs basic CaRT singleton tests
 
     :avocado: tags=all,singleton,two_node
     """
     def setUp(self):
+        """ Test setup """
         print("Running setup\n")
         self.utils = CartUtils()
         self.env = self.utils.get_env(self)
@@ -58,6 +59,7 @@ class CartSingletonTwoNodeTest(Test):
                                                '/run/env_CRT_CTX_SHARE_ADDR/*/')
 
     def tearDown(self):
+        """ Test tear down """
         print("Run TearDown\n")
         shutil.rmtree(self.tempdir)
 
@@ -81,6 +83,8 @@ class CartSingletonTwoNodeTest(Test):
             print("Exception in launching server : {}".format(e))
             self.fail("Test failed.\n")
 
+        time.sleep(5)
+
         # Verify the server is still running.
         if not self.utils.check_process(srv_rtn):
             procrtn = self.utils.stop_process(srv_rtn)
@@ -93,15 +97,14 @@ class CartSingletonTwoNodeTest(Test):
 
         print("\nClient cmd : %s\n" % clicmd)
 
-        cli_rtn = self.utils.launch_cmd(self, clicmd)
+        self.utils.launch_test(self, clicmd, srv_rtn)
 
         # Stop the server
         print("Stopping server process {}".format(srv_rtn))
         procrtn = self.utils.stop_process(srv_rtn)
 
-        if cli_rtn or procrtn:
-            self.fail("Test failed. Client ret code {}, \
-                       server ret code {}".format(cli_rtn, procrtn))
+        if procrtn:
+            self.fail("Test failed. Server ret code {}".format(procrtn))
 
     def test_multi_tier_singleton_attach(self):
         """
@@ -148,15 +151,14 @@ class CartSingletonTwoNodeTest(Test):
 
         print("\nClient cmd : %s\n" % clicmd)
 
-        cli_rtn = self.utils.launch_cmd(self, clicmd)
+        self.utils.launch_test(self, clicmd, srv_rtn)
 
         # Stop the server
         print("Stopping server process {}".format(srv_rtn))
         procrtn = self.utils.stop_process(srv_rtn)
 
-        if cli_rtn or procrtn:
-            self.fail("Test failed. Client ret code {}, \
-                       server ret code {} {}".format(cli_rtn, procrtn))
+        if procrtn:
+            self.fail("Test failed. Server ret code {}".format(procrtn))
 
     def test_multi_tier_without_singleton_attach(self):
         """
@@ -203,15 +205,18 @@ class CartSingletonTwoNodeTest(Test):
 
         print("\nClient cmd : %s\n" % clicmd)
 
-        cli_rtn = self.utils.launch_cmd(self, clicmd)
+        self.utils.launch_test(self, clicmd, srv_rtn, srv2_rtn)
 
         # Stop the server
         print("Stopping server process {}".format(srv_rtn))
-        procrtn = self.utils.stop_process(srv_rtn)
+        procrtn1 = self.utils.stop_process(srv_rtn)
 
-        if cli_rtn or procrtn:
-            self.fail("Test failed. Client ret code {}, \
-                       server ret code {} {}".format(cli_rtn, procrtn))
+        print("Stopping server process {}".format(srv2_rtn))
+        procrtn2 = self.utils.stop_process(srv2_rtn)
+
+        if procrtn1 or procrtn2:
+            self.fail("Test failed. \
+                       Server ret code {} {}".format(procrtn1, procrtn2))
 
 if __name__ == "__main__":
     main()

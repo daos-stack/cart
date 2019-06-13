@@ -8,7 +8,7 @@ defaultENV:
   CRT_PHY_ADDR_STR: "ofi+sockets"
   OFI_INTERFACE: "eth0"
   srv_CRT_CTX_NUM: "16"
-  cli_CRT_CTX_NUM: "1"
+  cli_CRT_CTX_NUM: "16"
 env_CRT_CTX_SHARE_ADDR: !mux
   sep:
     env: sep
@@ -18,7 +18,7 @@ env_CRT_CTX_SHARE_ADDR: !mux
     CRT_CTX_SHARE_ADDR: "0"
 hosts: !mux
   hosts_1:
-    config: one_node
+    config: two_node
     srv:
       - boro-A
       - boro-B

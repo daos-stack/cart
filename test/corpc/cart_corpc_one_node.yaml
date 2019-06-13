@@ -3,7 +3,7 @@
 
 defaultENV:
   #!filter-only : /run/envs_CRT_CTX_SHARE_ADDR/sep
-  #!filter-only : /run/tests/corpc
+  #!filter-only : /run/tests/corpc_prefwd
   D_LOG_MASK: "DEBUG,MEM=ERR"
   CRT_PHY_ADDR_STR: "ofi+sockets"
   OFI_INTERFACE: "eth0"
