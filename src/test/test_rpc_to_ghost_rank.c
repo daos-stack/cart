@@ -458,6 +458,7 @@ test_run(void)
 		D_ASSERTF(rc == 0 && rpc_req != NULL,
 				"crt_req_create() failed. "
 				"rc: %d, rpc_req: %p\n", rc, rpc_req);
+		sleep(10);
 		rc = crt_req_send(rpc_req, completion_cb_common, NULL);
 		D_ASSERTF(rc == 0, "crt_req_send() failed. rc: %d\n",
 				rc);
