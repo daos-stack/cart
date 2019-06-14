@@ -145,3 +145,13 @@ tests: !mux
     cli_arg: "--name client_group --attach_to service_group"
     cli_env: ""
     cli_ppn: "1"
+  ghost_rank:
+    name: rpc_to_ghost_rank
+    srv_bin: tests/test_rpc_to_ghost_rank
+    srv_arg: "--name service_group --is_service -c 2"
+    srv_env: "-x CRT_TIMEOUT=15"
+    srv_ppn: "2"
+    cli_bin: "hostname"
+    cli_arg: ""
+    cli_env: ""
+    cli_ppn: "1"
