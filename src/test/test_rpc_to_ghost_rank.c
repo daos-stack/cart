@@ -533,7 +533,6 @@ test_fini()
 
 	D_DEBUG(DB_TEST, "exiting.\n");
 	fprintf(stderr, "exiting.\n");
-	return rc;
 }
 
 int
@@ -605,7 +604,7 @@ test_parse_args(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-	int	rc;
+	int	rc = 0;
 
 	rc = test_parse_args(argc, argv);
 	if (rc != 0) {
