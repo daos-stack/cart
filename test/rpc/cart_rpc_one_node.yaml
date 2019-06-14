@@ -151,7 +151,3 @@ tests: !mux
     srv_arg: "--name service_group --is_service -c 2"
     srv_env: "-x CRT_TIMEOUT=15"
     srv_ppn: "2"
-    cli_bin: "hostname"
-    cli_arg: ""
-    cli_env: ""
-    cli_ppn: "1"
