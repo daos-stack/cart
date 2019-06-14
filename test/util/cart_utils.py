@@ -230,7 +230,7 @@ class CartUtils():
 
         if urifile is not None:
             if report_uri == True:
-                tst_cmd += "--report-uri {} ".format(urifile)
+                tst_cmd += "--report-uri {} --continuous ".format(urifile)
             else:
                 tst_cmd += "--ompi-server file:{} ".format(urifile)
 

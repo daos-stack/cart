@@ -462,7 +462,7 @@ crt_context_destroy(crt_context_t crt_ctx, int force)
 			"d_hash_table_traverse failed rc: %d.\n",
 			ctx->cc_idx, force, rc);
 		/* Flush SWIM RPC already sent */
-		rc = crt_context_flush(crt_ctx, CRT_SWIM_RPC_TIMEOUT);
+		rc = crt_context_flush(crt_ctx, CRT_SWIM_RPC_TIMEOUT + 60);
 		if (rc)
 			/* give a chance to other threads to complete */
 			sleep(CRT_SWIM_RPC_TIMEOUT);
@@ -696,6 +696,8 @@ crt_req_timeout_hdlr(struct crt_rpc_priv *rpc_priv)
 	crt_endpoint_t			*tgt_ep;
 	crt_rpc_t			*ul_req;
 	struct crt_uri_lookup_in	*ul_in;
+	int				 hg_ret;
+	int				 rc;
 
 	if (crt_req_timeout_reset(rpc_priv)) {
 		RPC_TRACE(DB_NET, rpc_priv,
@@ -754,7 +756,20 @@ crt_req_timeout_hdlr(struct crt_rpc_priv *rpc_priv)
 				  "aborting to group %s, rank %d, tgt_uri %s\n",
 				  grp_priv->gp_pub.cg_grpid,
 				  tgt_ep->ep_rank, rpc_priv->crp_tgt_uri);
-			crt_req_abort(&rpc_priv->crp_pub);
+			rc = crt_req_abort(&rpc_priv->crp_pub);
+			if (rc != DER_SUCCESS) {
+				RPC_ERROR(rpc_priv, "abort failed, rc %d\n",
+						rc);
+				rpc_priv->crp_state = RPC_STATE_CANCELED;
+				crt_context_req_untrack(rpc_priv);
+				crt_rpc_complete(rpc_priv, -DER_UNREACH);
+				hg_ret = HG_Destroy(rpc_priv->crp_hg_hdl);
+				if (hg_ret != HG_SUCCESS)
+					D_ERROR("HG_Destroy failed, hg_hdl %p, "
+						"hg_ret: %d.\n",
+						rpc_priv->crp_hg_hdl, hg_ret);
+				RPC_DECREF(rpc_priv);
+			}
 		}
 		break;
 	}
