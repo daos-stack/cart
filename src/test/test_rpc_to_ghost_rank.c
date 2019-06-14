@@ -533,6 +533,7 @@ test_fini()
 
 	D_DEBUG(DB_TEST, "exiting.\n");
 	fprintf(stderr, "exiting.\n");
+	return rc;
 }
 
 int
