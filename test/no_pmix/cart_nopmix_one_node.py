@@ -37,7 +37,7 @@ from cart_utils import CartUtils
 
 class CartNoPmixOneNodeTest(Test):
     """
-    Runs basic CaRT no_pmix tests
+    Runs basic CaRT no_pmix tests on one-node
 
     :avocado: tags=all,no_pmix,one_node
     """
