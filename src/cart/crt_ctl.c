@@ -141,6 +141,8 @@ crt_hdlr_ctl_get_uri_cache(crt_rpc_t *rpc_req)
 	struct crt_grp_priv			*grp_priv = NULL;
 	uint32_t				 nuri = 0;
 	struct crt_uri_cache			 uri_cache = {0};
+	struct crt_context			*crt_ctx;
+	int					 na_type;
 	int					 rc = 0;
 
 	D_ASSERTF(crt_is_service(), "Must be called in a service process\n");
@@ -148,13 +150,16 @@ crt_hdlr_ctl_get_uri_cache(crt_rpc_t *rpc_req)
 
 	grp_priv = crt_gdata.cg_grp->gg_primary_grp;
 
+	crt_ctx = (struct crt_context *)rpc_req->cr_ctx;
+	na_type =  crt_ctx->cc_na_conf->noc_na_type;
 	D_RWLOCK_RDLOCK(&grp_priv->gp_rwlock);
 
 	rc = verify_ctl_in_args(crt_req_get(rpc_req));
 	if (rc != 0)
 		D_GOTO(out, rc);
 
-	rc = d_hash_table_traverse(&grp_priv->gp_uri_lookup_cache,
+	D_DEBUG(DB_ALL, "na_type %d\n", na_type);
+	rc = d_hash_table_traverse(&grp_priv->gp_uri_lookup_cache[na_type],
 				   crt_ctl_get_uri_cache_size_cb, &nuri);
 	if (rc != 0)
 		D_GOTO(out, 0);
@@ -165,7 +170,7 @@ crt_hdlr_ctl_get_uri_cache(crt_rpc_t *rpc_req)
 
 	uri_cache.idx = 0;
 
-	rc = d_hash_table_traverse(&grp_priv->gp_uri_lookup_cache,
+	rc = d_hash_table_traverse(&grp_priv->gp_uri_lookup_cache[na_type],
 				   crt_ctl_fill_buffer_cb, &uri_cache);
 	if (rc != 0)
 		D_GOTO(out, 0);
@@ -239,7 +244,9 @@ crt_hdlr_ctl_ls(crt_rpc_t *rpc_req)
 	char				*addr_buf = NULL;
 	uint32_t			 addr_buf_len;
 	int				 count;
+	int				 na_type;
 	struct crt_context		*ctx = NULL;
+	struct crt_context		*crt_ctx = NULL;
 	int				 rc = 0;
 
 	D_ASSERTF(crt_is_service(), "Must be called in a service process\n");
@@ -252,12 +259,18 @@ crt_hdlr_ctl_ls(crt_rpc_t *rpc_req)
 	if (rc != 0)
 		D_GOTO(out, rc);
 
+	crt_ctx = (struct crt_context *)rpc_req->cr_ctx;
+	na_type =  crt_ctx->cc_na_conf->noc_na_type;
+
+	out_args->cel_ctx_num = crt_gdata.cg_ctx_num[na_type];
+	D_DEBUG(DB_TRACE, "out_args->cel_ctx_num %d\n",
+			crt_gdata.cg_ctx_num[na_type]);
 	addr_buf_len = 0;
 
 	D_RWLOCK_RDLOCK(&crt_gdata.cg_rwlock);
-	out_args->cel_ctx_num = crt_gdata.cg_ctx_num;
+	out_args->cel_ctx_num = crt_gdata.cg_ctx_num[na_type];
 
-	d_list_for_each_entry(ctx, &crt_gdata.cg_ctx_list, cc_link) {
+	d_list_for_each_entry(ctx, &crt_gdata.cg_ctx_list[na_type], cc_link) {
 		str_size = CRT_ADDR_STR_MAX_LEN;
 
 		D_MUTEX_LOCK(&ctx->cc_mutex);
@@ -280,7 +293,7 @@ crt_hdlr_ctl_ls(crt_rpc_t *rpc_req)
 
 	count = 0;
 
-	d_list_for_each_entry(ctx, &crt_gdata.cg_ctx_list, cc_link) {
+	d_list_for_each_entry(ctx, &crt_gdata.cg_ctx_list[na_type], cc_link) {
 		str_size = CRT_ADDR_STR_MAX_LEN;
 		rc = 0;
 

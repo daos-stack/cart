@@ -55,12 +55,15 @@ struct test_t {
 	char			*t_cfg_path;
 	uint32_t		 t_hold_time;
 	unsigned int		 t_srv_ctx_num;
+	unsigned int		 t_srv_ctx_num_psm2;
 	crt_context_t		 t_crt_ctx[TEST_CTX_MAX_NUM];
 	pthread_t		 t_tid[TEST_CTX_MAX_NUM];
+	int			 t_thread_id[TEST_CTX_MAX_NUM]; /* logical id */
 	sem_t			 t_token_to_proceed;
 	int			 t_roomno;
 	struct d_fault_attr_t	*t_fault_attr_1000;
 	struct d_fault_attr_t	*t_fault_attr_5000;
+	int			 t_shutdown;
 };
 
 struct test_t test_g = { .t_hold_time = 0,

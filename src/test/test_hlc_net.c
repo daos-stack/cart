@@ -47,6 +47,7 @@
 
 /* CRT internal opcode definitions, must be 0xFF00xxxx.*/
 #define CRT_OPC_TEST_PROTO (0x10000000)
+#define DEFAULT_PROGRESS_CTX_IDX	0
 
 #define DEBUG		1
 #define MAX_SEQ		1000
@@ -238,6 +239,7 @@ static void srv_fini(void)
 	rc = crt_context_destroy(global_srv.crt_ctx, true);
 	D_ASSERTF(rc == 0, "crt_context_destroy failed rc=%d\n", rc);
 
+	crt_swim_fini();
 	rc = crt_finalize();
 	D_ASSERTF(rc == 0, "crt_finalize failed rc=%d\n", rc);
 
@@ -252,6 +254,9 @@ static int srv_init(void)
 
 	rc = crt_init(CRT_DEFAULT_GRPID, CRT_FLAG_BIT_SERVER);
 	D_ASSERTF(rc == 0, " crt_init failed %d\n", rc);
+
+	rc = crt_swim_init(0, DEFAULT_PROGRESS_CTX_IDX);
+	D_ASSERTF(rc == DER_SUCCESS, "crt_swim_init() failed rc: %d.\n", rc);
 
 	rc = crt_proto_register(&test_proto_fmt);
 	D_ASSERT(rc == 0);

@@ -291,7 +291,8 @@ class CartUtils():
         """load mpi"""
 
         mpich = ['mpi/mpich-x86_64']
-        openmpi = ['mpi/openmpi3-x86_64', 'mpi/openmpi-x86_64']
+#        openmpi = ['mpi/openmpi3-x86_64', 'mpi/openmpi-x86_64']
+        openmpi = ['mpi/openmpi3-x86_64']
 
         init_file = '/usr/share/Modules/init/python.py'
 
@@ -320,20 +321,21 @@ class CartUtils():
 
         try:
             subprocess.check_call(['sh', '-l', '-c', 'module -V'])
+#            subprocess.check_call(['sh', '-c', 'module -V'])
         except subprocess.CalledProcessError:
             # older version of module return -1
             return self.init_mpi_old(load[0])
 
         self.print("Checking for loaded modules")
-        for to_load in load:
-            if self.module('is-loaded', to_load):
-                self.print("%s is already loaded" % to_load)
-                return True
+#        for to_load in load:
+#            if self.module('is-loaded', to_load):
+#                self.print("%s is already loaded" % to_load)
+#                return True
 
-        for to_unload in unload:
-            if self.module('is-loaded', to_unload):
-                self.module('unload', to_unload)
-                self.print("Unloading %s" % to_unload)
+#        for to_unload in unload:
+#            if self.module('is-loaded', to_unload):
+#                self.module('unload', to_unload)
+#                self.print("Unloading %s" % to_unload)
 
         for to_load in load:
             if self.module('load', to_load):

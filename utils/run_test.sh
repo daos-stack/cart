@@ -39,6 +39,37 @@
 set -e
 set -x
 
+# A list of tests to run as a single instance on Jenkins
+JENKINS_TEST_LIST=(scripts/cart_echo_test.yml                   \
+                   scripts/cart_echo_test_non_sep.yml           \
+                   scripts/cart_test_corpc_prefwd.yml           \
+                   scripts/cart_test_corpc_prefwd_non_sep.yml   \
+                   scripts/cart_test_group.yml                  \
+                   scripts/cart_test_group_non_sep.yml          \
+                   scripts/cart_test_barrier.yml                \
+                   scripts/cart_test_barrier_non_sep.yml        \
+                   scripts/cart_threaded_test.yml               \
+                   scripts/cart_threaded_test_non_sep.yml       \
+                   scripts/cart_test_rpc_error.yml              \
+                   scripts/cart_test_rpc_error_non_sep.yml      \
+                   scripts/cart_test_singleton.yml              \
+                   scripts/cart_test_singleton_non_sep.yml      \
+                   scripts/cart_test_corpc_version.yml          \
+                   scripts/cart_test_corpc_version_non_sep.yml  \
+                   scripts/cart_test_cart_ctl.yml               \
+                   scripts/cart_test_cart_ctl_non_sep.yml       \
+                   scripts/cart_test_ep_credits.yml             \
+                   scripts/cart_test_iv.yml                     \
+                   scripts/cart_test_iv_non_sep.yml             \
+                   scripts/cart_test_proto.yml                  \
+                   scripts/cart_test_proto_non_sep.yml          \
+                   scripts/cart_test_no_timeout.yml             \
+                   scripts/cart_test_no_pmix.yml                \
+                   scripts/cart_test_no_pmix_multi_ctx.yml      \
+                   scripts/cart_test_no_pmix_launcher.yml       \
+                   scripts/cart_test_no_timeout_non_sep.yml     \
+                   scripts/cart_test_multi_prov.yml)
+
 # Check for symbol names in the library.
 if [ -d "utils" ]; then
   utils/test_cart_lib.sh

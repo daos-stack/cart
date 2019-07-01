@@ -207,18 +207,53 @@ out:
 int
 crt_context_create(crt_context_t *crt_ctx)
 {
+	crt_ctx_init_opt_t	opt = {.ccio_prov = "ofi+sockets"};
+	int			na_type;
+	crt_phy_addr_t		addr_env;
+
+	addr_env = (crt_phy_addr_t)getenv(CRT_PHY_ADDR_ENV);
+	if (addr_env == NULL)
+		D_DEBUG(DB_ALL, "ENV %s not found.\n", CRT_PHY_ADDR_ENV);
+
+	na_type = crt_gdata.cg_na_plugin;
+	opt.ccio_interface = crt_na_ofi_conf.noc_interface;
+	opt.ccio_prov = addr_env;
+	opt.ccio_port = crt_na_ofi_conf.noc_port;
+	opt.ccio_share_na = crt_gdata.cg_share_na[na_type];
+	opt.ccio_ctx_max_num = crt_gdata.cg_ctx_max_num[na_type];
+
+	return crt_context_create_opt(crt_ctx, &opt);
+}
+
+int
+crt_context_create_opt(crt_context_t *crt_ctx, crt_ctx_init_opt_t *opt)
+{
 	struct crt_context	*ctx = NULL;
-	int			rc = 0;
+	int			 na_type;
+	struct na_ofi_config	*na_conf;
+	int			 rc = 0;
 
 	if (crt_ctx == NULL) {
 		D_ERROR("invalid parameter of NULL crt_ctx.\n");
 		D_GOTO(out, rc = -DER_INVAL);
 	}
 
-	if (crt_gdata.cg_share_na &&
-	    crt_gdata.cg_ctx_num >= crt_gdata.cg_ctx_max_num) {
+	rc = crt_parse_na_type(&na_type, opt->ccio_prov);
+	if (rc != DER_SUCCESS) {
+		D_ERROR("crt_parse_na_type() failed rc %d\n", rc);
+		return rc;
+	}
+
+	/**
+	 * for existing providers, make sure number of contexts is within limit
+	 */
+	na_conf = crt_na_config_lookup(opt->ccio_interface, opt->ccio_prov,
+				       true /* need_lock */);
+	if (na_conf && crt_gdata.cg_share_na[na_type] &&
+	    crt_gdata.cg_ctx_num[na_type] >= crt_gdata.cg_ctx_max_num[na_type]) {
 		D_ERROR("Number of active contexts (%d) reached limit (%d).\n",
-			crt_gdata.cg_ctx_num, crt_gdata.cg_ctx_max_num);
+			crt_gdata.cg_ctx_num[na_type],
+			crt_gdata.cg_ctx_max_num[na_type]);
 		D_GOTO(out, -DER_AGAIN);
 	}
 
@@ -236,7 +271,8 @@ crt_context_create(crt_context_t *crt_ctx)
 	D_RWLOCK_WRLOCK(&crt_gdata.cg_rwlock);
 
 
-	rc = crt_hg_ctx_init(&ctx->cc_hg_ctx, crt_gdata.cg_ctx_num);
+	rc = crt_hg_ctx_init_opt(&ctx->cc_hg_ctx,
+				 crt_gdata.cg_ctx_num[na_type], opt);
 	if (rc != 0) {
 		D_ERROR("crt_hg_ctx_init failed rc: %d.\n", rc);
 		D_RWLOCK_UNLOCK(&crt_gdata.cg_rwlock);
@@ -244,9 +280,19 @@ crt_context_create(crt_context_t *crt_ctx)
 		D_GOTO(out, rc);
 	}
 
-	ctx->cc_idx = crt_gdata.cg_ctx_num;
-	d_list_add_tail(&ctx->cc_link, &crt_gdata.cg_ctx_list);
-	crt_gdata.cg_ctx_num++;
+	na_conf = crt_na_config_lookup(opt->ccio_interface, opt->ccio_prov,
+					       true /* need_lock */);
+	if (na_conf == NULL) {
+		D_ERROR("crt_na_config_lookup() failed, rc %d\n", rc);
+		D_RWLOCK_UNLOCK(&crt_gdata.cg_rwlock);
+		crt_context_destroy(ctx, true);
+		D_GOTO(out, rc);
+	}
+
+	ctx->cc_na_conf = na_conf;
+	ctx->cc_idx = crt_gdata.cg_ctx_num[na_type];
+	d_list_add_tail(&ctx->cc_link, &crt_gdata.cg_ctx_list[na_type]);
+	crt_gdata.cg_ctx_num[na_type]++;
 
 	D_RWLOCK_UNLOCK(&crt_gdata.cg_rwlock);
 
@@ -425,11 +471,24 @@ out:
 	return rc;
 }
 
+/**
+ * retrieve na type from crt_context_t
+ */
+int
+crt_context_na_type(crt_context_t crt_ctx)
+{
+	struct crt_context	*ctx;
+
+	ctx = crt_ctx;
+	return ctx->cc_na_conf->noc_na_type;
+}
+
 int
 crt_context_destroy(crt_context_t crt_ctx, int force)
 {
 	struct crt_context	*ctx;
 	int			 flags;
+	int			 na_type;
 	int			 rc = 0;
 	int			 i;
 
@@ -443,7 +502,8 @@ crt_context_destroy(crt_context_t crt_ctx, int force)
 	}
 
 	ctx = crt_ctx;
-	rc = crt_grp_ctx_invalid(ctx, false /* locked */);
+	na_type = crt_context_na_type(crt_ctx);
+	rc = crt_grp_ctx_invalidate(ctx, false /* locked */);
 	if (rc) {
 		D_ERROR("crt_grp_ctx_invalid failed, rc: %d.\n", rc);
 		if (!force)
@@ -493,7 +553,7 @@ crt_context_destroy(crt_context_t crt_ctx, int force)
 	}
 
 	D_RWLOCK_WRLOCK(&crt_gdata.cg_rwlock);
-	crt_gdata.cg_ctx_num--;
+	crt_gdata.cg_ctx_num[na_type]--;
 	d_list_del(&ctx->cc_link);
 	D_RWLOCK_UNLOCK(&crt_gdata.cg_rwlock);
 
@@ -551,7 +611,8 @@ crt_ep_abort(crt_endpoint_t *ep)
 
 	D_RWLOCK_RDLOCK(&crt_gdata.cg_rwlock);
 
-	d_list_for_each_entry(ctx, &crt_gdata.cg_ctx_list, cc_link) {
+	d_list_for_each_entry(ctx, &crt_gdata.cg_ctx_list[ep->ep_na_type],
+			      cc_link) {
 		rc = 0;
 		D_MUTEX_LOCK(&ctx->cc_mutex);
 		rlink = d_hash_rec_find(&ctx->cc_epi_table,
@@ -1063,11 +1124,11 @@ crt_context_req_untrack(struct crt_rpc_priv *rpc_priv)
 }
 
 crt_context_t
-crt_context_lookup_locked(int ctx_idx)
+crt_context_lookup_locked(int na_type, int ctx_idx)
 {
 	struct crt_context	*ctx;
 
-	d_list_for_each_entry(ctx, &crt_gdata.cg_ctx_list, cc_link) {
+	d_list_for_each_entry(ctx, &crt_gdata.cg_ctx_list[na_type], cc_link) {
 		if (ctx->cc_idx == ctx_idx)
 			return ctx;
 	}
@@ -1076,19 +1137,62 @@ crt_context_lookup_locked(int ctx_idx)
 }
 
 crt_context_t
-crt_context_lookup(int ctx_idx)
+crt_context_lookup(int na_type, int ctx_idx)
 {
 	struct crt_context	*ctx;
 	bool			found = false;
 
 	D_RWLOCK_RDLOCK(&crt_gdata.cg_rwlock);
-	d_list_for_each_entry(ctx, &crt_gdata.cg_ctx_list, cc_link) {
+	d_list_for_each_entry(ctx, &crt_gdata.cg_ctx_list[na_type], cc_link) {
 		if (ctx->cc_idx == ctx_idx) {
 			found = true;
 			break;
 		}
 	}
 	D_RWLOCK_UNLOCK(&crt_gdata.cg_rwlock);
+
+	return (found == true) ? ctx : NULL;
+}
+
+
+/**
+ * lookup cart context by network interface + provider name.
+ *
+ * \param[in] interface     network interface name
+ * \param[in] prov          provider name string
+ * \param[in] need_lock     whether or not to grab lock inside this function
+ *
+ * \return                  pointer to cart cnotext, or NULL if no match is
+ *                          found.
+ */
+crt_context_t
+crt_context_lookup_prov(const char *interface, const char *prov,
+			bool need_lock) {
+	struct crt_context	*ctx;
+	struct na_ofi_config	*na_conf_tmp;
+	int			na_type;
+	bool			 found = false;
+	int			 rc;
+
+	rc = crt_parse_na_type(&na_type, prov);
+	if (rc != DER_SUCCESS) {
+		D_ERROR("crt_parse_na_type() failed rc %d\n", rc);
+		return NULL;
+	}
+
+	if (need_lock)
+		D_RWLOCK_RDLOCK(&crt_gdata.cg_rwlock);
+	d_list_for_each_entry(ctx, &crt_gdata.cg_ctx_list[na_type], cc_link) {
+		na_conf_tmp = ctx->cc_na_conf;
+		if (!strncmp(na_conf_tmp->noc_interface, interface,
+			     INET_ADDRSTRLEN) &&
+		    !strncmp(na_conf_tmp->noc_na_str, prov, 64)) {
+			found = true;
+			break;
+		}
+	}
+	if (need_lock)
+		D_RWLOCK_UNLOCK(&crt_gdata.cg_rwlock);
 
 	return (found == true) ? ctx : NULL;
 }
@@ -1102,6 +1206,7 @@ crt_context_idx(crt_context_t crt_ctx, int *ctx_idx)
 	if (crt_ctx == CRT_CONTEXT_NULL || ctx_idx == NULL) {
 		D_ERROR("invalid parameter, crt_ctx: %p, ctx_idx: %p.\n",
 			crt_ctx, ctx_idx);
+		assert(0);
 		D_GOTO(out, rc = -DER_INVAL);
 	}
 
@@ -1113,7 +1218,7 @@ out:
 }
 
 int
-crt_self_uri_get(int tag, char **uri)
+crt_self_uri_get_na(int na_type, int tag, char **uri)
 {
 	struct crt_context	*tmp_crt_ctx;
 	char			*tmp_uri = NULL;
@@ -1125,7 +1230,7 @@ crt_self_uri_get(int tag, char **uri)
 		D_GOTO(out, rc = -DER_INVAL);
 	}
 
-	tmp_crt_ctx = crt_context_lookup(tag);
+	tmp_crt_ctx = crt_context_lookup(na_type, tag);
 	if (tmp_crt_ctx == NULL) {
 		D_ERROR("crt_context_lookup(%d) failed.\n", tag);
 		D_GOTO(out, rc = -DER_NONEXIST);
@@ -1150,6 +1255,12 @@ out:
 }
 
 int
+crt_self_uri_get(int tag, char **uri)
+{
+	return crt_self_uri_get_na(crt_gdata.cg_na_plugin, tag, uri);
+}
+
+int
 crt_context_num(int *ctx_num)
 {
 	if (ctx_num == NULL) {
@@ -1157,7 +1268,19 @@ crt_context_num(int *ctx_num)
 		return -DER_INVAL;
 	}
 
-	*ctx_num = crt_gdata.cg_ctx_num;
+	*ctx_num = crt_gdata.cg_ctx_num_all;
+	return 0;
+}
+
+int
+crt_context_num_prov(int na_type, int *ctx_num)
+{
+	if (ctx_num == NULL) {
+		D_ERROR("invalid parameter of NULL ctx_num.\n");
+		return -DER_INVAL;
+	}
+
+	*ctx_num = crt_gdata.cg_ctx_num[na_type];
 	return 0;
 }
 
@@ -1169,7 +1292,24 @@ crt_context_empty(int locked)
 	if (locked == 0)
 		D_RWLOCK_RDLOCK(&crt_gdata.cg_rwlock);
 
-	rc = d_list_empty(&crt_gdata.cg_ctx_list);
+	/*YULU TODO needs change here */
+	rc = d_list_empty(&crt_gdata.cg_ctx_list[crt_gdata.cg_na_plugin]);
+
+	if (locked == 0)
+		D_RWLOCK_UNLOCK(&crt_gdata.cg_rwlock);
+
+	return rc;
+}
+
+bool
+crt_context_empty_na(int na_type, int locked)
+{
+	bool rc = false;
+
+	if (locked == 0)
+		D_RWLOCK_RDLOCK(&crt_gdata.cg_rwlock);
+
+	rc = d_list_empty(&crt_gdata.cg_ctx_list[na_type]);
 
 	if (locked == 0)
 		D_RWLOCK_UNLOCK(&crt_gdata.cg_rwlock);

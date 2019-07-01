@@ -57,6 +57,9 @@ test_run(d_rank_t my_rank)
 	tc_srv_start_basic(test.tg_local_group_name, &test.tg_crt_ctx,
 			   &test.tg_tid, &grp, &grp_size, &opt);
 
+	rc = crt_swim_init(0, DEFAULT_PROGRESS_CTX_IDX);
+	D_ASSERTF(rc == DER_SUCCESS, "crt_swim_init() failed rc: %d.\n", rc);
+
 	DBG_PRINT("Server started, grp_size = %d\n", grp_size);
 	rc = sem_init(&test.tg_token_to_proceed, 0, 0);
 	D_ASSERTF(rc == 0, "sem_init() failed.\n");
@@ -88,6 +91,7 @@ test_run(d_rank_t my_rank)
 			  "crt_group_config_remove() failed. rc: %d\n", rc);
 	}
 
+	crt_swim_fini();
 	rc = crt_finalize();
 	D_ASSERTF(rc == 0, "crt_finalize() failed. rc: %d\n", rc);
 

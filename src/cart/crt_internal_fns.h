@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2018 Intel Corporation
+/* Copyright (C) 2016-2019 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -69,12 +69,17 @@ enum {
 int crt_context_req_track(struct crt_rpc_priv *rpc_priv);
 bool crt_context_empty(int locked);
 void crt_context_req_untrack(struct crt_rpc_priv *rpc_priv);
-crt_context_t crt_context_lookup(int ctx_idx);
-crt_context_t crt_context_lookup_locked(int ctx_idx);
+crt_context_t crt_context_lookup(int na_type, int ctx_idx);
+crt_context_t crt_context_lookup_locked(int na_type, int ctx_idx);
 void crt_rpc_complete(struct crt_rpc_priv *rpc_priv, int rc);
 int crt_req_timeout_track(struct crt_rpc_priv *rpc_priv);
 void crt_req_timeout_untrack(struct crt_rpc_priv *rpc_priv);
 void crt_req_force_timeout(struct crt_rpc_priv *rpc_priv);
+crt_context_t crt_context_lookup_prov(const char *interface, const char *prov,
+	bool need_lock);
+
+int crt_parse_na_type(int *na_type, const char *na_str);
+int crt_context_na_type(crt_context_t crt_ctx);
 
 /** some simple helper functions */
 
@@ -97,5 +102,39 @@ crt_hdlr_proto_query(crt_rpc_t *rpc_req);
 
 /* Internal API to sync timestamp with remote message */
 uint64_t crt_hlc_get_msg(uint64_t msg);
+
+static inline struct na_ofi_config *
+crt_na_config_lookup(const char *ni_str, const char *na_str, bool need_lock)
+{
+	struct na_ofi_config	*na_conf = NULL;
+	struct na_ofi_config	*na_conf_tmp = NULL;
+
+	if (need_lock)
+		D_RWLOCK_RDLOCK(&crt_na_ofi_config_rwlock);
+
+	D_DEBUG(DB_ALL, "looking up interface: %s\n", ni_str);
+	d_list_for_each_entry(na_conf_tmp, &crt_na_ofi_config_opt,
+			      noc_link) {
+		if (!strncmp(na_conf_tmp->noc_interface, ni_str,
+			     INET_ADDRSTRLEN) &&
+		    !strncmp(na_conf_tmp->noc_na_str, na_str, 64)) {
+			na_conf = na_conf_tmp;
+			D_DEBUG(DB_ALL, "yes match, found %s on %s (len: %zd) "
+					"\n", na_conf_tmp->noc_na_str,
+					na_conf_tmp->noc_interface,
+					strlen(na_conf_tmp->noc_interface));
+			break;
+		}
+		D_DEBUG(DB_ALL, "not a match, found %s on %s (len: %zd) "
+			"want %s on %s (len %zd)\n", na_conf_tmp->noc_na_str,
+			na_conf_tmp->noc_interface,
+			strlen(na_conf_tmp->noc_interface),
+			na_str, ni_str, strlen(ni_str));
+	}
+	if (need_lock)
+		D_RWLOCK_UNLOCK(&crt_na_ofi_config_rwlock);
+
+	return na_conf;
+}
 
 #endif /* __CRT_INTERNAL_FNS_H__ */

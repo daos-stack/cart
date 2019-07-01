@@ -52,6 +52,8 @@ static bool pre_forward_called;
 static bool hdlr_called;
 static bool post_reply_called;
 
+#define DEFAULT_PROGRESS_CTX_IDX	0
+
 static int
 corpc_aggregate(crt_rpc_t *src, crt_rpc_t *result, void *priv)
 {
@@ -149,6 +151,7 @@ int main(void)
 	d_rank_t	excluded_ranks = {0};
 	crt_rpc_t	*rpc;
 	d_rank_t	my_rank;
+	int		na_type = 0;
 	crt_group_t	*grp;
 	char		*env_self_rank;
 	char		*grp_cfg_file;
@@ -168,6 +171,12 @@ int main(void)
 
 	rc = crt_init(NULL, CRT_FLAG_BIT_SERVER |
 			CRT_FLAG_BIT_AUTO_SWIM_DISABLE);
+	assert(rc == 0);
+
+	rc = crt_swim_init(0, DEFAULT_PROGRESS_CTX_IDX);
+	D_ASSERTF(rc == DER_SUCCESS, "crt_swim_init() failed rc: %d.\n", rc);
+
+	rc = crt_group_config_save(NULL, true);
 	assert(rc == 0);
 
 	rc = crt_proto_register(&my_proto_fmt_basic_corpc);
@@ -223,7 +232,7 @@ int main(void)
 	d_rank_list_free(rank_list);
 	rank_list = NULL;
 
-	rc = crt_swim_init(0);
+	rc = crt_swim_init(na_type, 0);
 	if (rc != 0) {
 		D_ERROR("crt_swim_init() failed; rc=%d\n", rc);
 		assert(0);
@@ -252,6 +261,7 @@ int main(void)
 		}
 	}
 
+	crt_swim_fini();
 	rc = crt_finalize();
 	assert(rc == 0);
 

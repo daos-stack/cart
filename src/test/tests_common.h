@@ -81,7 +81,7 @@ tc_test_init(d_rank_t rank, int num_attach_retries, bool is_server,
 	opts.mypid		= getpid();
 	opts.is_server		= is_server;
 	opts.num_attach_retries	= num_attach_retries;
-	opts.assert_on_error		= assert_on_error;
+	opts.assert_on_error	= assert_on_error;
 }
 
 static inline int
@@ -322,6 +322,8 @@ tc_load_group_from_file(const char *grp_cfg_file,
 	if (!f) {
 		D_ERROR("Failed to open %s for reading\n", grp_cfg_file);
 		D_GOTO(out, rc = DER_NONEXIST);
+	} else {
+		D_DEBUG(DB_TEST, "Opened %s for reading\n", grp_cfg_file);
 	}
 
 	while (1) {
@@ -468,6 +470,8 @@ tc_srv_start_basic(char *srv_group_name, crt_context_t *crt_ctx,
 	char		*grp_cfg_file;
 	char		*my_uri;
 	d_rank_t	 my_rank;
+	// x2682
+	int		 na_type = 0;
 	int		 rc = 0;
 
 	D_ASSERTF(opts.is_initialized == true, "tc_test_init not called.\n");
@@ -505,7 +509,7 @@ tc_srv_start_basic(char *srv_group_name, crt_context_t *crt_ctx,
 
 	grp_cfg_file = getenv("CRT_L_GRP_CFG");
 
-	rc = crt_rank_uri_get(*grp, my_rank, 0, &my_uri);
+	rc = crt_rank_uri_get(*grp, my_rank, na_type, 0, &my_uri);
 	D_ASSERTF(rc == 0, "crt_rank_uri_get() failed; rc=%d\n", rc);
 
 	/* load group info from a config file and delete file upon return */
@@ -515,7 +519,7 @@ tc_srv_start_basic(char *srv_group_name, crt_context_t *crt_ctx,
 
 	D_FREE(my_uri);
 
-	rc = crt_swim_init(0);
+	rc = crt_swim_init(na_type, 0);
 	D_ASSERTF(rc == 0, "crt_swim_init() failed; rc=%d\n", rc);
 
 	rc = crt_group_size(NULL, grp_size);

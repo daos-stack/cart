@@ -51,6 +51,8 @@
 #include <mercury_log.h>
 #include <na.h>
 
+#include <netinet/in.h>
+
 /** the shared HG RPC ID used for all CRT opc */
 #define CRT_HG_RPCID		(0xDA036868)
 #define CRT_HG_ONEWAY_RPCID	(0xDA036869)
@@ -64,16 +66,6 @@ struct crt_rpc_priv;
 struct crt_common_hdr;
 struct crt_corpc_hdr;
 
-/** type of NA plugin */
-enum crt_na_type {
-	CRT_NA_SM		= 0,
-	CRT_NA_OFI_SOCKETS	= 1,
-	CRT_NA_OFI_VERBS_RXM	= 2,
-	CRT_NA_OFI_VERBS	= 3,
-	CRT_NA_OFI_GNI		= 4,
-	CRT_NA_OFI_PSM2		= 5
-};
-
 static inline bool
 crt_na_type_is_ofi(int na_type)
 {
@@ -83,9 +75,9 @@ crt_na_type_is_ofi(int na_type)
 
 struct crt_na_dict {
 	char	*nad_str;
-	int	nad_type;
+	int	 nad_type;
 	/* a flag of explicitly bind with IP:port to create NA class */
-	bool	nad_port_bind;
+	bool	 nad_port_bind;
 };
 
 extern struct crt_na_dict crt_na_dict[];
@@ -137,6 +129,8 @@ struct crt_hg_addr_lookup_cb_args {
 int crt_hg_init(crt_phy_addr_t *addr, bool server);
 int crt_hg_fini(void);
 int crt_hg_ctx_init(struct crt_hg_context *hg_ctx, int idx);
+int crt_hg_ctx_init_opt(struct crt_hg_context *hg_ctx, int idx,
+			crt_ctx_init_opt_t *opt);
 int crt_hg_ctx_fini(struct crt_hg_context *hg_ctx);
 int crt_hg_req_create(struct crt_hg_context *hg_ctx,
 		      struct crt_rpc_priv *rpc_priv);
@@ -274,4 +268,5 @@ crt_hg_bulk_cancel(crt_bulk_opid_t opid)
 	return HG_Bulk_cancel(opid);
 }
 
+int crt_na_ofi_config_init_opt(crt_ctx_init_opt_t *opt);
 #endif /* __CRT_MERCURY_H__ */

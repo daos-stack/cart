@@ -470,6 +470,70 @@ crt_get_info_string(char **string)
 	return 0;
 }
 
+/**
+ * lookup the na plugin type by na_str
+ *
+ * \param[out]          na_type the na plugin type id
+ * \param[in] na_str    the na plugin string, e.g. "ofi+psm2", or "ofi+sockets"
+ *
+ * \return              DER_SUCCESS on success, negative value on error.
+ */
+int
+crt_parse_na_type(int *na_type, const char *na_str)
+{
+	struct crt_na_dict *ent;
+
+	if (na_str == NULL) {
+		D_ERROR("na_str can't be NULL.\n");
+		return -DER_INVAL;
+	}
+
+	for (ent = crt_na_dict; ent->nad_str != NULL; ent++) {
+		if (strncmp(na_str, ent->nad_str, strlen(ent->nad_str) + 1))
+			continue;
+
+		*na_type = ent->nad_type;
+		return DER_SUCCESS;
+	}
+
+	return -DER_NONEXIST;
+}
+
+static int
+crt_get_info_string_opt(char **string, crt_ctx_init_opt_t *opt)
+{
+	int			 port;
+	int			 plugin;
+	char			*plugin_str;
+	struct na_ofi_config	*na_conf;
+	int			 rc;
+
+	rc = crt_parse_na_type(&plugin, opt->ccio_prov);
+	if (rc != DER_SUCCESS) {
+		D_ERROR("crt_parse_na_type() failed rc %d\n", rc);
+		return rc;
+	}
+	D_ASSERT(plugin == crt_na_dict[plugin].nad_type);
+	plugin_str = crt_na_dict[plugin].nad_str;
+
+	if (!crt_na_dict[plugin].nad_port_bind) {
+		D_ASPRINTF(*string, "%s://", plugin_str);
+	} else {
+		na_conf = crt_na_config_lookup(opt->ccio_interface,
+					       opt->ccio_prov,
+					       true /* need_lock */);
+		D_ASSERTF(na_conf != NULL, "na_conf can't be NULL\n");
+		port = na_conf->noc_port;
+		na_conf->noc_port++;
+		D_ASPRINTF(*string,
+			   "%s://%s:%d", plugin_str, na_conf->noc_ip_str, port);
+	}
+	if (*string == NULL)
+		return -DER_NOMEM;
+
+	return DER_SUCCESS;
+}
+
 static int
 crt_hg_log(FILE *stream, const char *fmt, ...)
 {
@@ -496,6 +560,7 @@ crt_hg_init(crt_phy_addr_t *addr, bool server)
 	na_class_t		*na_class = NULL;
 	hg_class_t		*hg_class = NULL;
 	struct hg_init_info	 init_info = {};
+	int			 na_type;
 	int			 rc = 0;
 
 	if (crt_initialized()) {
@@ -511,6 +576,8 @@ crt_hg_init(crt_phy_addr_t *addr, bool server)
 
 	D_ASSERTF(*addr == NULL, "Can only be called in crt_init().\n");
 
+	na_type = crt_gdata.cg_na_plugin;
+
 	rc = crt_get_info_string(&info_string);
 	if (rc != 0)
 		D_GOTO(out, rc);
@@ -521,7 +588,8 @@ crt_hg_init(crt_phy_addr_t *addr, bool server)
 		/* one context per NA class */
 		init_info.na_init_info.max_contexts = 1;
 	else
-		init_info.na_init_info.max_contexts = crt_gdata.cg_ctx_max_num;
+		init_info.na_init_info.max_contexts =
+			crt_gdata.cg_ctx_max_num[na_type];
 
 	D_DEBUG(DB_NET, "info_string: %s\n", info_string);
 	na_class = NA_Initialize_opt(info_string, server,
@@ -584,7 +652,7 @@ crt_hg_init(crt_phy_addr_t *addr, bool server)
 	else
 		D_DEBUG(DB_NET, "passive address: %s.\n", *addr);
 
-	crt_gdata.cg_hg = hg_gdata;
+	crt_gdata.cg_hg[na_type] = hg_gdata;
 
 out:
 	if (info_string)
@@ -604,10 +672,12 @@ crt_hg_fini()
 	hg_class_t	*hg_class;
 	hg_return_t	hg_ret;
 	na_return_t	na_ret;
+	int		na_type;
 	int		rc = DER_SUCCESS;
 
-	na_class = crt_gdata.cg_hg->chg_nacla;
-	hg_class = crt_gdata.cg_hg->chg_hgcla;
+	na_type = crt_gdata.cg_na_plugin;
+	na_class = crt_gdata.cg_hg[na_type]->chg_nacla;
+	hg_class = crt_gdata.cg_hg[na_type]->chg_hgcla;
 	D_ASSERT(na_class != NULL);
 	D_ASSERT(hg_class != NULL);
 
@@ -626,30 +696,167 @@ crt_hg_fini()
 		rc = -DER_HG;
 	}
 
-	D_FREE(crt_gdata.cg_hg);
+	D_FREE(crt_gdata.cg_hg[na_type]);
+	return rc;
+}
+
+/**
+ * initialize an hg class and an underlining na class
+ */
+static int
+crt_hg_init_ground_up(crt_ctx_init_opt_t *opt,
+		      na_class_t **na_class, hg_class_t **hg_class)
+{
+	char			*info_string = NULL;
+	struct crt_hg_gdata	*hg_gdata = NULL;
+	struct hg_init_info	 init_info = {};
+	char			 addr_str[CRT_ADDR_STR_MAX_LEN] = {'\0'};
+	na_size_t		 str_size = CRT_ADDR_STR_MAX_LEN;
+	int			 na_type;
+	int			 rc;
+
+	rc = crt_parse_na_type(&na_type, opt->ccio_prov);
+	if (rc != DER_SUCCESS) {
+		D_DEBUG(DB_TRACE, "crt_parse_na_type() failed rc %d\n",
+			rc);
+		D_GOTO(out, rc);
+	}
+
+	rc = crt_get_info_string_opt(&info_string, opt);
+	if (rc != DER_SUCCESS) {
+		D_DEBUG(DB_TRACE, "crt_get_info_string_opt() failed rc %d\n",
+			rc);
+		D_GOTO(out, rc);
+	}
+
+	init_info.na_init_info.progress_mode = NA_DEFAULT;
+	if (opt->ccio_share_na == 0)
+		init_info.na_init_info.max_contexts = 1;
+	else
+		init_info.na_init_info.max_contexts = opt->ccio_ctx_max_num;
+	*na_class = NA_Initialize_opt(info_string, crt_is_service(),
+				      &init_info.na_init_info);
+	if (*na_class == NULL) {
+		D_ERROR("Could not initialize NA class.\n");
+		D_GOTO(out, rc = -DER_HG);
+	}
+
+	rc = crt_na_class_get_addr(*na_class, addr_str, &str_size);
+	if (rc != DER_SUCCESS) {
+		D_ERROR("crt_na_class_get_addr failed, rc: %d.\n", rc);
+		NA_Finalize(*na_class);
+		D_GOTO(out, rc = -DER_HG);
+	}
+	D_DEBUG(DB_NET, "New base address: %s.\n", addr_str);
+
+	init_info.na_class = *na_class;
+	/* first two args unused because init_info.na_class is not NULL.
+	*/
+	*hg_class = HG_Init_opt(NULL, false, &init_info);
+	if (*hg_class == NULL) {
+		D_ERROR("Could not initialize HG class.\n");
+		NA_Finalize(*na_class);
+		D_GOTO(out, rc = -DER_HG);
+	}
+
+	if (!crt_gdata.cg_hg[na_type]) {
+		D_ALLOC_PTR(hg_gdata);
+		if (hg_gdata == NULL) {
+			HG_Finalize(*hg_class);
+			NA_Finalize(*na_class);
+			D_GOTO(out, rc = -DER_NOMEM);
+		}
+		hg_gdata->chg_nacla = *na_class;
+		hg_gdata->chg_hgcla = *hg_class;
+		crt_gdata.cg_hg[na_type] = hg_gdata;
+	}
+
+	/* register the shared RPCID to every new hg_class */
+	rc = crt_hg_reg_rpcid(*hg_class);
+	if (rc != 0) {
+		D_ERROR("crt_hg_reg_rpcid failed, rc: %d.\n", rc);
+		HG_Finalize(*hg_class);
+		NA_Finalize(*na_class);
+		D_GOTO(out, rc);
+	}
+
+out:
+	if (info_string)
+		D_FREE(info_string);
+	if (rc != DER_SUCCESS) {
+		D_FREE(hg_gdata);
+	}
 	return rc;
 }
 
 int
-crt_hg_ctx_init(struct crt_hg_context *hg_ctx, int idx)
+crt_hg_ctx_init_opt(struct crt_hg_context *hg_ctx, int idx,
+		    crt_ctx_init_opt_t *opt)
 {
 	struct crt_context	*crt_ctx;
+	struct crt_context	*ctx_tmp;
 	na_class_t		*na_class = NULL;
 	hg_class_t		*hg_class = NULL;
 	hg_context_t		*hg_context = NULL;
-	char			*info_string = NULL;
-	struct hg_init_info	 init_info = {};
 	hg_return_t		 hg_ret;
+	struct na_ofi_config	*na_conf;
+	int			 na_type;
+	bool			 reuse_na_ctx = false;
 	int			 rc = 0;
 
 	D_ASSERT(hg_ctx != NULL);
 	crt_ctx = container_of(hg_ctx, struct crt_context, cc_hg_ctx);
+	D_ASSERT(opt != NULL);
 
+	rc = crt_parse_na_type(&na_type, opt->ccio_prov);
+	if (rc != DER_SUCCESS) {
+		D_ERROR("crt_parse_na_type() failed, rc %d\n", rc);
+		D_GOTO(out, rc);
+	}
 	D_DEBUG(DB_NET, "crt_gdata.cg_share_na %d, crt_is_service() %d\n",
-			crt_gdata.cg_share_na, crt_is_service());
-	if (idx == 0 || crt_gdata.cg_share_na == true) {
-		hg_context = HG_Context_create_id(crt_gdata.cg_hg->chg_hgcla,
-						  idx);
+			crt_gdata.cg_share_na[na_type], crt_is_service());
+
+	if (opt->ccio_share_na == 1)
+		reuse_na_ctx = true;
+
+	na_conf = crt_na_config_lookup(opt->ccio_interface, opt->ccio_prov,
+			true /* need_lock */);
+	if (na_conf == NULL) {
+		/* not found */
+		D_DEBUG(DB_ALL, "interface %s not initialized yet.\n",
+				opt->ccio_interface);
+		crt_na_ofi_config_init_opt(opt);
+
+		rc = crt_hg_init_ground_up(opt, &na_class, &hg_class);
+		if (rc != DER_SUCCESS) {
+			D_ERROR("crt_hg_init_ground_up() failed, rc %d\n", rc);
+			D_GOTO(out, rc);
+		}
+
+		reuse_na_ctx = true;
+	} else if (idx == 0) {
+		na_class = crt_gdata.cg_hg[na_type]->chg_nacla;
+		hg_class = crt_gdata.cg_hg[na_type]->chg_hgcla;
+		reuse_na_ctx = true;
+	} else {
+		/* lookup_hg_cass_by_interface_and_provider */
+		ctx_tmp = crt_context_lookup_prov(opt->ccio_interface,
+						  opt->ccio_prov,
+						  false);
+		if (ctx_tmp == NULL) {
+			D_ERROR("Interface %s initialized but no context "
+				"can't be found.\n", na_conf->noc_interface);
+			D_GOTO(out, rc = -DER_NONEXIST);
+		}
+		hg_class = ctx_tmp->cc_hg_ctx.chc_hgcla;
+		na_class = ctx_tmp->cc_hg_ctx.chc_nacla;
+		D_DEBUG(DB_ALL, "interface %s initialized.\n",
+			na_conf->noc_interface);
+	}
+
+	if (reuse_na_ctx) {
+		D_DEBUG(DB_ALL, "reuse_na_ctx 0\n");
+		hg_context = HG_Context_create_id(hg_class, idx);
 		if (hg_context == NULL) {
 			D_ERROR("Could not create HG context.\n");
 			D_GOTO(out, rc = -DER_HG);
@@ -664,44 +871,21 @@ crt_hg_ctx_init(struct crt_hg_context *hg_ctx, int idx)
 			D_GOTO(out, rc = -DER_HG);
 		}
 
-		hg_ctx->chc_nacla = crt_gdata.cg_hg->chg_nacla;
-		hg_ctx->chc_hgcla = crt_gdata.cg_hg->chg_hgcla;
+		hg_ctx->chc_nacla = na_class;
+		hg_ctx->chc_hgcla = hg_class;
 		D_DEBUG(DB_NET, "hg_ctx->chc_hgcla %p\n", hg_ctx->chc_hgcla);
-		hg_ctx->chc_shared_na = true;
+		if (opt->ccio_share_na == 1 || idx == 0) {
+			hg_ctx->chc_shared_na = true;
+			D_DEBUG(DB_TRACE, "idx %d, hg_ctx->chc_shared_na = true\n", idx);
+		} else {
+			hg_ctx->chc_shared_na = false;
+			D_DEBUG(DB_TRACE, "idx %d, hg_ctx->chc_shared_na = false\n", idx);
+		}
 	} else {
-		char		addr_str[CRT_ADDR_STR_MAX_LEN] = {'\0'};
-		na_size_t	str_size = CRT_ADDR_STR_MAX_LEN;
-
-		rc = crt_get_info_string(&info_string);
-		if (rc != 0)
+		rc = crt_hg_init_ground_up(opt, &na_class, &hg_class);
+		if (rc != DER_SUCCESS) {
+			D_ERROR("crt_hg_init_ground_up() failed, rc %d\n", rc);
 			D_GOTO(out, rc);
-
-		init_info.na_init_info.progress_mode = NA_DEFAULT;
-		init_info.na_init_info.max_contexts = 1;
-		na_class = NA_Initialize_opt(info_string, crt_is_service(),
-					     &init_info.na_init_info);
-		if (na_class == NULL) {
-			D_ERROR("Could not initialize NA class.\n");
-			D_GOTO(out, rc = -DER_HG);
-		}
-
-		rc = crt_na_class_get_addr(na_class, addr_str, &str_size);
-		if (rc != 0) {
-			D_ERROR("crt_na_class_get_addr failed, rc: %d.\n", rc);
-			NA_Finalize(na_class);
-			D_GOTO(out, rc = -DER_HG);
-		}
-		D_DEBUG(DB_NET, "New context(idx:%d), listen address: %s.\n",
-			idx, addr_str);
-
-		init_info.na_class = na_class;
-		/* first two args unused because init_info.na_class is not NULL.
-		 */
-		hg_class = HG_Init_opt(NULL, false, &init_info);
-		if (hg_class == NULL) {
-			D_ERROR("Could not initialize HG class.\n");
-			NA_Finalize(na_class);
-			D_GOTO(out, rc = -DER_HG);
 		}
 
 		hg_context = HG_Context_create(hg_class);
@@ -712,18 +896,8 @@ crt_hg_ctx_init(struct crt_hg_context *hg_ctx, int idx)
 			D_GOTO(out, rc = -DER_HG);
 		}
 
-		/* register the shared RPCID to every hg_class */
-		rc = crt_hg_reg_rpcid(hg_class);
-		if (rc != 0) {
-			D_ERROR("crt_hg_reg_rpcid failed, rc: %d.\n", rc);
-			HG_Context_destroy(hg_context);
-			HG_Finalize(hg_class);
-			NA_Finalize(na_class);
-			D_GOTO(out, rc);
-		}
-
 		D_DEBUG(DB_NET, "crt_gdata.cg_hg->chg_hgcla %p\n",
-			crt_gdata.cg_hg->chg_hgcla);
+			crt_gdata.cg_hg[na_type]->chg_hgcla);
 		/* register crt_ctx to get it in crt_rpc_handler_common */
 		hg_ret = HG_Context_set_data(hg_context, crt_ctx, NULL);
 		if (hg_ret != HG_SUCCESS) {
@@ -748,13 +922,11 @@ crt_hg_ctx_init(struct crt_hg_context *hg_ctx, int idx)
 	D_ASSERT(hg_ctx->chc_bulkctx != NULL);
 
 	rc = crt_hg_pool_init(hg_ctx);
-	if (rc != 0)
+	if (rc != DER_SUCCESS)
 		D_ERROR("context idx %d hg_ctx %p, crt_hg_pool_init failed, "
 			"rc: %d.\n", idx, hg_ctx, rc);
 
 out:
-	if (info_string)
-		D_FREE(info_string);
 	return rc;
 }
 
@@ -800,15 +972,21 @@ struct crt_context *
 crt_hg_context_lookup(hg_context_t *hg_ctx)
 {
 	struct crt_context	*crt_ctx;
-	int			found = 0;
+	int			 na_type;
+	int			 found = 0;
 
 	D_RWLOCK_RDLOCK(&crt_gdata.cg_rwlock);
 
-	d_list_for_each_entry(crt_ctx, &crt_gdata.cg_ctx_list, cc_link) {
-		if (crt_ctx->cc_hg_ctx.chc_hgctx == hg_ctx) {
-			found = 1;
-			break;
+	for (na_type = 0; na_type < CRT_NA_TYPE_NUM; na_type++) {
+		d_list_for_each_entry(
+			crt_ctx, &crt_gdata.cg_ctx_list[na_type], cc_link) {
+			if (crt_ctx->cc_hg_ctx.chc_hgctx == hg_ctx) {
+				found = 1;
+				break;
+			}
 		}
+		if (found)
+			break;
 	}
 
 	D_RWLOCK_UNLOCK(&crt_gdata.cg_rwlock);
@@ -1011,7 +1189,7 @@ crt_hg_req_create(struct crt_hg_context *hg_ctx, struct crt_rpc_priv *rpc_priv)
 			rc = -DER_HG;
 		}
 	}
-	if (crt_gdata.cg_share_na == true) {
+	if (hg_ctx->chc_shared_na == true) {
 		hg_ret = HG_Set_target_id(rpc_priv->crp_hg_hdl,
 					  rpc_priv->crp_pub.cr_ep.ep_tag);
 		if (hg_ret != HG_SUCCESS) {

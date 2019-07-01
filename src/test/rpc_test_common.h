@@ -50,6 +50,7 @@
 #define TEST_RPC_COMMON_BASE 0x010000000
 #define TEST_RPC_COMMON_VER  0
 
+#define DEFAULT_PROGRESS_CTX_IDX	0
 
 enum {
 /* T1.0:- Without reply from server */

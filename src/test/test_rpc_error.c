@@ -52,6 +52,7 @@
 
 #define TEST_RPC_ERROR_BASE             0x010000000
 #define TEST_RPC_ERROR_VER              0
+#define DEFAULT_PROGRESS_CTX_IDX	0
 
 #define RPC_ERR_OPC_NOREPLY	CRT_PROTO_OPC(TEST_RPC_ERROR_BASE, \
 					TEST_RPC_ERROR_VER, 0)
@@ -236,6 +237,12 @@ rpc_err_init(void)
 	rc = crt_init(rpc_err.re_local_group_name, flag);
 	D_ASSERTF(rc == 0, "crt_init() failed, rc: %d\n", rc);
 
+	if (rpc_err.re_is_service) {
+		rc = crt_swim_init(DEFAULT_PROGRESS_CTX_IDX);
+		D_ASSERTF(rc == DER_SUCCESS,
+			  "crt_swim_init() failed rc: %d.\n", rc);
+	}
+
 	rc = crt_group_rank(NULL, &rpc_err.re_my_rank);
 	D_ASSERTF(rc == 0, "crt_group_rank() failed, rc: %d\n", rc);
 
@@ -264,6 +271,10 @@ rpc_err_fini()
 
 	rc = crt_context_destroy(rpc_err.re_crt_ctx, 0);
 	D_ASSERTF(rc == 0, "crt_context_destroy() failed. rc: %d\n", rc);
+
+	if (rpc_err.re_is_service)
+		crt_swim_fini();
+
 	rc = crt_finalize();
 	D_ASSERTF(rc == 0, "crt_finalize() failed. rc: %d\n", rc);
 

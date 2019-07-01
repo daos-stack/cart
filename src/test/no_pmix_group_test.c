@@ -344,6 +344,7 @@ int main(int argc, char **argv)
 	struct RPC_PING_in	*input;
 	sem_t			sem;
 	int			tag;
+	int			na_type;
 	int			rc;
 
 	env_self_rank = getenv("CRT_L_RANK");
@@ -396,7 +397,8 @@ int main(int argc, char **argv)
 		assert(0);
 	}
 
-	rc = crt_rank_uri_get(grp, my_rank, 0, &my_uri);
+	na_type = crt_context_na_type(crt_ctx[0]);
+	rc = crt_rank_uri_get(grp, my_rank, na_type, 0, &my_uri);
 	if (rc != 0) {
 		D_ERROR("crt_rank_uri_get() failed; rc=%d\n", rc);
 		assert(0);
@@ -414,7 +416,7 @@ int main(int argc, char **argv)
 			my_uri, grp_cfg_file);
 	D_FREE(my_uri);
 
-	rc = crt_swim_init(0);
+	rc = crt_swim_init(na_type, 0);
 	if (rc != 0) {
 		D_ERROR("crt_swim_init() failed; rc=%d\n", rc);
 		assert(0);

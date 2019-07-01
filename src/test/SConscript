@@ -49,7 +49,8 @@ SIMPLE_TEST_SRC = ['threaded_client.c',
                    'no_pmix_launcher_client.c', 'no_pmix_group_test.c',
                    'test_rpc_to_ghost_rank.c', 'no_pmix_corpc_errors.c']
 BASIC_SRC = ['crt_basic.c']
-TEST_GROUP_SRC = 'test_group.c'
+TEST_GROUP_SRC = ['test_group.c']
+TEST_MULTI_PROV_SRC = ['test_multi_prov_srv.c', 'test_multi_prov_cli.c']
 IV_TESTS = ['iv_client.c', 'iv_server.c']
 #TEST_RPC_ERR_SRC = 'test_rpc_error.c'
 #CRT_RPC_TESTS = ['rpc_test_cli.c', 'rpc_test_srv.c', 'rpc_test_srv2.c']
@@ -76,6 +77,11 @@ def scons():
         tenv.Requires(target, [cart_lib, gurt_lib])
         tenv.Install(os.path.join("$PREFIX", 'TESTING', 'tests'), target)
 
+#    for test in ECHO_TEST_SRC:
+#        target = tenv.Program(test)
+#        tenv.Requires(target, [cart_lib, gurt_lib])
+#        tenv.Install(os.path.join("$PREFIX", 'TESTING', 'tests'), target)
+
     for test in IV_TESTS:
         target = tenv.Program(test)
         tenv.Requires(target, [cart_lib, gurt_lib])
@@ -100,6 +106,12 @@ def scons():
         target = tenv.Program(test)
         tenv.Requires(target, [cart_lib, gurt_lib])
         tenv.Install(os.path.join("$PREFIX", 'TESTING', 'tests'), target)
+
+    for test in TEST_MULTI_PROV_SRC:
+        target = tenv.Program([test])
+        tenv.Requires(target, [cart_lib, gurt_lib])
+        tenv.Install(os.path.join("$PREFIX", 'TESTING', 'tests'), target)
+
 #    test_rpc_err = tenv.Program([TEST_RPC_ERR_SRC])
 #    tenv.Requires(test_rpc_err, [cart_lib, gurt_lib])
 #    tenv.Install(os.path.join("$PREFIX", 'TESTING', 'tests'), test_rpc_err)

@@ -276,6 +276,7 @@ srv_rpc_finalize(void)
 		assert(rc == 0);
 	}
 
+	crt_swim_fini();
 	rc = crt_finalize();
 	D_ASSERTF(rc == 0, "crt_finalize failed %d\n", rc);
 
@@ -569,6 +570,9 @@ srv_rpc_init(void)
 
 	rc = crt_init(CRT_DEFAULT_GRPID, CRT_FLAG_BIT_SERVER);
 	D_ASSERTF(rc == 0, " crt_init failed %d\n", rc);
+
+	rc = crt_swim_init(DEFAULT_PROGRESS_CTX_IDX);
+	D_ASSERTF(rc == DER_SUCCESS, "crt_swim_init() failed rc: %d.\n", rc);
 
 	rc = crt_group_config_path_set(rpc_srv.config_path);
 	D_ASSERTF(rc == 0, "crt_group_config_path_set failed %d\n", rc);

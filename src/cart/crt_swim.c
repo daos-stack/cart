@@ -189,9 +189,10 @@ static int crt_swim_send_message(struct swim_context *ctx, swim_id_t to,
 	crt_opcode_t		 opc;
 	int			 opc_idx = 0;
 	int			 ctx_idx = csm->csm_crt_ctx_idx;
+	int			 na_type = csm->csm_crt_na_type;
 	int			 rc;
 
-	crt_ctx = crt_context_lookup(ctx_idx);
+	crt_ctx = crt_context_lookup(na_type, ctx_idx);
 	if (crt_ctx == CRT_CONTEXT_NULL) {
 		D_ERROR("crt_context_lookup failed\n");
 		D_GOTO(out, rc = -DER_UNINIT);
@@ -425,7 +426,7 @@ static struct swim_ops crt_swim_ops = {
 	.set_member_state = &crt_swim_set_member_state,
 };
 
-int crt_swim_init(int crt_ctx_idx)
+int crt_swim_init(int na_type, int crt_ctx_idx)
 {
 	struct crt_grp_priv	*grp_priv = crt_gdata.cg_grp->gg_primary_grp;
 	struct crt_swim_membs	*csm = &grp_priv->gp_membs_swim;
@@ -441,6 +442,7 @@ int crt_swim_init(int crt_ctx_idx)
 
 	grp_membs = grp_priv_get_membs(grp_priv);
 	csm->csm_crt_ctx_idx = crt_ctx_idx;
+	csm->csm_crt_na_type = na_type;
 	csm->csm_ctx = swim_init(SWIM_ID_INVALID, &crt_swim_ops, grp_priv);
 	if (csm->csm_ctx == NULL) {
 		D_ERROR("swim_init() failed for self=%u, crt_ctx_idx=%d\n",
@@ -490,6 +492,13 @@ out:
 	if (rc == DER_SUCCESS)
 		crt_gdata.cg_swim_inited = 1;
 	return rc;
+}
+
+bool
+crt_swim_enabled(struct crt_grp_priv *grp_priv)
+{
+	struct crt_swim_membs	*csm = &grp_priv->gp_membs_swim;
+	return csm->csm_ctx != NULL;
 }
 
 int crt_swim_enable(struct crt_grp_priv *grp_priv, int crt_ctx_idx)

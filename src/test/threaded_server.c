@@ -49,6 +49,7 @@ static pthread_cond_t	cond = PTHREAD_COND_INITIALIZER;
 
 #define NUM_THREADS 16
 #define STOP 1
+#define DEFAULT_PROGRESS_CTX_IDX	0
 
 static int check_status(void *arg)
 {
@@ -148,6 +149,9 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
+	rc = crt_swim_init(0, DEFAULT_PROGRESS_CTX_IDX);
+	D_ASSERTF(rc == DER_SUCCESS, "crt_swim_init() failed rc: %d.\n", rc);
+
 	rc = crt_proto_register(&my_proto_fmt_threaded_server);
 	if (rc != 0) {
 		printf("Could not register rpc protocol , rc = %d", rc);
@@ -184,6 +188,7 @@ int main(int argc, char **argv)
 		       msg_counts[i]);
 
 	crt_context_destroy(crt_ctx, false);
+	crt_swim_fini();
 	crt_finalize();
 
 	d_log_fini();
