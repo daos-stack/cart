@@ -574,14 +574,27 @@ out:
 int
 d_log_init(void)
 {
-	char	*log_file;
+	char	*log_file, *log_file_pid_append;
 	int	 flags = DLOG_FLV_LOGPID | DLOG_FLV_FAC | DLOG_FLV_TAG;
 	int	 rc;
+	char     buffer1[20], buffer2[100];
+	pid_t    pid;
 
 	log_file = getenv(D_LOG_FILE_ENV);
 	if (log_file == NULL || strlen(log_file) == 0) {
 		flags |= DLOG_FLV_STDOUT;
 		log_file = NULL;
+	}
+
+	log_file_pid_append = getenv(D_LOG_FILE_PID_APPEND_ENV);
+	if (log_file != NULL && strcmp (log_file_pid_append, "0")!=0) {
+		/* Append pid to log file. */
+		pid = getpid();
+		//itoa((int)pid, buffer1, 16);
+		sprintf(buffer1, "%d", pid);
+		strcpy (buffer2, log_file);
+		strcat (buffer2, buffer1);
+		log_file = buffer2;
 	}
 
 	rc = d_log_init_adv("CaRT", log_file, flags, DLOG_WARN, DLOG_EMERG);
