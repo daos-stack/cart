@@ -61,12 +61,12 @@ class CartCtlFiveNodeTest(Test):
 
         srvcmd = self.utils.build_cmd(self, self.env, "srv", True, urifile)
 
-        print("\nServer cmd : %s\n" % srvcmd)
+        self.utils.print_cmd("\nServer cmd : %s\n" % srvcmd)
 
         try:
             srv_rtn = self.utils.launch_cmd_bg(self, srvcmd)
         except Exception as e:
-            print("Exception in launching server : {}".format(e))
+            self.utils.print_cmd("Exception in launching server : {}".format(e))
             self.fail("Test failed.\n")
 
         # Verify the server is still running.
@@ -78,10 +78,10 @@ class CartCtlFiveNodeTest(Test):
         time.sleep(5)
 
         clicmd = self.utils.build_cmd(self, self.env, "cli1", False, urifile)
-        print("\nClient cmd : %s\n" % clicmd)
+        self.utils.print_cmd("\nClient cmd : %s\n" % clicmd)
         self.utils.launch_test(self, clicmd, srv_rtn)
         clicmd = self.utils.build_cmd(self, self.env, "cli2", False, urifile)
-        print("\nClient cmd : %s\n" % clicmd)
+        self.utils.print_cmd("\nClient cmd : %s\n" % clicmd)
         self.utils.launch_test(self, clicmd, srv_rtn)
 
         self.utils.stop_process(srv_rtn)

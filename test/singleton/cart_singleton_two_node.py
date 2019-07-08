@@ -75,12 +75,12 @@ class CartSingletonTwoNodeTest(Test):
 
         srvcmd += " -p {} -s".format(self.tempdir)
 
-        print("\nServer cmd : %s\n" % srvcmd)
+        self.utils.print_cmd("\nServer cmd : %s\n" % srvcmd)
 
         try:
             srv_rtn = self.utils.launch_cmd_bg(self, srvcmd)
         except Exception as e:
-            print("Exception in launching server : {}".format(e))
+            self.utils.print_cmd("Exception in launching server : {}".format(e))
             self.fail("Test failed.\n")
 
         time.sleep(5)
@@ -95,12 +95,12 @@ class CartSingletonTwoNodeTest(Test):
 
         clicmd += " -p {} -s".format(self.tempdir)
 
-        print("\nClient cmd : %s\n" % clicmd)
+        self.utils.print_cmd("\nClient cmd : %s\n" % clicmd)
 
         self.utils.launch_test(self, clicmd, srv_rtn)
 
         # Stop the server
-        print("Stopping server process {}".format(srv_rtn))
+        self.utils.print_cmd("Stopping server process {}".format(srv_rtn))
         procrtn = self.utils.stop_process(srv_rtn)
 
         if procrtn:
@@ -129,12 +129,12 @@ class CartSingletonTwoNodeTest(Test):
         srvcmd += " : {} -x CRT_CTX_NUM={} -N {} --hostfile {} {}".format(self.env,
                                       srv2_ctx, srv2_ppn, hostfile, srv2_bin)
 
-        print("\nServer cmd : %s\n" % srvcmd)
+        self.utils.print_cmd("\nServer cmd : %s\n" % srvcmd)
 
         try:
             srv_rtn = self.utils.launch_cmd_bg(self, srvcmd)
         except Exception as e:
-            print("Exception in launching server : {}".format(e))
+            self.utils.print_cmd("Exception in launching server : {}".format(e))
             self.fail("Test failed.\n")
 
         time.sleep(10)
@@ -149,12 +149,12 @@ class CartSingletonTwoNodeTest(Test):
 
         clicmd += " -p {} -s -m".format(self.tempdir)
 
-        print("\nClient cmd : %s\n" % clicmd)
+        self.utils.print_cmd("\nClient cmd : %s\n" % clicmd)
 
         self.utils.launch_test(self, clicmd, srv_rtn)
 
         # Stop the server
-        print("Stopping server process {}".format(srv_rtn))
+        self.utils.print_cmd("Stopping server process {}".format(srv_rtn))
         procrtn = self.utils.stop_process(srv_rtn)
 
         if procrtn:
@@ -175,22 +175,22 @@ class CartSingletonTwoNodeTest(Test):
         srv2cmd = self.utils.build_cmd(self, self.env, "srv2", False, urifile)
 
 
-        print("\nServer cmd : %s\n" % srvcmd)
+        self.utils.print_cmd("\nServer cmd : %s\n" % srvcmd)
 
         try:
             srv_rtn = self.utils.launch_cmd_bg(self, srvcmd)
         except Exception as e:
-            print("Exception in launching server : {}".format(e))
+            self.utils.print_cmd("Exception in launching server : {}".format(e))
             self.fail("Test failed.\n")
 
         time.sleep(10)
 
-        print("\nServer cmd : %s\n" % srv2cmd)
+        self.utils.print_cmd("\nServer cmd : %s\n" % srv2cmd)
 
         try:
             srv2_rtn = self.utils.launch_cmd_bg(self, srv2cmd)
         except Exception as e:
-            print("Exception in launching server : {}".format(e))
+            self.utils.print_cmd("Exception in launching server : {}".format(e))
             self.fail("Test failed.\n")
 
         # Verify the server is still running.
@@ -203,15 +203,15 @@ class CartSingletonTwoNodeTest(Test):
 
         clicmd += " -m"
 
-        print("\nClient cmd : %s\n" % clicmd)
+        self.utils.print_cmd("\nClient cmd : %s\n" % clicmd)
 
         self.utils.launch_test(self, clicmd, srv_rtn, srv2_rtn)
 
         # Stop the server
-        print("Stopping server process {}".format(srv_rtn))
+        self.utils.print_cmd("Stopping server process {}".format(srv_rtn))
         procrtn1 = self.utils.stop_process(srv_rtn)
 
-        print("Stopping server process {}".format(srv2_rtn))
+        self.utils.print_cmd("Stopping server process {}".format(srv2_rtn))
         procrtn2 = self.utils.stop_process(srv2_rtn)
 
         if procrtn1 or procrtn2:

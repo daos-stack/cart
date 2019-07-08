@@ -66,12 +66,12 @@ class CartSingletonOneNodeTest(Test):
 
         srvcmd += " -p {} -s".format(self.tempdir)
 
-        print("\nServer cmd : %s\n" % srvcmd)
+        self.utils.print_cmd("\nServer cmd : %s\n" % srvcmd)
 
         try:
             srv_rtn = self.utils.launch_cmd_bg(self, srvcmd)
         except Exception as e:
-            print("Exception in launching server : {}".format(e))
+            self.utils.print_cmd("Exception in launching server : {}".format(e))
             self.fail("Test failed.\n")
 
         time.sleep(5)
@@ -95,12 +95,12 @@ class CartSingletonOneNodeTest(Test):
 
         clicmd += " -p {} -s".format(self.tempdir)
 
-        print("\nClient cmd : %s\n" % clicmd)
+        self.utils.print_cmd("\nClient cmd : %s\n" % clicmd)
 
         self.utils.launch_test(self, clicmd, srv_rtn)
 
         # Stop the server
-        print("Stopping server process {}".format(srv_rtn))
+        self.utils.print_cmd("Stopping server process {}".format(srv_rtn))
         procrtn = self.utils.stop_process(srv_rtn)
 
         if procrtn:

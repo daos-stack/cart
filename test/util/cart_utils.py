@@ -29,6 +29,7 @@ import random
 import json
 import shlex
 import subprocess
+import logging
 
 class CartUtils():
     """CartUtils Class"""
@@ -285,3 +286,9 @@ class CartUtils():
             return -1
 
         return rtn
+
+    def print_cmd(self, cmd):
+        stdout = logging.getLogger('avocado.test.stdout')
+        stdout.info(cmd)
+        progress_log = logging.getLogger("progress")
+        progress_log.info(cmd)

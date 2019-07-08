@@ -75,7 +75,7 @@ class CartNoPmixLauncherOneNodeTest(Test):
         cmd += " {}".format(cli_bin)
         cmd += " {}".format(cli_arg)
 
-        print("\nTest cmd : %s\n" % cmd)
+        self.utils.print_cmd("\nTest cmd : %s\n" % cmd)
         self.utils.launch_test(self, cmd)
 
 if __name__ == "__main__":

@@ -58,7 +58,7 @@ class CartBarrierFiveNodeTest(Test):
 
         cmd = self.utils.build_cmd(self, self.env, "srv")
 
-        print("\nTest cmd : %s\n" % cmd)
+        self.utils.print_cmd("\nTest cmd : %s\n" % cmd)
 
         self.utils.launch_test(self, cmd)
 
