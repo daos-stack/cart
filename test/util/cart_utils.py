@@ -29,6 +29,8 @@ import random
 import json
 import shlex
 import subprocess
+import cart_logparse
+import cart_logtest
 
 class CartUtils():
     """CartUtils Class"""
@@ -285,3 +287,11 @@ class CartUtils():
             return -1
 
         return rtn
+
+    def log_check(self):
+        """Check log files for consistency """
+        strict_test = False
+	for filename in os.listdir(self.log_dir)
+            cl = cart_logparse.LogIter(filename)
+            c_log_test = cart_logtest.LogTest(cl)
+            c_log_test.check_log_file(strict_test)

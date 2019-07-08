@@ -65,6 +65,7 @@ class CartRpcOneNodeTest(Test):
         print("\nClient cmd : %s\n" % clicmd)
 
         self.utils.launch_srv_cli_test(self, srvcmd, clicmd)
+        self.utils.log_check(self)
 
 if __name__ == "__main__":
     main()
