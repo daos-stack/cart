@@ -69,7 +69,7 @@ class CartSingletonOneNodeTest(Test):
         try:
             srv_rtn = self.utils.launch_cmd_bg(self, srvcmd)
         except Exception as e:
-            self.utils.print_cmd("Exception in launching server : {}".format(e))
+            self.utils.print("Exception in launching server : {}".format(e))
             self.fail("Test failed.\n")
 
         time.sleep(5)
@@ -96,7 +96,7 @@ class CartSingletonOneNodeTest(Test):
         self.utils.launch_test(self, clicmd, srv_rtn)
 
         # Stop the server
-        self.utils.print_cmd("Stopping server process {}".format(srv_rtn))
+        self.utils.print("Stopping server process {}".format(srv_rtn))
         procrtn = self.utils.stop_process(srv_rtn)
 
         if procrtn:

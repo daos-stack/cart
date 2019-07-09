@@ -70,7 +70,7 @@ class CartGroupTiersThreeNodeTest(Test):
         try:
             srv2_rtn = self.utils.launch_cmd_bg(self, srv2cmd)
         except Exception as e:
-            self.utils.print_cmd("Exception in launching server : {}".format(e))
+            self.utils.print("Exception in launching server : {}".format(e))
             self.fail("Test failed.\n")
 
         time.sleep(8)
@@ -78,7 +78,7 @@ class CartGroupTiersThreeNodeTest(Test):
         try:
             srv_rtn = self.utils.launch_cmd_bg(self, srvcmd)
         except Exception as e:
-            self.utils.print_cmd("Exception in launching server : {}".format(e))
+            self.utils.print("Exception in launching server : {}".format(e))
             self.fail("Test failed.\n")
 
         time.sleep(4)
@@ -92,10 +92,10 @@ class CartGroupTiersThreeNodeTest(Test):
         self.utils.launch_test(self, clicmd, srv_rtn, srv2_rtn)
 
         # Stop the server
-        self.utils.print_cmd("Stopping server process 2 {}".format(srv2_rtn))
+        self.utils.print("Stopping server process 2 {}".format(srv2_rtn))
         procrtn2 = self.utils.stop_process(srv2_rtn)
 
-        self.utils.print_cmd("Stopping server process 1 {}".format(srv_rtn))
+        self.utils.print("Stopping server process 1 {}".format(srv_rtn))
         procrtn1 = self.utils.stop_process(srv_rtn)
 
         if procrtn2 or procrtn1:

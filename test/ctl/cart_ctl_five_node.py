@@ -64,7 +64,7 @@ class CartCtlFiveNodeTest(Test):
         try:
             srv_rtn = self.utils.launch_cmd_bg(self, srvcmd)
         except Exception as e:
-            self.utils.print_cmd("Exception in launching server : {}".format(e))
+            self.utils.print("Exception in launching server : {}".format(e))
             self.fail("Test failed.\n")
 
         # Verify the server is still running.

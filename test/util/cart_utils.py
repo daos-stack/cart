@@ -118,6 +118,9 @@ class CartUtils():
 
     def get_env(self, cartobj):
         """ return basic env setting in yaml """
+        self.stdout = logging.getLogger('avocado.test.stdout')
+        self.progress_log = logging.getLogger("progress")
+
         env_CCSA = cartobj.params.get("env", "/run/env_CRT_CTX_SHARE_ADDR/*/")
         test_name = cartobj.params.get("name", "/run/tests/*/")
         host_cfg = cartobj.params.get("config", "/run/hosts/*/")
@@ -262,7 +265,7 @@ class CartUtils():
     def launch_test(self, cartobj, cmd, srv1=None, srv2=None):
         """ launches test """
 
-        self.print_cmd("\nCMD : %s\n" % cmd)
+        self.print("\nCMD : %s\n" % cmd)
 
         cmd = shlex.split(cmd)
         rtn = subprocess.call(cmd)
@@ -281,7 +284,7 @@ class CartUtils():
     def launch_cmd_bg(self, cartobj, cmd):
         """ launches the given cmd in background """
 
-        self.print_cmd("\nCMD : %s\n" % cmd)
+        self.print("\nCMD : %s\n" % cmd)
 
         cmd = shlex.split(cmd)
         rtn = subprocess.Popen(cmd)
@@ -291,8 +294,8 @@ class CartUtils():
 
         return rtn
 
-    def print_cmd(self, cmd):
-        stdout = logging.getLogger('avocado.test.stdout')
-        stdout.info(cmd)
-        progress_log = logging.getLogger("progress")
-        progress_log.info(cmd)
+    def print(self, cmd):
+        """ prints the given cmd at runtime and stdout """
+
+        self.stdout.info(cmd)
+        self.progress_log.info(cmd)
