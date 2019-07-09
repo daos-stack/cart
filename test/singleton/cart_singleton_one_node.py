@@ -66,8 +66,6 @@ class CartSingletonOneNodeTest(Test):
 
         srvcmd += " -p {} -s".format(self.tempdir)
 
-        self.utils.print_cmd("\nServer cmd : %s\n" % srvcmd)
-
         try:
             srv_rtn = self.utils.launch_cmd_bg(self, srvcmd)
         except Exception as e:
@@ -94,8 +92,6 @@ class CartSingletonOneNodeTest(Test):
         clicmd = self.params.get("cli_bin", '/run/tests/*/')
 
         clicmd += " -p {} -s".format(self.tempdir)
-
-        self.utils.print_cmd("\nClient cmd : %s\n" % clicmd)
 
         self.utils.launch_test(self, clicmd, srv_rtn)
 

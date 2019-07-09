@@ -61,8 +61,6 @@ class CartCtlFiveNodeTest(Test):
 
         srvcmd = self.utils.build_cmd(self, self.env, "srv", True, urifile)
 
-        self.utils.print_cmd("\nServer cmd : %s\n" % srvcmd)
-
         try:
             srv_rtn = self.utils.launch_cmd_bg(self, srvcmd)
         except Exception as e:
@@ -78,10 +76,8 @@ class CartCtlFiveNodeTest(Test):
         time.sleep(5)
 
         clicmd = self.utils.build_cmd(self, self.env, "cli1", False, urifile)
-        self.utils.print_cmd("\nClient cmd : %s\n" % clicmd)
         self.utils.launch_test(self, clicmd, srv_rtn)
         clicmd = self.utils.build_cmd(self, self.env, "cli2", False, urifile)
-        self.utils.print_cmd("\nClient cmd : %s\n" % clicmd)
         self.utils.launch_test(self, clicmd, srv_rtn)
 
         self.utils.stop_process(srv_rtn)

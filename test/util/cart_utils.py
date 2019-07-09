@@ -262,6 +262,8 @@ class CartUtils():
     def launch_test(self, cartobj, cmd, srv1=None, srv2=None):
         """ launches test """
 
+        self.print_cmd("\nCMD : %s\n" % cmd)
+
         cmd = shlex.split(cmd)
         rtn = subprocess.call(cmd)
 
@@ -278,6 +280,8 @@ class CartUtils():
 
     def launch_cmd_bg(self, cartobj, cmd):
         """ launches the given cmd in background """
+
+        self.print_cmd("\nCMD : %s\n" % cmd)
 
         cmd = shlex.split(cmd)
         rtn = subprocess.Popen(cmd)

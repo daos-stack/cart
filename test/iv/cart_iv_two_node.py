@@ -222,8 +222,6 @@ class CartIvTwoNodeTest(Test):
 
         srvcmd = self.utils.build_cmd(self, self.env, "srv")
 
-        self.utils.print_cmd("\nServer cmd : %s\n" % srvcmd)
-
         try:
             srv_rtn = self.utils.launch_cmd_bg(self, srvcmd)
         except Exception as e:

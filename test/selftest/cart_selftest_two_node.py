@@ -61,9 +61,6 @@ class CartSelfTwoNodeTest(Test):
         srvcmd = self.utils.build_cmd(self, self.env, "srv", True, urifile)
         clicmd = self.utils.build_cmd(self, self.env, "cli", False, urifile)
 
-        self.utils.print_cmd("\nServer cmd : %s\n" % srvcmd)
-        self.utils.print_cmd("\nClient cmd : %s\n" % clicmd)
-
         srv_rtn = self.utils.launch_cmd_bg(self, srvcmd)
 
         # Verify the server is still running.

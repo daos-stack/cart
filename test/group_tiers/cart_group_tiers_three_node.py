@@ -67,8 +67,6 @@ class CartGroupTiersThreeNodeTest(Test):
 
         srv2cmd = self.utils.build_cmd(self, self.env, "srv2", True, urifile2)
 
-        self.utils.print_cmd("\nServer 1 cmd : %s\n" % srv2cmd)
-
         try:
             srv2_rtn = self.utils.launch_cmd_bg(self, srv2cmd)
         except Exception as e:
@@ -76,8 +74,6 @@ class CartGroupTiersThreeNodeTest(Test):
             self.fail("Test failed.\n")
 
         time.sleep(8)
-
-        self.utils.print_cmd("\nServer 2 cmd : %s\n" % srvcmd)
 
         try:
             srv_rtn = self.utils.launch_cmd_bg(self, srvcmd)
@@ -89,13 +85,9 @@ class CartGroupTiersThreeNodeTest(Test):
 
         clicmd = self.utils.build_cmd(self, self.env, "cli1", False, urifile2)
 
-        self.utils.print_cmd("\nClient 1 cmd : %s\n" % clicmd)
-
         self.utils.launch_test(self, clicmd, srv_rtn, srv2_rtn)
 
         clicmd = self.utils.build_cmd(self, self.env, "cli2", False, urifile1)
-
-        self.utils.print_cmd("\nClient 2 cmd : %s\n" % clicmd)
 
         self.utils.launch_test(self, clicmd, srv_rtn, srv2_rtn)
 

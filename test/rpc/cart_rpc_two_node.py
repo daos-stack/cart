@@ -61,9 +61,6 @@ class CartRpcTwoNodeTest(Test):
         srvcmd = self.utils.build_cmd(self, self.env, "srv", True, urifile)
         clicmd = self.utils.build_cmd(self, self.env, "cli", False, urifile)
 
-        self.utils.print_cmd("\nServer cmd : %s\n" % srvcmd)
-        self.utils.print_cmd("\nClient cmd : %s\n" % clicmd)
-
         self.utils.launch_srv_cli_test(self, srvcmd, clicmd)
 
 if __name__ == "__main__":

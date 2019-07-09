@@ -75,8 +75,6 @@ class CartSingletonTwoNodeTest(Test):
 
         srvcmd += " -p {} -s".format(self.tempdir)
 
-        self.utils.print_cmd("\nServer cmd : %s\n" % srvcmd)
-
         try:
             srv_rtn = self.utils.launch_cmd_bg(self, srvcmd)
         except Exception as e:
@@ -94,8 +92,6 @@ class CartSingletonTwoNodeTest(Test):
         clicmd = self.params.get("cli_bin", '/run/tests/*/')
 
         clicmd += " -p {} -s".format(self.tempdir)
-
-        self.utils.print_cmd("\nClient cmd : %s\n" % clicmd)
 
         self.utils.launch_test(self, clicmd, srv_rtn)
 
@@ -129,8 +125,6 @@ class CartSingletonTwoNodeTest(Test):
         srvcmd += " : {} -x CRT_CTX_NUM={} -N {} --hostfile {} {}".format(self.env,
                                       srv2_ctx, srv2_ppn, hostfile, srv2_bin)
 
-        self.utils.print_cmd("\nServer cmd : %s\n" % srvcmd)
-
         try:
             srv_rtn = self.utils.launch_cmd_bg(self, srvcmd)
         except Exception as e:
@@ -148,8 +142,6 @@ class CartSingletonTwoNodeTest(Test):
         clicmd = self.params.get("cli_bin", '/run/tests/*/')
 
         clicmd += " -p {} -s -m".format(self.tempdir)
-
-        self.utils.print_cmd("\nClient cmd : %s\n" % clicmd)
 
         self.utils.launch_test(self, clicmd, srv_rtn)
 
@@ -174,9 +166,6 @@ class CartSingletonTwoNodeTest(Test):
 
         srv2cmd = self.utils.build_cmd(self, self.env, "srv2", False, urifile)
 
-
-        self.utils.print_cmd("\nServer cmd : %s\n" % srvcmd)
-
         try:
             srv_rtn = self.utils.launch_cmd_bg(self, srvcmd)
         except Exception as e:
@@ -184,8 +173,6 @@ class CartSingletonTwoNodeTest(Test):
             self.fail("Test failed.\n")
 
         time.sleep(10)
-
-        self.utils.print_cmd("\nServer cmd : %s\n" % srv2cmd)
 
         try:
             srv2_rtn = self.utils.launch_cmd_bg(self, srv2cmd)
@@ -202,8 +189,6 @@ class CartSingletonTwoNodeTest(Test):
         clicmd = self.utils.build_cmd(self, self.env, "cli", False, urifile)
 
         clicmd += " -m"
-
-        self.utils.print_cmd("\nClient cmd : %s\n" % clicmd)
 
         self.utils.launch_test(self, clicmd, srv_rtn, srv2_rtn)
 
