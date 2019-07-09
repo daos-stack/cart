@@ -34,6 +34,11 @@ import logging
 class CartUtils():
     """CartUtils Class"""
 
+    def __init__(self):
+        """ CartUtils init """
+        self.stdout = logging.getLogger('avocado.test.stdout')
+        self.progress_log = logging.getLogger("progress")
+
     def write_host_file(self, hostlist, slots=1):
         """ write out a hostfile suitable for orterun """
 
@@ -118,9 +123,6 @@ class CartUtils():
 
     def get_env(self, cartobj):
         """ return basic env setting in yaml """
-        self.stdout = logging.getLogger('avocado.test.stdout')
-        self.progress_log = logging.getLogger("progress")
-
         env_CCSA = cartobj.params.get("env", "/run/env_CRT_CTX_SHARE_ADDR/*/")
         test_name = cartobj.params.get("name", "/run/tests/*/")
         host_cfg = cartobj.params.get("config", "/run/hosts/*/")
