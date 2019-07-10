@@ -79,7 +79,7 @@ extern void (*d_alt_assert)(const int, const char*, const char*, const int);
 #define D_LOG_MASK_ENV	"D_LOG_MASK"	/**< Env to specify log mask */
 
 /**< Env to specify log file pid append to filename*/
-#define D_LOG_FILE_APPEND_PID_ENV	"D_LOG_FILE_APPEND_PID"	
+#define D_LOG_FILE_APPEND_PID_ENV	"D_LOG_FILE_APPEND_PID"
 
 /* Enable shadow warning where users use same variable name in nested
  * scope.   This enables use of a variable in the macro below and is

@@ -20,10 +20,9 @@ hosts: !mux
   hosts_1:
     config: one_node
     srv:
-       - wolf-55
+       - boro-A
     cli:
-       - wolf-55
- 
+       - boro-A 
 tests: !mux
   proto:
     name: proto_basic
