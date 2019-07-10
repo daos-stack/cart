@@ -28,8 +28,8 @@ fault_config:
     # Change probability_x and probability_y both to non-zero to turn on the
     # D_ALLOC injection in test_group.c
   - id:           1000
-    probability_x:  0
-    probability_y:  0
+    probability_x:  1
+    probability_y:  1
     # without quoting, no space is allowed here, leading and trailing white
     # spaces are ignored.  with quoting, anything between quotes is preserved,
     # including white spaces.
