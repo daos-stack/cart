@@ -132,7 +132,8 @@ class LogLine():
 
     def to_str(self, mark=False):
         """Convert the object to a string"""
-        pre = self._preamble.split(' ', maxsplit=3)
+#        pre = self._preamble.split(' ', maxsplit=3)
+        pre = self._preamble.split(' ', 3)
         preamble = ' '.join([pre[0], pre[3]])
         if mark:
             return '{} ** {}'.format(preamble, self._msg)
@@ -306,7 +307,7 @@ class StateIter():
         self._l = iter(self.li)
         return self
 
-    def __next__(self):
+    def next(self):
         line = next(self._l)
 
         if not line.trace:
@@ -383,7 +384,8 @@ class LogIter():
         self.__index = 0
 
         for line in self._fd:
-            fields = line.split(maxsplit=8)
+ #           fields = line.split(maxsplit=8)
+            fields = line.split(' ', 8)
             index += 1
             if self.__from_file:
                 if len(fields) < 6 or len(fields[0]) != 17:
@@ -448,7 +450,7 @@ class LogIter():
             self._offset = 0
         return self
 
-    def __lnext(self):
+    def __lnext__(self):
         """Helper function for __next__"""
 
         if self.__from_file:
@@ -456,7 +458,8 @@ class LogIter():
             if not line:
                 raise StopIteration
             self.__index += 1
-            fields = line.split(maxsplit=8)
+ #           fields = line.split(maxsplit=8)
+            fields = line.split(' ', 8)
             if len(fields) < 6 or len(fields[0]) != 17:
                 return LogRaw(line)
             return LogLine(line, self.__index)
@@ -468,10 +471,10 @@ class LogIter():
         self._offset += 1
         return line
 
-    def __next__(self):
+    def next(self):
 
         while True:
-            line = self.__lnext()
+            line = self.__lnext__()
 
             if not self._raw and isinstance(line, LogRaw):
                 continue

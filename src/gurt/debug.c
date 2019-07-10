@@ -586,15 +586,16 @@ d_log_init(void)
 		log_file = NULL;
 	}
 
-	log_file_pid_append = getenv(D_LOG_FILE_PID_APPEND_ENV);
-	if (log_file != NULL && strcmp (log_file_pid_append, "0")!=0) {
-		/* Append pid to log file. */
-		pid = getpid();
-		//itoa((int)pid, buffer1, 16);
-		sprintf(buffer1, "%d", pid);
-		strcpy (buffer2, log_file);
-		strcat (buffer2, buffer1);
-		log_file = buffer2;
+	log_file_pid_append = getenv(D_LOG_FILE_APPEND_PID_ENV);
+	if (log_file != NULL && log_file_pid_append != NULL) {
+	        if (strcmp (log_file_pid_append, "0")!=0) {
+			/* Append pid to log file. */
+			pid = getpid();
+			sprintf(buffer1, "%d", pid);
+			strcpy (buffer2, log_file);
+			strcat (buffer2, buffer1);
+			log_file = buffer2;
+		}
 	}
 
 	rc = d_log_init_adv("CaRT", log_file, flags, DLOG_WARN, DLOG_EMERG);

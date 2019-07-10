@@ -160,6 +160,14 @@ class CartUtils():
         if not os.path.exists(log_path):
             os.makedirs(log_path)
 
+        # If the logparser is being used, make sure the log directory is empty
+        logparse = cartobj.params.get("logparse", "/run/tests/*/")
+        if logparse is not None:
+	    for the_file in os.listdir(log_path):
+    		file_path = os.path.join(log_path, the_file)
+		if os.path.isfile(file_path):
+                    os.unlink(file_path)
+
         return env
 
     def get_srv_cnt(self, cartobj, host):
@@ -288,10 +296,27 @@ class CartUtils():
 
         return rtn
 
-    def log_check(self):
+
+    def log_check(self, cartobj):
+	"""Check log files for consistency """
+
+	logparse = cartobj.params.get("logparse", "/run/tests/*/")
+        if logparse is None:
+		return
+
         """Check log files for consistency """
         strict_test = False
-	for filename in os.listdir(self.log_dir)
-            cl = cart_logparse.LogIter(filename)
-            c_log_test = cart_logtest.LogTest(cl)
-            c_log_test.check_log_file(strict_test)
+	print ("Parsing log path", cartobj.log_path)
+	if not os.path.exists(cartobj.log_path):
+		print ("Path does not exist")
+		return
+
+	for filename in os.listdir(cartobj.log_path):
+	    log_file = os.path.join(cartobj.log_path, filename)
+	    if os.path.isfile(log_file):
+	        print ("Parsing ", log_file)
+                cl = cart_logparse.LogIter(log_file)
+                c_log_test = cart_logtest.LogTest(cl)
+	        c_log_test.check_log_file(strict_test)
+	    else:
+	        print ("File is a Directory. Skipping.... :", log_file)
