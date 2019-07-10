@@ -571,6 +571,8 @@ crt_grp_psr_set(struct crt_grp_priv *grp_priv, d_rank_t psr_rank,
 	D_RWLOCK_WRLOCK(&grp_priv->gp_rwlock);
 	D_FREE(grp_priv->gp_psr_phy_addr);
 	grp_priv->gp_psr_rank = psr_rank;
+	D_STRNDUP(grp_priv->gp_psr_phy_addr, psr_addr,
+		CRT_ADDR_STR_MAX_LEN);
 	grp_priv->gp_psr_phy_addr = psr_addr;
 	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
 	D_DEBUG(DB_TRACE, "group %s, set psr rank %d, uri %s.\n",

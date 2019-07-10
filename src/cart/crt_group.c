@@ -1117,7 +1117,7 @@ crt_grp_priv_destroy(struct crt_grp_priv *grp_priv)
 	grp_priv_fini_membs(grp_priv);
 
 	if (grp_priv->gp_psr_phy_addr != NULL)
-		free(grp_priv->gp_psr_phy_addr);
+		D_FREE(grp_priv->gp_psr_phy_addr);
 	D_RWLOCK_DESTROY(&grp_priv->gp_rwlock);
 	D_FREE(grp_priv->gp_pub.cg_grpid);
 
@@ -3195,11 +3195,12 @@ out:
 	if (filename != NULL)
 		free(filename);
 	D_FREE(grpname);
-	if (rc != 0) {
-		D_FREE(addr_str);
+	D_FREE(addr_str);
+
+	if (rc != 0)
 		D_ERROR("crt_grp_config_psr_load (grpid %s) failed, rc: %d.\n",
 			grpid, rc);
-	}
+
 	return rc;
 }
 
@@ -3549,7 +3550,7 @@ int
 crt_grp_psr_reload(struct crt_grp_priv *grp_priv)
 {
 	d_rank_t	psr_rank;
-	crt_phy_addr_t	uri = NULL, psr_phy_addr = NULL;
+	crt_phy_addr_t	uri = NULL;
 	int		rc = 0;
 
 	psr_rank = grp_priv->gp_psr_rank;
@@ -3565,10 +3566,7 @@ crt_grp_psr_reload(struct crt_grp_priv *grp_priv)
 			if (uri == NULL)
 				break;
 
-			D_STRNDUP(psr_phy_addr, uri, CRT_ADDR_STR_MAX_LEN);
-			if (psr_phy_addr == NULL)
-				D_GOTO(out, rc = -DER_NOMEM);
-			crt_grp_psr_set(grp_priv, psr_rank, psr_phy_addr);
+			crt_grp_psr_set(grp_priv, psr_rank, uri);
 			D_GOTO(out, rc = 0);
 		} else if (rc != -DER_EVICTED) {
 			/*
@@ -4316,6 +4314,7 @@ int crt_group_psr_set(crt_group_t *grp, d_rank_t rank)
 	}
 
 	crt_grp_psr_set(grp_priv, rank, uri);
+	D_FREE(uri);
 
 out:
 	return rc;
