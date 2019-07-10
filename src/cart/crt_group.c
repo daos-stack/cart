@@ -3152,8 +3152,8 @@ crt_grp_config_psr_load(struct crt_grp_priv *grp_priv, d_rank_t psr_rank)
 
 		if (CRT_PMIX_ENABLED()) {
 			if (!forall || rank == psr_rank) {
-				D_DEBUG(DB_TRACE, "grp %s selected psr_rank %d, "
-					"uri %s.\n", grpid, rank, addr_str);
+				D_DEBUG(DB_TRACE, "grp %s selected psr_rank %d"
+					", uri %s.\n", grpid, rank, addr_str);
 				crt_grp_psr_set(grp_priv, rank, addr_str);
 				rc = 0;
 
@@ -3163,12 +3163,15 @@ crt_grp_config_psr_load(struct crt_grp_priv *grp_priv, d_rank_t psr_rank)
 
 		if (!CRT_PMIX_ENABLED()) {
 			crt_node_info_t	node_info;
+
 			node_info.uri = addr_str;
 
 			rc = crt_group_node_add_internal(grp_priv, rank, 0,
 					node_info);
 			if (rc != 0) {
-				D_ERROR("crt_group_node_add_internal() failed; rc=%d\n", rc);
+				D_ERROR("crt_group_node_add_internal() failed;"
+					" rank=%d uri='%s' rc=%d\n",
+					rank, addr_str, rc);
 				break;
 			}
 

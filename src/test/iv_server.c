@@ -1162,8 +1162,8 @@ int main(int argc, char **argv)
 	char		*grp_cfg_file;
 	crt_group_t	*grp;
 	d_rank_t	my_rank;
-	int	 	c;
-	int	 	rc;
+	int		c;
+	int		rc;
 
 	while ((c = getopt(argc, argv, "v:")) != -1) {
 		switch (c) {
