@@ -1201,7 +1201,6 @@ int main(int argc, char **argv)
 			CRT_FLAG_BIT_PMIX_DISABLE);
 	assert(rc == 0);
 
-	DBG_PRINT("SELF rank set to %d\n", my_rank);
 	rc = crt_rank_self_set(my_rank);
 	assert(rc == 0);
 
@@ -1210,7 +1209,6 @@ int main(int argc, char **argv)
 		D_ERROR("Failed to lookup group %s\n", IV_GRP_NAME);
 		assert(0);
 	}
-
 
 	grp_cfg_file = getenv("CRT_L_GRP_CFG");
 	if (grp_cfg_file == NULL) {
@@ -1224,7 +1222,7 @@ int main(int argc, char **argv)
 		assert(0);
 	}
 
-	DBG_PRINT("Server starting\n");
+	DBG_PRINT("Server starting, self_rank=%d\n", my_rank);
 
 	rc = crt_proto_register(&my_proto_fmt_iv);
 	assert(rc == 0);
