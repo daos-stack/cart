@@ -1,0 +1,5 @@
+usr/lib/*/cart/TESTING/*/*
+usr/lib/*/cart/multi-node-test.sh
+usr/lib/*/cart/.build_vars-linux.sh
+usr/bin/self_test
+usr/bin/*-self_test
