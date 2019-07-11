@@ -305,8 +305,8 @@ class CartUtils():
             return -1
 
         return rtn
-	
-    def print(self, cmd): 
+
+    def print(self, cmd):
         """ prints the given cmd at runtime and stdout """
 
         self.stdout.info(cmd)
