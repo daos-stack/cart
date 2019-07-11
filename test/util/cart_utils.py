@@ -29,11 +29,17 @@ import random
 import json
 import shlex
 import subprocess
+import logging
 import cart_logparse
 import cart_logtest
 
 class CartUtils():
     """CartUtils Class"""
+
+    def __init__(self):
+        """ CartUtils init """
+        self.stdout = logging.getLogger('avocado.test.stdout')
+        self.progress_log = logging.getLogger("progress")
 
     def write_host_file(self, hostlist, slots=1):
         """ write out a hostfile suitable for orterun """
@@ -271,6 +277,8 @@ class CartUtils():
     def launch_test(self, cartobj, cmd, srv1=None, srv2=None):
         """ launches test """
 
+	self.print("\nCMD : %s\n" % cmd)
+
         cmd = shlex.split(cmd)
         rtn = subprocess.call(cmd)
 
@@ -288,6 +296,8 @@ class CartUtils():
     def launch_cmd_bg(self, cartobj, cmd):
         """ launches the given cmd in background """
 
+	self.print("\nCMD : %s\n" % cmd)
+
         cmd = shlex.split(cmd)
         rtn = subprocess.Popen(cmd)
 
@@ -295,6 +305,12 @@ class CartUtils():
             return -1
 
         return rtn
+	
+    def print(self, cmd): 
+        """ prints the given cmd at runtime and stdout """
+
+        self.stdout.info(cmd)
+	self.progress_log.info(cmd)
 
 
     def log_check(self, cartobj):
