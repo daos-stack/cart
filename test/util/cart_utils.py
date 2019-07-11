@@ -277,7 +277,7 @@ class CartUtils():
     def launch_test(self, cartobj, cmd, srv1=None, srv2=None):
         """ launches test """
 
-	self.print("\nCMD : %s\n" % cmd)
+        self.print("\nCMD : %s\n" % cmd)
 
         cmd = shlex.split(cmd)
         rtn = subprocess.call(cmd)
@@ -296,7 +296,7 @@ class CartUtils():
     def launch_cmd_bg(self, cartobj, cmd):
         """ launches the given cmd in background """
 
-	self.print("\nCMD : %s\n" % cmd)
+        self.print("\nCMD : %s\n" % cmd)
 
         cmd = shlex.split(cmd)
         rtn = subprocess.Popen(cmd)
@@ -310,8 +310,7 @@ class CartUtils():
         """ prints the given cmd at runtime and stdout """
 
         self.stdout.info(cmd)
-	self.progress_log.info(cmd)
-
+        self.progress_log.info(cmd)
 
     def log_check(self, cartobj):
 	"""Check log files for consistency """
