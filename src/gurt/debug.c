@@ -588,7 +588,7 @@ d_log_init(void)
 
 	log_file_pid_append = getenv(D_LOG_FILE_APPEND_PID_ENV);
 	if (log_file != NULL && log_file_pid_append != NULL) {
-	        if (strcmp(log_file_pid_append, "0")!=0) {
+		if (strcmp(log_file_pid_append, "0") != 0) {
 			/* Append pid to log file. */
 			pid = getpid();
 			sprintf(buffer1, "%d", pid);

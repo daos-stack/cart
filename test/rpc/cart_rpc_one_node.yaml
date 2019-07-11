@@ -22,7 +22,7 @@ hosts: !mux
     srv:
        - boro-A
     cli:
-       - boro-A 
+       - boro-A
 tests: !mux
   proto:
     name: proto_basic
