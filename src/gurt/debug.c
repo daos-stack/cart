@@ -577,8 +577,7 @@ d_log_init(void)
 	char	*log_file, *log_file_pid_append;
 	int	 flags = DLOG_FLV_LOGPID | DLOG_FLV_FAC | DLOG_FLV_TAG;
 	int	 rc;
-	char     buffer1[20], buffer2[100];
-	pid_t    pid;
+	char     *buffer=NULL;
 
 	log_file = getenv(D_LOG_FILE_ENV);
 	if (log_file == NULL || strlen(log_file) == 0) {
@@ -590,11 +589,8 @@ d_log_init(void)
 	if (log_file != NULL && log_file_pid_append != NULL) {
 		if (strcmp(log_file_pid_append, "0") != 0) {
 			/* Append pid to log file. */
-			pid = getpid();
-			sprintf(buffer1, "%d", pid);
-			strcpy(buffer2, log_file);
-			strcat(buffer2, buffer1);
-			log_file = buffer2;
+			D_ASPRINTF(buffer, "%s%d", log_file, getpid());
+			log_file = buffer;
 		}
 	}
 
@@ -606,6 +602,8 @@ d_log_init(void)
 
 	d_log_sync_mask();
 out:
+	if (buffer!=NULL)
+		D_FREE(buffer);
 	return rc;
 }
 
