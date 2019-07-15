@@ -215,11 +215,11 @@ class CartUtils():
                                            "/run/tests/*/")
         tst_ctx = cartobj.params.get("{}_CRT_CTX_NUM".format(host),
                                      "/run/defaultENV/")
-	
+
         tst_host = cartobj.params.get("{}".format(host), "/run/hosts/*/")
         tst_ppn = cartobj.params.get("{}_ppn".format(host), "/run/tests/*/")
         logparse = cartobj.params.get("logparse", "/run/tests/*/")
-	
+
         if tst_slt is not None:
             hostfile = self.write_host_file(tst_host,tst_slt)
         else:

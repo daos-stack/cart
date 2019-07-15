@@ -577,7 +577,7 @@ d_log_init(void)
 	char	*log_file, *log_file_pid_append;
 	int	 flags = DLOG_FLV_LOGPID | DLOG_FLV_FAC | DLOG_FLV_TAG;
 	int	 rc;
-	char     *buffer=NULL;
+	char     *buffer = NULL;
 
 	log_file = getenv(D_LOG_FILE_ENV);
 	if (log_file == NULL || strlen(log_file) == 0) {
@@ -602,7 +602,7 @@ d_log_init(void)
 
 	d_log_sync_mask();
 out:
-	if (buffer!=NULL)
+	if (buffer != NULL)
 		D_FREE(buffer);
 	return rc;
 }
