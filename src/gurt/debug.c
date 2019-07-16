@@ -590,6 +590,8 @@ d_log_init(void)
 		if (strcmp(log_file_pid_append, "0") != 0) {
 			/* Append pid to log file. */
 			D_ASPRINTF(buffer, "%s%d", log_file, getpid());
+			if (buffer == NULL)
+				D_GOTO(out, rc = DER_NOMEM);
 			log_file = buffer;
 		}
 	}
@@ -602,8 +604,7 @@ d_log_init(void)
 
 	d_log_sync_mask();
 out:
-	if (buffer != NULL)
-		D_FREE(buffer);
+	D_FREE(buffer);
 	return rc;
 }
 
