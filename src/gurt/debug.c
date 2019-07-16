@@ -591,7 +591,7 @@ d_log_init(void)
 			/* Append pid to log file. */
 			D_ASPRINTF(buffer, "%s%d", log_file, getpid());
 			if (buffer == NULL)
-				D_GOTO(out, rc = DER_NOMEM);
+				D_GOTO(out, rc = -DER_NOMEM);
 			log_file = buffer;
 		}
 	}

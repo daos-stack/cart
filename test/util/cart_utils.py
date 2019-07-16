@@ -320,7 +320,7 @@ class CartUtils():
 	"""Check log files for consistency """
 
 	logparse = cartobj.params.get("logparse", "/run/tests/*/")
-        if logparse is None:
+        if logparse is None or not logparse:
 		return
 
         """Check log files for consistency """
