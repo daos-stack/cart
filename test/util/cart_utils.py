@@ -243,7 +243,7 @@ class CartUtils():
             tst_cmd += " " + tst_env
 
         if logparse:
-	    tst_cmd += "-x D_LOG_FILE_APPEND_PID=1"
+	    tst_cmd += " -x D_LOG_FILE_APPEND_PID=1"
 
         tst_mod = os.getenv("CART_TEST_MODE", "native")
         if tst_mod == "memcheck":
