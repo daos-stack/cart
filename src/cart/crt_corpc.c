@@ -496,6 +496,7 @@ corpc_add_child_rpc(struct crt_rpc_priv *parent_rpc_priv,
 	parent_co_hdr = &parent_rpc_priv->crp_coreq_hdr;
 	child_co_hdr = &child_rpc_priv->crp_coreq_hdr;
 	child_co_hdr->coh_int_grpid = parent_co_hdr->coh_int_grpid;
+
 	/* child's coh_bulk_hdl is different with parent_co_hdr */
 	child_co_hdr->coh_bulk_hdl = parent_rpc_priv->crp_pub.cr_co_bulk_hdl;
 	child_co_hdr->coh_excluded_ranks = parent_co_hdr->coh_excluded_ranks;
@@ -817,13 +818,11 @@ crt_corpc_req_hdlr(struct crt_rpc_priv *rpc_priv)
 		}
 	}
 
-
 	rc = crt_tree_get_children(co_info->co_grp_priv, co_info->co_grp_ver,
 				   co_info->co_excluded_ranks,
 				   co_info->co_tree_topo, co_info->co_root,
 				   co_info->co_grp_priv->gp_self,
 				   &children_rank_list, &ver_match);
-
 
 	if (rc != 0) {
 		RPC_ERROR(rpc_priv,
@@ -856,6 +855,7 @@ crt_corpc_req_hdlr(struct crt_rpc_priv *rpc_priv)
 		crt_endpoint_t	 tgt_ep = {0};
 
 		tgt_ep.ep_rank = children_rank_list->rl_ranks[i];
+		tgt_ep.ep_grp = &co_info->co_grp_priv->gp_pub;
 
 		rc = crt_req_create_internal(rpc_priv->crp_pub.cr_ctx, &tgt_ep,
 					     rpc_priv->crp_pub.cr_opc,
