@@ -65,7 +65,7 @@ class GroupTest(Test):
 
         srv_cmd = self.utils.build_cmd(self, self.env, "srv")
 
-        cmd = srv_cmd 
+        cmd = srv_cmd
         self.utils.launch_test(self, cmd)
 
 if __name__ == "__main__":

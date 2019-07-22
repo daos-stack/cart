@@ -45,7 +45,7 @@
 #include <gurt/common.h>
 
 int
-tc_load_group_from_file(const char *grp_cfg_file, 
+tc_load_group_from_file(const char *grp_cfg_file,
 		crt_context_t ctx, crt_group_t *grp,
 		d_rank_t my_rank, bool delete_file)
 {
