@@ -3897,7 +3897,7 @@ out:
 }
 
 
-static int 
+static int
 crt_group_primary_add_internal(struct crt_grp_priv *grp_priv,
 				d_rank_t rank, int tag, char *uri)
 {
@@ -4378,6 +4378,7 @@ crt_group_secondary_create(crt_group_id_t grp_name, crt_group_t *primary_grp,
 		D_GOTO(out, rc);
 	}
 
+	found = false;
 	/* Record secondary group in the primary group */
 	for (i = 0; i < CRT_MAX_SEC_GRPS; i++) {
 		if (grp_priv_prim->gp_priv_sec[i] == NULL) {
