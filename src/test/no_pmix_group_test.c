@@ -424,8 +424,7 @@ int main(int argc, char **argv)
 		rc = crt_group_secondary_rank_add(sec_grp1,
 					sec_ranks[i], real_ranks[i]);
 		if (rc != 0) {
-		//TODO: Rename in comments
-			D_ERROR("crt_group_rank_add() failed; rc=%d\n", rc);
+			D_ERROR("Rank addition failed; rc=%d\n", rc);
 			assert(0);
 		}
 
@@ -448,7 +447,7 @@ int main(int argc, char **argv)
 
 		rc = crt_group_rank_p2s(sec_grp1, real_ranks[i], &tmp_rank);
 		if (rc != 0) {
-			D_ERROR("crt_group_rank_p2s failed; rc=%d\n", rc);
+			D_ERROR("crt_group_rank_p2s() failed; rc=%d\n", rc);
 			assert(0);
 		}
 
@@ -471,7 +470,7 @@ int main(int argc, char **argv)
 	/* Add new sec_rank=50 after the removal of previous one */
 	rc = crt_group_secondary_rank_add(sec_grp1, 50, 2);
 	if (rc != 0) {
-		D_ERROR("crt_group_rank_add() failed; rc=%d\n", rc);
+		D_ERROR("Rank addition failed; rc=%d\n", rc);
 		assert(0);
 	}
 
