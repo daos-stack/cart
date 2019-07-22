@@ -627,11 +627,14 @@ int main(int argc, char **argv)
 	g_do_shutdown = 1;
 	sem_destroy(&sem);
 
+	DBG_PRINT("All tesst succeeded\n");
 join:
 
 	/* Wait until shutdown is issued and progress threads exit */
 	for (i = 0; i < NUM_SERVER_CTX; i++)
 		pthread_join(progress_thread[i], NULL);
+
+	DBG_PRINT("Finished waiting for contexts\n");
 
 	rc = crt_group_secondary_destroy(sec_grp1);
 	if (rc != 0) {
@@ -639,12 +642,15 @@ join:
 		assert(0);
 	}
 
+	DBG_PRINT("Destroyed secondary group\n");
+
 	rc = crt_finalize();
 	if (rc != 0) {
 		D_ERROR("crt_finalize() failed with rc=%d\n", rc);
 		assert(0);
 	}
 
+	DBG_PRINT("Finalized\n");
 	d_log_fini();
 
 	return 0;
