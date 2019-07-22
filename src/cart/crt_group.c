@@ -1907,6 +1907,19 @@ crt_group_rank_p2s(crt_group_t *subgrp, d_rank_t rank_in, d_rank_t *rank_out)
 		return rc;
 	}
 
+	if (CRT_PMIX_ENABLED()) {
+		d_rank_list_t *membs;
+
+		membs = grp_priv_get_membs(grp_priv);
+		rc = d_idx_in_rank_list(membs, rank_in, rank_out);
+		if (rc != 0) {
+			D_ERROR("primary rank %d is not a member of subgroup %s.\n",
+				rank_in, subgrp->cg_grpid);
+			rc = -DER_OOG;
+		}
+		D_GOTO(out, rc);
+	}
+
 	rlink = d_hash_rec_find(&grp_priv->gp_p2s_table,
 			(void *)&rank_in, sizeof(rank_in));
 	if (!rlink) {
@@ -1918,6 +1931,8 @@ crt_group_rank_p2s(crt_group_t *subgrp, d_rank_t rank_in, d_rank_t *rank_out)
 	*rank_out = rm->rm_value;
 
 	d_hash_rec_decref(&grp_priv->gp_p2s_table, rlink);
+
+out:
 	return rc;
 }
 
