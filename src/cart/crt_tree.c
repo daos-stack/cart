@@ -54,7 +54,6 @@ crt_get_filtered_grp_rank_list(struct crt_grp_priv *grp_priv, uint32_t grp_ver,
 	d_rank_list_t		*grp_rank_list = NULL;
 	d_rank_list_t		*live_ranks;
 	d_rank_list_t		*membs;
-	d_rank_t		pri_self, pri_root;
 	int			 rc = 0;
 
 	if (CRT_PMIX_ENABLED()) {
@@ -65,23 +64,19 @@ crt_get_filtered_grp_rank_list(struct crt_grp_priv *grp_priv, uint32_t grp_ver,
 		live_ranks = membs;
 	}
 
+	rc = d_rank_list_dup_sort_uniq(&grp_rank_list, live_ranks);
+
+	if (rc != 0) {
+		D_ERROR("d_rank_list_dup failed, rc: %d.\n", rc);
+		D_GOTO(out, rc);
+	}
+	D_ASSERT(grp_rank_list != NULL);
+	*allocated = true;
+
 	if (exclude_ranks == NULL || exclude_ranks->rl_nr == 0) {
-		grp_rank_list = live_ranks;
 		*grp_size = grp_rank_list->rl_nr;
 
-		D_ASSERT(*grp_size == grp_rank_list->rl_nr);
-		*allocated = false;
 	} else {
-		/* grp_priv->gp_live_ranks/exclude_ranks already sorted
-		 * and unique
-		 */
-		rc = d_rank_list_dup(&grp_rank_list, live_ranks);
-
-		if (rc != 0) {
-			D_ERROR("d_rank_list_dup failed, rc: %d.\n", rc);
-			D_GOTO(out, rc);
-		}
-		D_ASSERT(grp_rank_list != NULL);
 		d_rank_list_filter(exclude_ranks, grp_rank_list,
 				   true /* exclude */);
 
@@ -93,15 +88,10 @@ crt_get_filtered_grp_rank_list(struct crt_grp_priv *grp_priv, uint32_t grp_ver,
 			D_GOTO(out, rc = 0);
 		}
 
-		*allocated = true;
 		*grp_size = grp_rank_list->rl_nr;
 	}
 
-
-	pri_root = grp_priv_get_primary_rank(grp_priv, root);
-	pri_self = grp_priv_get_primary_rank(grp_priv, self);
-
-	rc = d_idx_in_rank_list(grp_rank_list, pri_root, grp_root);
+	rc = d_idx_in_rank_list(grp_rank_list, root, grp_root);
 	if (rc != 0) {
 		D_ERROR("d_idx_in_rank_list (group %s, rank %d), "
 			"failed, rc: %d.\n", grp_priv->gp_pub.cg_grpid,
@@ -109,7 +99,7 @@ crt_get_filtered_grp_rank_list(struct crt_grp_priv *grp_priv, uint32_t grp_ver,
 		D_GOTO(out, rc);
 	}
 
-	rc = d_idx_in_rank_list(grp_rank_list, pri_self, grp_self);
+	rc = d_idx_in_rank_list(grp_rank_list, self, grp_self);
 	if (rc != 0)
 		D_ERROR("d_idx_in_rank_list (group %s, rank %d), "
 			"failed, rc: %d.\n", grp_priv->gp_pub.cg_grpid,
@@ -254,6 +244,7 @@ crt_tree_get_children(struct crt_grp_priv *grp_priv, uint32_t grp_ver,
 			root, self, rc);
 		D_GOTO(out, rc);
 	}
+
 	if (grp_rank_list == NULL) {
 		D_DEBUG(DB_TRACE, "crt_get_filtered_grp_rank_list(group %s) "
 			"get empty.\n", grp_priv->gp_pub.cg_grpid);
@@ -271,6 +262,7 @@ crt_tree_get_children(struct crt_grp_priv *grp_priv, uint32_t grp_ver,
 			root, self, rc);
 		D_GOTO(out, rc);
 	}
+
 	if (nchildren == 0) {
 		*children_rank_list = NULL;
 		D_GOTO(out, rc = 0);
