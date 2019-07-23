@@ -2337,10 +2337,11 @@ crt_hdlr_uri_lookup(crt_rpc_t *rpc_req)
 		D_RWLOCK_UNLOCK(&crt_grp_list_rwlock);
 	}
 
-	if (rc != 0) {
-		D_ERROR("Could not find the group specified\n");
+	if (rc != 0 || grp_priv == NULL) {
+		D_ERROR("Could not find the group %s specified\n",
+			ul_in->ul_grp_id);
 		ul_out->ul_uri = NULL;
-		D_GOTO(out, rc = 0);
+		D_GOTO(out, rc);
 	}
 
 	crt_ctx = rpc_req->cr_ctx;
