@@ -195,9 +195,14 @@ struct crt_proto_format my_proto_fmt = {
 static void *
 progress_function(void *data)
 {
+	int i;
 	crt_context_t *p_ctx = (crt_context_t *)data;
 
 	while (g_do_shutdown == 0)
+		crt_progress(*p_ctx, 1000, NULL, NULL);
+
+	/* Progress contexts for a while after shutdown to send response */
+	for (i = 0; i < 1000; i++)
 		crt_progress(*p_ctx, 1000, NULL, NULL);
 
 	crt_context_destroy(*p_ctx, 1);

@@ -865,8 +865,17 @@ crt_corpc_req_hdlr(struct crt_rpc_priv *rpc_priv)
 		if (CRT_PMIX_ENABLED() && !co_info->co_grp_priv->gp_primary) {
 			uint32_t	 idx;
 
-			d_idx_in_rank_list(membs, children_rank_list->rl_ranks[i],
-					&idx);
+			rc = d_idx_in_rank_list(membs,
+				children_rank_list->rl_ranks[i], &idx);
+
+			if (rc != 0) {
+				RPC_ERROR(rpc_priv, "rank %d not found\n",
+					children_rank_list->rl_ranks[i]);
+				crt_corpc_fail_child_rpc(rpc_priv,
+						co_info->co_child_num - i, rc);
+				D_GOTO(forward_done, rc);
+			}
+
 			tgt_ep.ep_rank = idx;
 		} else {
 			tgt_ep.ep_rank = children_rank_list->rl_ranks[i];
@@ -885,7 +894,8 @@ crt_corpc_req_hdlr(struct crt_rpc_priv *rpc_priv)
 			D_GOTO(forward_done, rc);
 		}
 		D_ASSERT(child_rpc != NULL);
-		D_ASSERT(child_rpc->cr_output_size == rpc_priv->crp_pub.cr_output_size);
+		D_ASSERT(child_rpc->cr_output_size ==
+			rpc_priv->crp_pub.cr_output_size);
 		D_ASSERT(child_rpc->cr_output_size == 0 ||
 			 child_rpc->cr_output != NULL);
 		D_ASSERT(child_rpc->cr_input_size == 0);
