@@ -220,9 +220,13 @@ crt_tree_get_children(struct crt_grp_priv *grp_priv, uint32_t grp_ver,
 	D_ASSERT(default_grp_priv != NULL);
 
 	D_RWLOCK_RDLOCK(grp_priv->gp_rwlock_ft);
-	if (ver_match != NULL)
+	if (ver_match != NULL) {
 		*ver_match = (grp_ver == default_grp_priv->gp_membs_ver ?
 			      true : false);
+
+		if (*ver_match == false)
+			D_GOTO(out, rc = -DER_MISMATCH);
+	}
 
 	CRT_TREE_PARAMETER_CHECKING(grp_priv, tree_topo, root, self);
 	if (children_rank_list == NULL) {
