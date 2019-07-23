@@ -96,14 +96,18 @@ crt_get_filtered_grp_rank_list(struct crt_grp_priv *grp_priv, uint32_t grp_ver,
 		D_ERROR("d_idx_in_rank_list (group %s, rank %d), "
 			"failed, rc: %d.\n", grp_priv->gp_pub.cg_grpid,
 			root, rc);
+		d_rank_list_free(grp_rank_list);
 		D_GOTO(out, rc);
 	}
 
 	rc = d_idx_in_rank_list(grp_rank_list, self, grp_self);
-	if (rc != 0)
+	if (rc != 0) {
 		D_ERROR("d_idx_in_rank_list (group %s, rank %d), "
 			"failed, rc: %d.\n", grp_priv->gp_pub.cg_grpid,
 			self, rc);
+		d_rank_list_free(grp_rank_list);
+		D_GOTO(out, rc);
+	}
 
 out:
 	if (rc == 0)
