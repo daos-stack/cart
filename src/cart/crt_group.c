@@ -895,8 +895,7 @@ crt_grp_lc_lookup(struct crt_grp_priv *grp_priv, int ctx_idx,
 	int			 rc = 0;
 
 	D_ASSERT(grp_priv != NULL);
-	if (CRT_PMIX_ENABLED())
-		D_ASSERT(rank < grp_priv->gp_size);
+
 	D_ASSERT(tag < CRT_SRV_CONTEXT_NUM);
 	D_ASSERT(uri != NULL || hg_addr != NULL);
 	D_ASSERT(ctx_idx >= 0 && ctx_idx < CRT_SRV_CONTEXT_NUM);
@@ -919,6 +918,8 @@ crt_grp_lc_lookup(struct crt_grp_priv *grp_priv, int ctx_idx,
 		rank = grp_priv_get_primary_rank(grp_priv, rank);
 	}
 
+	if (CRT_PMIX_ENABLED())
+		D_ASSERT(rank < default_grp_priv->gp_size);
 
 	D_RWLOCK_RDLOCK(&default_grp_priv->gp_rwlock);
 	rlink = d_hash_rec_find(&default_grp_priv->gp_lookup_cache[ctx_idx],
@@ -1911,9 +1912,10 @@ crt_group_rank_p2s(crt_group_t *subgrp, d_rank_t rank_in, d_rank_t *rank_out)
 		d_rank_list_t *membs;
 
 		membs = grp_priv_get_membs(grp_priv);
+
 		rc = d_idx_in_rank_list(membs, rank_in, rank_out);
 		if (rc != 0) {
-			D_ERROR("primary rank %d is not a member of subgroup %s.\n",
+			D_ERROR("primary rank %d is not a member of grp %s.\n",
 				rank_in, subgrp->cg_grpid);
 			rc = -DER_OOG;
 		}
@@ -4466,7 +4468,6 @@ grp_priv_get_primary_rank(struct crt_grp_priv *priv, d_rank_t rank)
 
 	if (CRT_PMIX_ENABLED()) {
 		D_ASSERT(rank < priv->gp_membs.cgm_list->rl_nr);
-
 		return priv->gp_membs.cgm_list->rl_ranks[rank];
 	}
 

@@ -987,7 +987,7 @@ crt_req_uri_lookup(struct crt_rpc_priv *rpc_priv)
 		D_GOTO(out, rc);
 	}
 
-	rc = crt_grp_lc_uri_insert(default_grp_priv, crt_ctx->cc_idx,
+	rc = crt_grp_lc_uri_insert(grp_priv, crt_ctx->cc_idx,
 			rank, tag, uri);
 	if (rc != 0) {
 		D_ERROR("crt_grp_lc_uri_insert() failed, rc %d\n", rc);
