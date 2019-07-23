@@ -4422,6 +4422,19 @@ crt_group_secondary_create(crt_group_id_t grp_name, crt_group_t *primary_grp,
 	crt_grp_insert_locked(grp_priv);
 	D_RWLOCK_UNLOCK(&crt_grp_list_rwlock);
 
+	if (ranks == NULL)
+		D_GOTO(out, rc);
+
+	for (i = 0; i < ranks->rl_nr; i++) {
+		rc = crt_group_secondary_rank_add(*ret_grp, i,
+						ranks->rl_ranks[i]);
+		if (rc != 0) {
+			D_ERROR("Failed to add rank %d : %d to the group\n",
+				i, ranks->rl_ranks[i]);
+			D_GOTO(out, rc);
+		}
+	}
+
 out:
 	if (rc != 0 && grp_priv)
 		crt_grp_priv_destroy(grp_priv);
