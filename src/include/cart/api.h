@@ -1901,7 +1901,7 @@ int crt_group_psr_set(crt_group_t *grp, d_rank_t rank);
  * \param[in] ctx               Associated cart context
  * \param[in] grp               Group handle
  * \param[in] primary_rank      Primary rank to be added
- * \param[in] uri		URI of the primary rank
+ * \param[in] uri               URI of the primary rank
  *
  * \return                      DER_SUCCESS on success, negative value
  *                              on failure.
