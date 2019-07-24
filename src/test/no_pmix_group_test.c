@@ -514,13 +514,14 @@ int main(int argc, char **argv)
 		assert(0);
 	}
 
-	/* Wait for all servers to load up */
-	/* TODO: This will be replaced by proper sync when CART-715 is done */
-	sleep(10);
 
 	/* All ranks except for 0 wait for RPCs. rank=0 initiates test */
 	if (my_rank != 0)
 		D_GOTO(join, 0);
+
+	/* Wait for all servers to load up */
+	/* TODO: This will be replaced by proper sync when CART-715 is done */
+	sleep(10);
 
 	/* This section only executes for my_rank == 0 */
 
