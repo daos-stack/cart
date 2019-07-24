@@ -227,8 +227,11 @@ crt_tree_get_children(struct crt_grp_priv *grp_priv, uint32_t grp_ver,
 	if (ver_match != NULL) {
 		*ver_match = (bool)(grp_ver == default_grp_priv->gp_membs_ver);
 
-		if (*ver_match == false)
+		if (*ver_match == false) {
+			D_ERROR("Version mismatch. Passed: %u current:%u\n",
+				grp_ver, default_grp_priv->gp_membs_ver);
 			D_GOTO(out, rc = -DER_MISMATCH);
+		}
 	}
 
 	CRT_TREE_PARAMETER_CHECKING(grp_priv, tree_topo, root, self);

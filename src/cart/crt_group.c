@@ -951,7 +951,7 @@ crt_grp_lc_lookup(struct crt_grp_priv *grp_priv, int ctx_idx,
 				  rlink);
 		D_GOTO(out, rc);
 	} else {
-		D_ERROR("Entry for rank=%d not found\n", rank);
+		D_DEBUG(DB_ALL, "Entry for rank=%d not found\n", rank);
 	}
 	D_RWLOCK_UNLOCK(&default_grp_priv->gp_rwlock);
 
