@@ -206,9 +206,7 @@ rm_op_rec_decref(struct d_hash_table *hhtab, d_list_t *rlink)
 
 	D_ASSERT(rm->rm_initialized);
 	D_MUTEX_LOCK(&rm->rm_mutex);
-	rm->rm_ref--;
-	ref = rm->rm_ref;
-
+	ref = --rm->rm_ref;
 	D_MUTEX_UNLOCK(&rm->rm_mutex);
 
 	return ref == 0;
@@ -222,7 +220,7 @@ crt_rm_destroy(struct crt_rank_mapping *rm)
 	D_ASSERT(rm->rm_initialized == 1);
 
 	D_MUTEX_DESTROY(&rm->rm_mutex);
-	D_FREE_PTR(rm);
+	D_FREE(rm);
 }
 
 static void
@@ -4087,7 +4085,7 @@ crt_group_rank_remove(crt_group_t *group, d_rank_t rank)
 		rlink = d_hash_rec_find(&grp_priv->gp_uri_lookup_cache,
 				(void *)&rank, sizeof(rank));
 		if (!rlink) {
-			D_ERROR("Rank %d isnt part of group\n", rank);
+			D_ERROR("Rank %d is not part of the group\n", rank);
 			D_GOTO(out, rc = -DER_OOG);
 		}
 
@@ -4105,7 +4103,7 @@ crt_group_rank_remove(crt_group_t *group, d_rank_t rank)
 				(void *)&rank, sizeof(rank));
 
 		if (!rlink) {
-			D_ERROR("Rank %d isnt part of group\n", rank);
+			D_ERROR("Rank %d is not part of the group\n", rank);
 			D_GOTO(out, rc = -DER_OOG);
 		}
 
@@ -4178,14 +4176,14 @@ int
 crt_group_info_get(crt_group_t *group, d_iov_t *grp_info)
 {
 	D_ERROR("API is currently not supported\n");
-	return -DER_INVAL;
+	return -DER_NOSYS;
 }
 
 int
 crt_group_info_set(d_iov_t *grp_info)
 {
 	D_ERROR("API is currently not supported\n");
-	return -DER_INVAL;
+	return -DER_NOSYS;
 }
 
 

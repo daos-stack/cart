@@ -225,8 +225,7 @@ crt_tree_get_children(struct crt_grp_priv *grp_priv, uint32_t grp_ver,
 
 	D_RWLOCK_RDLOCK(grp_priv->gp_rwlock_ft);
 	if (ver_match != NULL) {
-		*ver_match = (grp_ver == default_grp_priv->gp_membs_ver ?
-			      true : false);
+		*ver_match = (bool)(grp_ver == default_grp_priv->gp_membs_ver);
 
 		if (*ver_match == false)
 			D_GOTO(out, rc = -DER_MISMATCH);
