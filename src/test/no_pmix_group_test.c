@@ -515,7 +515,8 @@ int main(int argc, char **argv)
 	}
 
 	/* Wait for all servers to load up */
-	sleep(5);
+	/* TODO: This will be replaced by proper sync when CART-715 is done */
+	sleep(10);
 
 	/* All ranks except for 0 wait for RPCs. rank=0 initiates test */
 	if (my_rank != 0)
@@ -538,9 +539,10 @@ int main(int argc, char **argv)
 
 	__dump_ranks(sec_grp1);
 	/* Send RPCs to all secondary ranks to all tags in reverse order */
-	for (tag = NUM_SERVER_CTX - 1; tag > 0; tag--) {
-		for (i = 0; i < rank_list->rl_nr; i++) {
-			rank = rank_list->rl_ranks[i];
+	for (i = 0; i < rank_list->rl_nr; i++) {
+		rank = rank_list->rl_ranks[i];
+
+		for (tag = NUM_SERVER_CTX - 1; tag > 0; tag--) {
 
 			server_ep.ep_rank = rank;
 			server_ep.ep_grp = sec_grp1;
