@@ -198,13 +198,15 @@
 
 /** Internal macro for initializing facility cache defined by DD_*_CACHE */
 #define _D_LOG_INITIALIZE_FIELD(flag, s_name, l_name, mask, fac) DLOG_UNINIT,
-/** These macros are used intended to be used with FOREACH macros that define
- *  log facilities in your library.   It will utilize internal FOREACH macros
- *  to define debug bits as well as user defined macros.  See
- *  D_FOREACH_GURT_FAC for an example.
+
+/**
+ * These macros are intended to be used with FOREACH macros that define log
+ * facilities in your library.   It will utilize internal FOREACH macros to
+ * define debug bits as well as user defined macros.  See D_FOREACH_GURT_FAC for
+ * an example.
  *
- * These macros can also be used standalone but are not quite as convenient
- * due to required but unused arguments
+ * These macros can also be used standalone but are not quite as convenient due
+ * to required but unused arguments
  */
 
 #ifdef D_LOG_USE_V2 /* Macros for D_DEBUG version 2 */

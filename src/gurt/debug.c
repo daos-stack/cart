@@ -315,6 +315,10 @@ debug_mask_load(const char *mask_name)
 	cur = strtok(mask_str, DD_SEP);
 	d_dbglog_data.dd_mask = 0;
 	while (cur != NULL) {
+		if (strncasecmp(cur, "any", sizeof("any")) == 0) {
+			D_PRINT_ERR("DB_ANY deprecated, use DB_ALL instead.\n");
+			continue;
+		}
 		for (i = 0; i < NUM_DBG_BIT_ENTRIES; i++) {
 			d = &d_dbg_bit_dict[i];
 			if (d->db_name != NULL &&
@@ -366,6 +370,9 @@ d_log_dbg_grp_alloc(d_dbug_t dbgmask, char *grpname, uint32_t flags)
 
 	if (grpname == NULL || dbgmask == 0)
 		return -1;
+
+	if (dbgmask && d_dbg_bit_dict[1])
+		D_PRINT_ERR("DB_ANY deprecated, use DB_ALL instead.\n");
 
 	name_sz = strlen(grpname) + 1;
 	set_as_default = flags & D_LOG_SET_AS_DEFAULT;
@@ -426,7 +433,7 @@ debug_prio_err_load_env(void)
 static void
 debug_mask_load_env(void)
 {
-	char		    *mask_env;
+	char	*mask_env;
 
 	mask_env = getenv(DD_MASK_ENV);
 	if (mask_env == NULL)
