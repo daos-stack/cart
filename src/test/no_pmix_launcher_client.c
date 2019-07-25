@@ -52,116 +52,91 @@
 #include "no_pmix_launcher_common.h"
 #include "tests_common.h"
 
-#define SCHAN_SRV_CTX 8
-
-struct st_master_endpt {
-        crt_endpoint_t endpt;
-        struct crt_st_status_req_out reply;
+struct wfr_status {
+	sem_t	sem;
+	int	rc;
 };
 
 static void
-start_test_cb(const struct crt_cb_info *cb_info)
+rpc_handle_reply(const struct crt_cb_info *info)
 {
-        /* Result returned to main thread */
-        int32_t *return_status = cb_info->cci_arg;
+        sem_t   *sem;
 
-        /* Status retrieved from the RPC result payload */
-        int32_t *reply_status;
+        D_ASSERTF(info->cci_rc == 0, "rpc response failed. rc: %d\n",
+                info->cci_rc);
 
-        /* Check the status of the RPC transport itself */
-        if (cb_info->cci_rc != 0) {
-                *return_status = cb_info->cci_rc;
-                return;
-        }
-
-        /* Get the status from the payload */
-        reply_status = (int32_t *)crt_reply_get(cb_info->cci_rpc);
-        D_ASSERT(reply_status != NULL);
-
-        /* Return whatever result we got to the main thread */
-        *return_status = *reply_status;
+        sem = (sem_t *)info->cci_arg;
+        sem_post(sem);
 }
 
-static int wait_for_ranks(crt_context_t ctx, crt_group_t *grp, uint32_t grp_size,
-                          d_rank_list_t *rank_list)
+static void
+wfr_handle_reply(const struct crt_cb_info *info)
 {
-	struct st_master_endpt  *mep;
-	int			i = 0;
-	int 			tag;
+	struct wfr_status	*wfrs;
+
+	wfrs = (struct wfr_status *)info->cci_arg;
+
+	wfrs->rc = info->cci_rc;
+
+        sem_post(&wfrs->sem);
+}
+
+static int wait_for_ranks(crt_context_t ctx, crt_group_t *grp, d_rank_list_t *rank_list, int tag, double timeout)
+{
+	struct wfr_status	ws;
 	d_rank_t		rank;
-	int			rc = 0;
 	crt_rpc_t		*rpc = NULL;
-	uint32_t		done;
-	struct crt_st_start_params      *start_args = NULL;
+	crt_endpoint_t          server_ep;
+	int                     i = 0;
+	int                     rc = 0;
 
-        D_ALLOC_ARRAY(mep, grp_size*SCHAN_SRV_CTX);
-        if (mep == NULL)
-		return -DER_NOMEM;
-
-	int index = 0;
+        rc = sem_init(&ws.sem, 0, 0);
+        D_ASSERTF( rc == 0, "sem_init() failed; rc=%d\n", rc);
 
         for (i = 0; i < rank_list->rl_nr; i++) {
-		for (tag = 0; tag < SCHAN_SRV_CTX; tag++){
 
-                	rank = rank_list->rl_ranks[i];
+                rank = rank_list->rl_ranks[i];
 
-			printf("SCHAN15 - sending rpc to ep %d\n", index);
+                printf("Sending ping to %d:%d\n", rank, tag);
 
-        	        mep[index].endpt.ep_rank = rank;
-                	mep[index].endpt.ep_tag = tag;
-                	mep[index].endpt.ep_grp = grp;
+                server_ep.ep_rank = rank;
+                server_ep.ep_tag = tag;
+                server_ep.ep_grp = grp;
 
-			crt_endpoint_t *endpt = &mep[index].endpt;
+                rc = crt_req_create(ctx, &server_ep, CRT_OPC_CTL_GET_PID, &rpc);
+                D_ASSERTF( rc == 0, "crt_req_create() failed; rc=%d\n", rc);
 
-        	        /* Create and send a new RPC */
-                	rc = crt_req_create(ctx, endpt, CRT_OPC_SELF_TEST_START, &rpc);
-                	D_ASSERTF(rc == 0, "crt_req_create failed with rc = %d\n", rc);
+                rc = crt_req_set_timeout(rpc, 5);
+                D_ASSERTF( rc == 0, "crt_req_set_timeout() failed; rc=%d\n", rc);
 
-                	rc = crt_req_set_timeout(rpc, 5);
-                	D_ASSERTF(rc == 0, "crt_req_set_timeout failed with rc = %d",
-                        	  rc);
+              	rc = crt_req_send(rpc, wfr_handle_reply, &ws);
+		printf("SCHAN15 - rpc send rc = %d\n", rc);
+               	tc_sem_timedwait(&ws.sem, 10, __LINE__);
 
-			start_args = (struct crt_st_start_params *) crt_req_get(rpc);
-			D_ASSERTF(start_args != NULL, "crt_req_get returned NULL\n");
+	        struct timespec                  t1, t2;
+        	double                           time_s;
+        	rc = d_gettime(&t1);
+        	assert(rc == 0);
 
-                	/* Set the launch status to a known impossible value */
-                	mep[index].reply.status = INT32_MAX;
-
-                	rc = crt_req_send(rpc, start_test_cb, &mep[index].reply.status);
-			if(rc != 0){
-				D_ERROR("Failed to send start RPC to endpoint %u:%u; "
-					"rc = %d\n", endpt->ep_rank, endpt->ep_tag,
-					rc);
-			}
-		index++;
+		while(ws.rc != 0 && time_s < timeout){
+			printf("SCHAN15 - Retrying...\n");
+			rc = crt_req_create(ctx, &server_ep, CRT_OPC_CTL_GET_PID, &rpc);
+			rc = crt_req_set_timeout(rpc, 5);
+			rc = crt_req_send(rpc, wfr_handle_reply, &ws);
+			tc_sem_timedwait(&ws.sem, 10, __LINE__);
+		        rc = d_gettime(&t2);
+		        assert(rc == 0);
+        		time_s = d_time2s(d_timediff(t1, t2));
+			printf("time lapsed: %.3e s.\n", time_s);
 		}
-	}
 
-        do {
-                /* Flag indicating all test launches have returned a status */
-                done = 1;
-
-		index = 0;
-
-                /* Wait a bit for tests to finish launching */
-                sched_yield();
-
-                for (i = 0; i < rank_list->rl_nr; i++) {
-	        	for (tag = 0; tag < SCHAN_SRV_CTX; tag++){
-				rank = rank_list->rl_ranks[i];
-	               		printf("SCHAN15 - waiting on ep %d\n", index);
-
-                        	if (mep[index].reply.status == INT32_MAX) {
-                                	/* No response yet... */
-                                	done = 0;
-                                	break;
-                        	}
-				index++;
-			}
-			if(done == 0)
-				break;
+		if(ws.rc != 0){
+			printf("SCHAN15 - Retry exceeded. Server not ready.\n");
+			rc = ws.rc;
 		}
-        } while (done != 1);
+        }
+
+	sem_destroy(&ws.sem);
 
 	return rc;
 }
@@ -178,19 +153,6 @@ progress_function(void *data)
 
 	return NULL;
 }
-
-static void
-rpc_handle_reply(const struct crt_cb_info *info)
-{
-	sem_t	*sem;
-
-	D_ASSERTF(info->cci_rc == 0, "rpc response failed. rc: %d\n",
-		info->cci_rc);
-
-	sem = (sem_t *)info->cci_arg;
-	sem_post(sem);
-}
-
 
 int main(int argc, char **argv)
 {
@@ -258,7 +220,7 @@ int main(int argc, char **argv)
 	DBG_PRINT("Client starting with cfg_file=%s\n", grp_cfg_file);
 
 	/* load group info from a config file and delete file upon return */
-	rc = tc_load_group_from_file(grp_cfg_file, grp, SCHAN_SRV_CTX,
+	rc = tc_load_group_from_file(grp_cfg_file, grp, NUM_SERVER_CTX,
 				-1, true);
 	if (rc != 0) {
 		D_ERROR("tc_load_group_from_file() failed; rc=%d\n", rc);
@@ -293,11 +255,13 @@ int main(int argc, char **argv)
 	}
 
 	printf("\nSCHAN15 - Sync'ing all ep\n\n");
-	rc = wait_for_ranks(crt_ctx, grp, grp_size, rank_list);
-        if (rc != 0) {
-                D_ERROR("wait_for_ranks() failed; rc=%d\n", rc);
-                assert(0);
-        }
+	//for (tag = 0; tag < NUM_SERVER_CTX; tag++) {
+		rc = wait_for_ranks(crt_ctx, grp, rank_list, NUM_SERVER_CTX - 1, 3);
+        	if (rc != 0) {
+                	D_ERROR("wait_for_ranks() failed; rc=%d\n", rc);
+                	assert(0);
+       		}
+	//}
 
 	printf("SCHAN15 - Starting tests...\n");
 
@@ -306,7 +270,7 @@ int main(int argc, char **argv)
 
 		rank = rank_list->rl_ranks[i];
 
-		for (tag = 0; tag < SCHAN_SRV_CTX; tag++) {
+		for (tag = 0; tag < NUM_SERVER_CTX; tag++) {
 			DBG_PRINT("Sending ping to %d:%d\n", rank, tag);
 
 			server_ep.ep_rank = rank;

@@ -97,6 +97,18 @@ int main(int argc, char **argv)
 		assert(0);
 	}
 
+        for (i = 0; i < NUM_SERVER_CTX; i++) {
+                rc = crt_context_create(&crt_ctx[i]);
+                if (rc != 0) {
+                        D_ERROR("crt_context_create() failed; rc=%d\n", rc);
+                        assert(0);
+                }
+
+                rc = pthread_create(&progress_thread[i], 0,
+                                progress_function, &crt_ctx[i]);
+                assert(rc == 0);
+        }
+
 	rc = crt_proto_register(&my_proto_fmt);
 	if (rc != 0) {
 		D_ERROR("crt_proto_register() failed; rc=%d\n", rc);
@@ -107,18 +119,6 @@ int main(int argc, char **argv)
 	if (!grp) {
 		D_ERROR("Failed to lookup group\n");
 		assert(0);
-	}
-
-	for (i = 0; i < NUM_SERVER_CTX; i++) {
-		rc = crt_context_create(&crt_ctx[i]);
-		if (rc != 0) {
-			D_ERROR("crt_context_create() failed; rc=%d\n", rc);
-			assert(0);
-		}
-
-		rc = pthread_create(&progress_thread[i], 0,
-				progress_function, &crt_ctx[i]);
-		assert(rc == 0);
 	}
 
 	grp_cfg_file = getenv("CRT_L_GRP_CFG");
