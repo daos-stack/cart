@@ -2790,6 +2790,7 @@ crt_grp_detach(crt_group_t *attached_grp)
 			}
 		}
 	} else {
+		D_RWLOCK_WRLOCK(&grp_gdata->gg_rwlock);
 		found = true;
 	}
 
