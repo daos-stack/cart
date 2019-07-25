@@ -316,7 +316,7 @@ debug_mask_load(const char *mask_name)
 	d_dbglog_data.dd_mask = 0;
 	while (cur != NULL) {
 		if (strncasecmp(cur, "any", sizeof("any")) == 0) {
-			D_PRINT_ERR("DB_ANY deprecated, use DB_ALL instead.\n");
+			D_PRINT_ERR("DB_ANY deprecated, use DB_MISC instead.\n");
 			continue;
 		}
 		for (i = 0; i < NUM_DBG_BIT_ENTRIES; i++) {
@@ -370,9 +370,6 @@ d_log_dbg_grp_alloc(d_dbug_t dbgmask, char *grpname, uint32_t flags)
 
 	if (grpname == NULL || dbgmask == 0)
 		return -1;
-
-	if (dbgmask && d_dbg_grp_dict[1].dg_mask)
-		D_PRINT_ERR("DB_ANY deprecated, use DB_ALL instead.\n");
 
 	name_sz = strlen(grpname) + 1;
 	set_as_default = flags & D_LOG_SET_AS_DEFAULT;

@@ -75,7 +75,7 @@
 	/** All debug streams */                \
 	ACTION(DB_ALL,   all,   all,   0, arg)  \
 	/** Generic debug stream */             \
-	ACTION(DB_ANY,   any,   any,   0, arg)  \
+	ACTION(DB_MISC,  misc,  misc,  0, arg)  \
 	/** Extremely verbose debug stream */   \
 	ACTION(DB_TRACE, trace, trace, 0, arg)  \
 	/** Memory operations */                \
