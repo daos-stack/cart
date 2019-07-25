@@ -64,18 +64,23 @@
 #define D_LOGFAC	DD_GURT_FAC(misc)
 #endif
 
-/** Arguments to priority bit macros are
+/**
+ * Arguments to priority bit macros are
  *      flag            Variable name of the priority bit flag
  *      s_name          Short name of the flag
  *      l_name          Long name of the flag
  *      default_mask    Should always be 0 for debug bits
  *      arg             Argument passed along.  Use D_NOOP when not required
+ *
+ * \note DB_ALL is special in that it sets all bits in the bitfield. If one
+ *       wants to always log, when any debug is enabled, use DB_ALL instead of
+ *       DB_ANY.
  */
 #define D_FOREACH_GURT_DB(ACTION, arg)          \
-	/** All debug streams */                \
+	/** Set all debug bits */               \
 	ACTION(DB_ALL,   all,   all,   0, arg)  \
-	/** Generic debug stream */             \
-	ACTION(DB_MISC,  misc,  misc,  0, arg)  \
+	/** Stream for uncategorized messages */\
+	ACTION(DB_ANY,   any,   any,   0, arg)  \
 	/** Extremely verbose debug stream */   \
 	ACTION(DB_TRACE, trace, trace, 0, arg)  \
 	/** Memory operations */                \

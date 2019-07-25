@@ -315,10 +315,6 @@ debug_mask_load(const char *mask_name)
 	cur = strtok(mask_str, DD_SEP);
 	d_dbglog_data.dd_mask = 0;
 	while (cur != NULL) {
-		if (strncasecmp(cur, "any", sizeof("any")) == 0) {
-			D_PRINT_ERR("DB_ANY deprecated, use DB_MISC instead.\n");
-			continue;
-		}
 		for (i = 0; i < NUM_DBG_BIT_ENTRIES; i++) {
 			d = &d_dbg_bit_dict[i];
 			if (d->db_name != NULL &&
