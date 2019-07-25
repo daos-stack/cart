@@ -371,7 +371,7 @@ d_log_dbg_grp_alloc(d_dbug_t dbgmask, char *grpname, uint32_t flags)
 	if (grpname == NULL || dbgmask == 0)
 		return -1;
 
-	if (dbgmask && d_dbg_bit_dict[1])
+	if (dbgmask && d_dbg_grp_dict[1].dg_mask)
 		D_PRINT_ERR("DB_ANY deprecated, use DB_ALL instead.\n");
 
 	name_sz = strlen(grpname) + 1;
