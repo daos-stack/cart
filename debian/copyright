@@ -4,7 +4,7 @@ Source: https://github.com/daos-stack/cart
 
 Files: *
 Copyright: Copyright 2016-2019 Intel Corporation <daos@daos.groups.io>
-License: Intel Open Source License
+License: Intel_Open_Source_License
  Copyright (C) 2016-2019 Intel Corporation
  All rights reserved.
  .
@@ -63,7 +63,3 @@ License: GPL-2+
  On Debian systems, the complete text of the GNU General
  Public License version 2 can be found in "/usr/share/common-licenses/GPL-2".
 
-# Please also look if there are files or directories which have a
-# different copyright/license attached and list them here.
-# Please avoid picking licenses with terms that are more restrictive than the
-# packaged work, as it may make Debian's contributions unacceptable upstream.
