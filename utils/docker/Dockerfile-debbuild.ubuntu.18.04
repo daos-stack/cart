@@ -36,8 +36,8 @@ ENV OFI_ART=\
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
             cmake libboost-dev libevent-dev pkg-config
 
-RUN curl -sS -f -L -O ${OFI_ART}/libfabric1_1.7.1%7Erc1-1_amd64.deb; \
-    curl -sS -f -L -O ${OFI_ART}/libfabric-dev_1.7.1%7Erc1-1_amd64.deb; \
+RUN curl -sS -f -L -O ${OFI_ART}/libfabric1_1.8.0-1_amd64.deb; \
+    curl -sS -f -L -O ${OFI_ART}/libfabric-dev_1.8.0-1_amd64.deb; \
     apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
       ./libfabric*_amd64.deb
 
