@@ -26,7 +26,9 @@ ARG JENKINS_URL=""
 ENV JENKINS_PATH="${JENKINS_URL}/job/daos-stack/job"
 ENV JENKINS_ART="lastSuccessfulBuild/artifact/artifacts"
 
-ARG CACHEBUST=1
+# Uncomment this CACHEBUST line if testing PRs for dependent components.
+# It should be commented out before the merge to master
+#ARG CACHEBUST=1
 
 ARG OFIBRANCH="master"
 ENV OFI_ART=\

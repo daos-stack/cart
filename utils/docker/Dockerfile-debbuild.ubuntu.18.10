@@ -17,7 +17,10 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
             libibverbs-dev libpsm-infinipath1-dev librdmacm-dev \
             libpsm2-dev
 
-ARG CACHEBUST=1
+# Uncomment this CACHEBUST line if testing PRs for dependent components.
+# It should be commented out before the merge to master
+#ARG CACHEBUST=1
+
 ARG JENKINS_URL=""
 ENV JENKINS_PATH="${JENKINS_URL}/job/daos-stack/job"
 ENV JENKINS_ART="lastSuccessfulBuild/artifact/artifacts"
