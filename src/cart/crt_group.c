@@ -2218,7 +2218,7 @@ crt_uri_lookup_forward_cb(const struct crt_cb_info *cb_info)
 	ul_fwd_in = crt_req_get(cb_info->cci_rpc);
 	ul_fwd_out = crt_reply_get(cb_info->cci_rpc);
 
-	if (ul_fwd_out->ul_rc != 0) 
+	if (ul_fwd_out->ul_rc != 0)
 		D_GOTO(out, rc = ul_fwd_out->ul_rc);
 
 	crt_ctx = cb_info->cci_rpc->cr_ctx;
