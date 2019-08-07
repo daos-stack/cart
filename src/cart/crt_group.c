@@ -682,7 +682,8 @@ crt_grp_lc_uri_insert(struct crt_grp_priv *passed_grp_priv, int ctx_idx,
 	}
 
 	D_RWLOCK_WRLOCK(&grp_priv->gp_rwlock);
-	rc = grp_lc_uri_insert_internal_locked(grp_priv, ctx_idx, rank, tag, uri);
+	rc = grp_lc_uri_insert_internal_locked(grp_priv, ctx_idx, rank, tag,
+						uri);
 	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
 
 	return rc;
@@ -5001,7 +5002,7 @@ crt_group_secondary_modify(crt_group_t *grp, d_rank_list_t *sec_ranks,
 		}
 
 		if (sec_ranks->rl_nr != prim_ranks->rl_nr) {
-			D_ERROR("Primary list size=%d differs from secondary=%d\n",
+			D_ERROR("Prim list size=%d differs from sec=%d\n",
 				prim_ranks->rl_nr, sec_ranks->rl_nr);
 			D_GOTO(out, rc = -DER_INVAL);
 		}

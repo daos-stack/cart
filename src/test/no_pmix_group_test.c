@@ -238,7 +238,7 @@ __dump_ranklist(const char *msg, d_rank_list_t *rl)
 {
 	int i;
 
-	DBG_PRINT(msg);
+	DBG_PRINT("%s", msg);
 	for (i = 0; i < rl->rl_nr; i++)
 		DBG_PRINT("rank[%d] = %d\n", i, rl->rl_ranks[i]);
 
@@ -678,7 +678,12 @@ int main(int argc, char **argv)
 	}
 
 	for (i = 0; i < 10; i++) {
-		asprintf(&uris[i], "ofi+sockets://127.0.0.1:%d", 10000 + i);
+		rc = asprintf(&uris[i], "ofi+sockets://127.0.0.1:%d", 
+				10000 + i);
+		if (rc == -1) {
+			D_ERROR("asprintf() failed\n");
+			assert(0);
+		}
 		mod_ranks->rl_ranks[i] = i + 1;
 	}
 
