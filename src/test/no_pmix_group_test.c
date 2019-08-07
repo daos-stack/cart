@@ -673,7 +673,7 @@ int main(int argc, char **argv)
 
 	mod_ranks = d_rank_list_alloc(10);
 	if (!mod_ranks) {
-		D_ASSERT("rank list allocation failed\n");
+		D_ERROR("rank list allocation failed\n");
 		assert(0);
 	}
 
