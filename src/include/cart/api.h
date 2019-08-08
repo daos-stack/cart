@@ -1972,18 +1972,20 @@ int crt_group_secondary_destroy(crt_group_t *grp);
  * \return                       DER_SUCCESS on success, negative value on
  *                               failure.
  *
- * Note: \ref uris is an array of srings; expected to be of size
- * ranks->rl_nr * num_ctxs
- * In multi-provider support uris should be formed as:
- * [uri0 for provider0]
+ * Note: \ref uris shall be an array of (ranks->rl_nr * num_ctxs) strings
+ * In multi-provider case, where num_ctxs > 1, uris array should be
+ * formed as follows:
+ * [uri0 for provider0 identified by ctx0]
  * [uri1 for provider0]
  * ....
  * [uriX for provider0]
- * [uri0 for provider1]
+ *
+ * [uri0 for provider1 identified by ctx1]
  * [uri1 for provider1]
  * ...
  * [uriX for provider1]
- * [uri0 for provider2]
+ *
+ * [uri0 for provider2 identified by ctx2]
  * etc...
  */
 int crt_group_primary_modify(crt_group_t *grp, crt_context_t *ctxs,
