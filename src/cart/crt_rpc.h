@@ -71,6 +71,7 @@ enum crt_rpc_flags_internal {
 struct crt_corpc_hdr {
 	/* internal group ID */
 	uint64_t		 coh_int_grpid;
+	d_string_t		 coh_int_grpid_name;
 	/* collective bulk handle */
 	crt_bulk_t		 coh_bulk_hdl;
 	/* optional excluded ranks */

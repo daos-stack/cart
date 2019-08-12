@@ -96,6 +96,7 @@ crt_corpc_info_init(struct crt_rpc_priv *rpc_priv,
 			rpc_priv->crp_flags |= CRT_RPC_FLAG_GRP_DESTROY;
 
 		co_hdr->coh_int_grpid = grp_priv->gp_int_grpid;
+		D_STRNDUP(co_hdr->coh_int_grpid_name, grp_priv->gp_pub.cg_grpid, CRT_GROUP_ID_MAX_LEN + 1);
 		co_hdr->coh_excluded_ranks = co_info->co_excluded_ranks;
 		co_hdr->coh_inline_ranks = NULL;
 		co_hdr->coh_grp_ver = grp_ver;
@@ -139,12 +140,12 @@ crt_corpc_initiate(struct crt_rpc_priv *rpc_priv)
 		grp_priv = grp_gdata->gg_srv_pri_grp;
 		D_ASSERT(grp_priv != NULL);
 	} else {
-		grp_priv = crt_grp_lookup_int_grpid(co_hdr->coh_int_grpid);
+		grp_priv = crt_grp_lookup_int_grpid_name(co_hdr->coh_int_grpid, co_hdr->coh_int_grpid_name);
 		if (grp_priv != NULL) {
 			grp_ref_taken = true;
 		} else {
-			D_ERROR("crt_grp_lookup_int_grpid "DF_X64" failed.\n",
-				co_hdr->coh_int_grpid);
+			D_ERROR("crt_grp_lookup_int_grpid_name: %s %d failed.\n",
+				co_hdr->coh_int_grpid_name, (int)co_hdr->coh_int_grpid);
 			D_GOTO(out, rc = -DER_INVAL);
 		}
 	}
@@ -496,6 +497,7 @@ corpc_add_child_rpc(struct crt_rpc_priv *parent_rpc_priv,
 	parent_co_hdr = &parent_rpc_priv->crp_coreq_hdr;
 	child_co_hdr = &child_rpc_priv->crp_coreq_hdr;
 	child_co_hdr->coh_int_grpid = parent_co_hdr->coh_int_grpid;
+	D_STRNDUP(child_co_hdr->coh_int_grpid_name, parent_co_hdr->coh_int_grpid_name, CRT_GROUP_ID_MAX_LEN + 1);
 
 	/* child's coh_bulk_hdl is different with parent_co_hdr */
 	child_co_hdr->coh_bulk_hdl = parent_rpc_priv->crp_pub.cr_co_bulk_hdl;
