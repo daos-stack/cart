@@ -429,6 +429,11 @@ crt_proc_corpc_hdr(crt_proc_t proc, struct crt_corpc_hdr *hdr)
 		D_ERROR("crt proc error, rc: %d.\n", rc);
 		D_GOTO(out, rc);
 	}
+	rc = crt_proc_crt_group_id_t(hg_proc, &hdr->coh_int_grpid_name);
+	if (rc != 0) {
+		D_ERROR("crt proc error, rc: %d.\n", rc);
+		D_GOTO(out, rc);
+	}
 	hg_ret = hg_proc_hg_uint32_t(hg_proc, &hdr->coh_grp_ver);
 	if (hg_ret != HG_SUCCESS) {
 		D_ERROR("hg proc error, hg_ret: %d.\n", hg_ret);

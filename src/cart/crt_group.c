@@ -991,7 +991,7 @@ crt_grp_id_identical(crt_group_id_t grp_id_1, crt_group_id_t grp_id_2)
 	return strcmp(grp_id_1, grp_id_2) == 0;
 }
 
-static inline struct crt_grp_priv *
+struct crt_grp_priv *
 crt_grp_lookup_locked(crt_group_id_t grp_id)
 {
 	struct crt_grp_priv	*grp_priv;
