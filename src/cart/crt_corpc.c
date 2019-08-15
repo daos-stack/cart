@@ -142,13 +142,12 @@ crt_corpc_initiate(struct crt_rpc_priv *rpc_priv)
 		D_ASSERT(grp_priv != NULL);
 	} else {
 		grp_priv = crt_grp_lookup_locked(co_hdr->coh_int_grpid_name);
-		
 		if (grp_priv != NULL) {
 			grp_ref_taken = true;
 			crt_grp_priv_addref(grp_priv);
 		} else {
-			D_ERROR("crt_grp_lookup_int_grpid_name: %s %d failed.\n",
-				co_hdr->coh_int_grpid_name, (int)co_hdr->coh_int_grpid);
+			D_ERROR("crt_grp_lookup_locked: %s failed.\n",
+				co_hdr->coh_int_grpid_name);
 			D_GOTO(out, rc = -DER_INVAL);
 		}
 	}

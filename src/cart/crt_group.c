@@ -1040,41 +1040,6 @@ exit:
 	return grp_priv;
 }
 
-/* lookup by internal subgrp id name*/
-struct crt_grp_priv *
-crt_grp_lookup_int_grpid_name(uint64_t int_grpid, d_string_t int_grpid_name)
-{
-	struct crt_grp_priv	*grp_priv;
-	bool			 found = false;
-
-	/* Check if the group is primary group or not */
-	if (!crt_grp_is_subgrp_id(int_grpid)) {
-		grp_priv = crt_grp_pub2priv(NULL);
-
-		crt_grp_priv_addref(grp_priv);
-		D_GOTO(exit, 0);
-	}
-
-	/* Lookup subgroup in the list */
-	D_RWLOCK_RDLOCK(&crt_grp_list_rwlock);
-	d_list_for_each_entry(grp_priv, &crt_grp_list, gp_link) {
-		if (grp_priv->gp_pub.cg_grpid == NULL)
-			continue;
-		if (strcmp(grp_priv->gp_pub.cg_grpid, int_grpid_name) == 0) {
-			found = true;
-			break;
-		}
-	}
-	if (found == true)
-		crt_grp_priv_addref(grp_priv);
-	else
-		grp_priv = NULL;
-	D_RWLOCK_UNLOCK(&crt_grp_list_rwlock);
-
-exit:
-	return grp_priv;
-}
-
 static inline void
 crt_grp_insert_locked(struct crt_grp_priv *grp_priv)
 {
