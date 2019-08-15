@@ -10,7 +10,7 @@ hosts: !mux
   hosts_1:
     config: one_node
     srv:
-      - wolf-55
+      - boro-A
 tests: !mux
   group_test:
     name: group_test
