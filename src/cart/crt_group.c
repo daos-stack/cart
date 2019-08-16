@@ -1062,7 +1062,7 @@ crt_grp_lookup_grpid(crt_group_id_t grp_id)
 		grp_priv = NULL;
 	D_RWLOCK_UNLOCK(&crt_grp_list_rwlock);
 
-	return (found == true) ? grp_priv : NULL;
+	return grp_priv;
 }
 
 static inline void
