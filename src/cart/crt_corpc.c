@@ -41,9 +41,6 @@
 
 #include "crt_internal.h"
 
-/* protect global group list */
-extern pthread_rwlock_t crt_grp_list_rwlock;
-
 static inline int
 crt_corpc_info_init(struct crt_rpc_priv *rpc_priv,
 		    struct crt_grp_priv *grp_priv, bool grp_ref_taken,
