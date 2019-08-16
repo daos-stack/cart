@@ -451,12 +451,12 @@ int crt_grp_lc_addr_insert(struct crt_grp_priv *grp_priv,
 			   d_rank_t rank, uint32_t tag, hg_addr_t *hg_addr);
 int crt_grp_ctx_invalid(struct crt_context *ctx, bool locked);
 struct crt_grp_priv *crt_grp_lookup_int_grpid(uint64_t int_grpid);
+struct crt_grp_priv *crt_grp_lookup_grpid(crt_group_id_t grp_id);
 int crt_validate_grpid(const crt_group_id_t grpid);
 int crt_grp_init(crt_group_id_t grpid);
 int crt_grp_fini(void);
 int crt_grp_failed_ranks_dup(crt_group_t *grp, d_rank_list_t **failed_ranks);
 void crt_grp_priv_destroy(struct crt_grp_priv *grp_priv);
-struct crt_grp_priv *crt_grp_lookup_locked(crt_group_id_t grp_id);
 
 int crt_grp_config_load(struct crt_grp_priv *grp_priv);
 
