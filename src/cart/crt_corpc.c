@@ -41,6 +41,9 @@
 
 #include "crt_internal.h"
 
+/* protect global group list */
+extern pthread_rwlock_t crt_grp_list_rwlock;
+
 static inline int
 crt_corpc_info_init(struct crt_rpc_priv *rpc_priv,
 		    struct crt_grp_priv *grp_priv, bool grp_ref_taken,
@@ -139,15 +142,18 @@ crt_corpc_initiate(struct crt_rpc_priv *rpc_priv)
 		grp_priv = grp_gdata->gg_srv_pri_grp;
 		D_ASSERT(grp_priv != NULL);
 	} else {
+		D_RWLOCK_RDLOCK(&crt_grp_list_rwlock);
 		grp_priv = crt_grp_lookup_locked(co_hdr->coh_grpid);
 		if (grp_priv != NULL) {
 			grp_ref_taken = true;
 			crt_grp_priv_addref(grp_priv);
 		} else {
+			D_RWLOCK_UNLOCK(&crt_grp_list_rwlock);
 			D_ERROR("crt_grp_lookup_locked: %s failed.\n",
 				co_hdr->coh_grpid);
 			D_GOTO(out, rc = -DER_INVAL);
 		}
+		D_RWLOCK_UNLOCK(&crt_grp_list_rwlock);
 	}
 
 	rc = crt_corpc_info_init(rpc_priv, grp_priv, grp_ref_taken,
