@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2018 Intel Corporation
+/* Copyright (C) 2016-2019 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -409,6 +409,11 @@ crt_proc_corpc_hdr(crt_proc_t proc, struct crt_corpc_hdr *hdr)
 		D_GOTO(out, rc = -DER_INVAL);
 
 	hg_proc = proc;
+	rc = crt_proc_crt_group_id_t(hg_proc, &hdr->coh_grpid);
+	if (rc != 0) {
+		D_ERROR("crt proc error, rc: %d.\n", rc);
+		D_GOTO(out, rc);
+	}
 	rc = crt_proc_crt_bulk_t(hg_proc, &hdr->coh_bulk_hdl);
 	if (rc != 0) {
 		D_ERROR("crt proc error, rc: %d.\n", rc);
@@ -420,11 +425,6 @@ crt_proc_corpc_hdr(crt_proc_t proc, struct crt_corpc_hdr *hdr)
 		D_GOTO(out, rc);
 	}
 	rc = crt_proc_d_rank_list_ptr_t(hg_proc, &hdr->coh_inline_ranks);
-	if (rc != 0) {
-		D_ERROR("crt proc error, rc: %d.\n", rc);
-		D_GOTO(out, rc);
-	}
-	rc = crt_proc_crt_group_id_t(hg_proc, &hdr->coh_grpid);
 	if (rc != 0) {
 		D_ERROR("crt proc error, rc: %d.\n", rc);
 		D_GOTO(out, rc);
