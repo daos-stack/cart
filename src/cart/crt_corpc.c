@@ -742,11 +742,15 @@ crt_corpc_reply_hdlr(const struct crt_cb_info *cb_info)
 			    parent_rpc_priv->crp_pub.cr_output_size > 0) {
 				/*
 				 * when root excluded, copy first reply's
-				 * content to parent.
+				 * content to parent and zero child's copy so
+				 * that any pointers contained therein belong
+				 * solely to parent.
 				 */
 				memcpy(parent_rpc_priv->crp_pub.cr_output,
 				       child_rpc_priv->crp_pub.cr_output,
 				       parent_rpc_priv->crp_pub.cr_output_size);
+				memset(child_rpc_priv->crp_pub.cr_output, 0,
+				       child_rpc_priv->crp_pub.cr_output_size);
 			} else {
 				D_ASSERT(co_ops->co_aggregate != NULL);
 				rc = co_ops->co_aggregate(child_req,
