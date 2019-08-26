@@ -444,6 +444,10 @@ crt_get_info_string(char **string)
 
 	if (!crt_na_dict[plugin].nad_port_bind) {
 		D_ASPRINTF(*string, "%s://", plugin_str);
+	} else if (crt_na_ofi_conf.noc_port == -1) {
+		/* OFI_PORT not speicified */
+		D_ASPRINTF(*string, "%s://%s", plugin_str,
+			   crt_na_ofi_conf.noc_ip_str);
 	} else {
 		port = crt_na_ofi_conf.noc_port;
 		crt_na_ofi_conf.noc_port++;
