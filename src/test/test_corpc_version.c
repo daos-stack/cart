@@ -47,17 +47,10 @@
 #include <getopt.h>
 #include <semaphore.h>
 
-#include <gurt/common.h>
 #include <gurt/atomic.h>
 #include <cart/api.h>
 
-#define DBG_PRINT(x...)							\
-	do {								\
-		fprintf(stderr, "SRV [rank=%d pid=%d]\t",		\
-			test.t_my_rank,					\
-			test.t_my_pid);					\
-		fprintf(stderr, x);					\
-	} while (0)
+#include "tests_common.h"
 
 #define TEST_CORPC_BASE1 0x010000000
 #define TEST_CORPC_BASE2 0x020000000
@@ -73,23 +66,16 @@
 						TEST_CORPC_VER, 2)
 
 struct test_t {
-	crt_group_t		*t_local_group;
-	crt_group_t		*t_target_group;
+	crt_group_t		*t_primary_group;
 	crt_group_t		*t_sub_group;
-	char			*t_local_group_name;
-	char			*t_target_group_name;
-	int			 t_is_service;
-	uint32_t		 t_is_client,
-				 t_hold:1;
+	char			*t_primary_group_name;
 	ATOMIC uint32_t		 t_shutdown;
-	uint32_t		 t_holdtime;
 	uint32_t		 t_my_rank;
 	uint32_t		 t_my_pid;
 	uint32_t		 t_my_group_size;
-	uint32_t		 t_target_group_size;
 	crt_context_t		 t_crt_ctx;
 	pthread_t		 t_tid;
-	sem_t			 t_all_done;
+	sem_t			 t_token;
 };
 
 struct test_t test;
@@ -127,6 +113,9 @@ CRT_RPC_DEFINE(subgrp_ping, CRT_ISEQ_SUBGRP_PING, CRT_OSEQ_SUBGRP_PING)
 
 static void client_cb(const struct crt_cb_info *cb_info);
 
+d_rank_t real_ranks[] = {4, 3, 1, 2};
+d_rank_t sec_ranks[] = {0, 1, 2, 3};
+
 int
 test_parse_args(int argc, char **argv)
 {
@@ -135,9 +124,6 @@ test_parse_args(int argc, char **argv)
 
 	struct option		 long_options[] = {
 		{"name", required_argument, 0, 'n'},
-		{"attach_to", required_argument, 0, 'a'},
-		{"holdtime", required_argument, 0, 'h'},
-		{"is_service", no_argument, &test.t_is_service, 1},
 		{0, 0, 0, 0}
 	};
 
@@ -151,14 +137,7 @@ test_parse_args(int argc, char **argv)
 			if (long_options[option_index].flag != 0)
 				break;
 		case 'n':
-			test.t_local_group_name = optarg;
-			break;
-		case 'a':
-			test.t_target_group_name = optarg;
-			test.t_is_client = 1;
-			break;
-		case 'h':
-			test.t_holdtime = atoi(optarg);
+			test.t_primary_group_name = optarg;
 			break;
 		case '?':
 			return 1;
@@ -199,6 +178,33 @@ static void *progress_thread(void *arg)
 	pthread_exit(NULL);
 }
 
+static int
+test_rank_evict(crt_group_t *grp, crt_context_t *crt_ctx, d_rank_t rank)
+{
+	d_rank_list_t		*mod_ranks;
+	int			rc = 0;
+
+	mod_ranks = d_rank_list_alloc(1);
+	if (!mod_ranks) {
+		D_ERROR("rank list allocation failed\n");
+		assert(0);
+	}
+	mod_ranks->rl_ranks[0] = rank;
+	mod_ranks->rl_nr = 1;
+
+	rc = crt_group_primary_modify(grp, crt_ctx, 1,
+				mod_ranks, NULL,
+				CRT_GROUP_MOD_OP_REMOVE);
+	if (rc != 0) {
+		D_ERROR("crt_group_primary_modify() failed; rc=%d\n", rc);
+		assert(0);
+	}
+	crt_group_version_set(grp, 1);
+	DBG_PRINT("group %p version changed to %d\n", grp, 1);
+
+	return rc;
+}
+
 static void
 corpc_ver_mismatch_hdlr(crt_rpc_t *rpc_req)
 {
@@ -211,6 +217,7 @@ corpc_ver_mismatch_hdlr(crt_rpc_t *rpc_req)
 	D_ASSERT(rpc_req_input != NULL && rpc_req_output != NULL);
 	DBG_PRINT("server received request, opc: 0x%x.\n",
 		rpc_req->cr_opc);
+	rpc_req_output->magic = rpc_req_input->magic;
 	rpc_req_output->result = 1;
 	rc = crt_reply_send(rpc_req);
 	D_ASSERT(rc == 0);
@@ -218,10 +225,15 @@ corpc_ver_mismatch_hdlr(crt_rpc_t *rpc_req)
 		rpc_req_input->magic, rpc_req_output->result);
 
 	/* now everybody evicts rank 2 so group destroy can succeed */
-	rc = crt_rank_evict(test.t_local_group, 2);
-	if (rc != DER_SUCCESS)
-		D_ERROR("crt_rank_evcit(grp=%p, rank=2) failed, rc %d\n",
-			test.t_local_group, rc);
+//	rc = crt_rank_evict(test.t_primary_group, 2);
+
+	if (0 && test.t_my_rank != 2) {
+		rc = test_rank_evict(test.t_primary_group, test.t_crt_ctx,
+				2);
+		if (rc != DER_SUCCESS)
+			D_ERROR("crt_rank_evcit(grp=%p, rank=2) failed, rc %d\n",
+					test.t_primary_group, rc);
+	}
 }
 
 static void
@@ -273,9 +285,13 @@ test_rank_evict_hdlr(crt_rpc_t *rpc_req)
 	DBG_PRINT("server received eviction request, opc: 0x%x.\n",
 		rpc_req->cr_opc);
 
-	test.t_sub_group = crt_group_lookup("example_grpid");
-	D_ASSERT(test.t_sub_group != NULL);
-	rc = crt_rank_evict(test.t_local_group, rpc_req_input->rank);
+//	test.t_sub_group = crt_group_lookup("example_grpid");
+	if (test.t_sub_group == NULL)
+		DBG_PRINT("!!!!!!!! t_sub_group shuold not be NULL\n");
+	D_ASSERTF(test.t_sub_group != NULL, "should not be NULL\n");
+//	rc = crt_rank_evict(test.t_primary_group, rpc_req_input->rank);
+	rc = test_rank_evict(test.t_primary_group, test.t_crt_ctx,
+			     rpc_req_input->rank);
 	D_ASSERT(rc == 0);
 	D_DEBUG(DB_TEST, "rank %d evicted rank %d.\n", test.t_my_rank,
 		rpc_req_input->rank);
@@ -309,31 +325,7 @@ struct crt_corpc_ops corpc_ver_mismatch_ops = {
 };
 
 void
-target_shutdown_cmd_issue()
-{
-	crt_endpoint_t			 server_ep;
-	crt_rpc_t			*rpc_req = NULL;
-	int				 i;
-	int				 rc = 0;
-
-	for (i = 0; i < test.t_target_group_size; i++) {
-		server_ep.ep_grp = test.t_target_group;
-		server_ep.ep_rank = i;
-		server_ep.ep_tag = 0;
-		rc = crt_req_create(test.t_crt_ctx, &server_ep,
-				    TEST_OPC_SHUTDOWN,
-				    &rpc_req);
-		D_ASSERTF(rc == 0 && rpc_req != NULL,
-			  "crt_req_create() failed, rc: %d rpc_req: %p\n",
-			  rc, rpc_req);
-		rc = crt_req_send(rpc_req, client_cb, NULL);
-		D_ASSERTF(rc == 0, "crt_req_send() failed. rc: %d\n", rc);
-
-	}
-}
-
-void
-local_shutdown_cmd_issue()
+primary_shutdown_cmd_issue()
 {
 	crt_endpoint_t			 server_ep;
 	crt_rpc_t			*rpc_req = NULL;
@@ -343,7 +335,7 @@ local_shutdown_cmd_issue()
 	for (i = 0; i < test.t_my_group_size; i++) {
 		if (i == test.t_my_rank)
 			continue;
-		server_ep.ep_grp = test.t_local_group;
+		server_ep.ep_grp = test.t_primary_group;
 		server_ep.ep_rank = i;
 		server_ep.ep_tag = 0;
 		rc = crt_req_create(test.t_crt_ctx, &server_ep,
@@ -358,19 +350,11 @@ local_shutdown_cmd_issue()
 	}
 }
 
-static int
-sub_grp_destroy_cb(void *arg, int status)
-{
-	DBG_PRINT("in grp_destroy_cb, arg %p, status %d.\n", arg, status);
-	local_shutdown_cmd_issue();
-
-	return 0;
-}
 
 static int
 rank_evict_cb(crt_rpc_t *rpc_req)
 {
-	d_rank_t			 excluded_ranks[3] = {1, 3, 6};
+	d_rank_t			 excluded_ranks[1] = {2};
 	d_rank_list_t			 excluded_membs;
 	crt_rpc_t			*corpc_req;
 	struct corpc_ver_mismatch_in	*corpc_in;
@@ -382,7 +366,8 @@ rank_evict_cb(crt_rpc_t *rpc_req)
 	if (rpc_req_output == NULL)
 		return -DER_INVAL;
 
-	excluded_membs.rl_nr = 3;
+	// excluded ranks  contains secondary logical ranks
+	excluded_membs.rl_nr = 1;
 	excluded_membs.rl_ranks = excluded_ranks;
 	rc = crt_corpc_req_create(test.t_crt_ctx, test.t_sub_group,
 			&excluded_membs, TEST_OPC_CORPC_VER_MISMATCH,
@@ -416,14 +401,11 @@ corpc_ver_mismatch_cb(crt_rpc_t *rpc_req)
 	if (rpc_req_output == NULL)
 		return -DER_INVAL;
 	DBG_PRINT("%s, bounced back magic number: %d, %s\n",
-		test.t_local_group_name,
+		test.t_primary_group_name,
 		rpc_req_output->magic,
 		rpc_req_output->magic == rpc_req_input->magic ?
 		"MATCH" : "MISMATCH");
-	rc = crt_group_destroy(test.t_sub_group, sub_grp_destroy_cb,
-			&test.t_my_rank);
-	DBG_PRINT("crt_group_destroy rc: %d, arg %p.\n",
-		rc, &test.t_my_rank);
+	primary_shutdown_cmd_issue();
 
 	return rc;
 }
@@ -437,7 +419,7 @@ eviction_rpc_issue(void)
 	int			 rc = 0;
 
 	/* tell rank 4 to evict rank 2 */
-	server_ep.ep_grp = test.t_local_group;
+	server_ep.ep_grp = test.t_primary_group;
 	server_ep.ep_rank = 4;
 	server_ep.ep_tag = 0;
 	rc = crt_req_create(test.t_crt_ctx, &server_ep, TEST_OPC_RANK_EVICT,
@@ -495,8 +477,8 @@ client_cb(const struct crt_cb_info *cb_info)
  * rank is hit first, we might bet back -DER_NONEXIST instead
  * if rank updated membership list but group version hasnt changed yet
  */
-		D_ASSERTF((cb_info->cci_rc == -DER_MISMATCH ||
-			cb_info->cci_rc == -DER_NONEXIST),
+		D_ASSERTF((cb_info->cci_rc == -DER_MISMATCH),
+//				|| cb_info->cci_rc == -DER_NONEXIST),
 			"cb_info->cci_rc %d\n", cb_info->cci_rc);
 		corpc_ver_mismatch_cb(rpc_req);
 		break;
@@ -504,7 +486,7 @@ client_cb(const struct crt_cb_info *cb_info)
 		rank_evict_cb(rpc_req);
 		break;
 	case TEST_OPC_SHUTDOWN:
-		sem_post(&test.t_all_done);
+		sem_post(&test.t_token);
 		break;
 	default:
 		break;
@@ -519,28 +501,25 @@ test_rank_conversion(void)
 
 	rc = crt_group_rank_p2s(test.t_sub_group, 2, &rank_out);
 	D_ASSERT(rc == 0);
-	D_ASSERT(rank_out == 1);
+	D_ASSERT(rank_out == 3);
 
-	rc = crt_group_rank_s2p(test.t_sub_group, 3, &rank_out);
+	rc = crt_group_rank_s2p(test.t_sub_group, 0, &rank_out);
 	D_ASSERT(rc == 0);
 	D_ASSERT(rank_out == 4);
 }
 
-static int
-sub_grp_create_cb(crt_group_t *grp, void *priv, int status)
+void
+dummy_barrier_cb(struct crt_barrier_cb_info *cb_info)
+{
+}
+
+void
+sub_grp_ping_issue(struct crt_barrier_cb_info *cb_info)
 {
 	crt_endpoint_t			 server_ep;
 	crt_rpc_t			*rpc_req = NULL;
 	struct subgrp_ping_in		*rpc_req_input;
 	int				 rc = 0;
-
-	DBG_PRINT("sub group created, grp %p, myrank %d, status %d.\n",
-		grp, *(int *) priv, status);
-	D_ASSERT(status == 0);
-	test.t_sub_group = grp;
-
-	/* test rank conversion */
-	test_rank_conversion();
 
 	/* send an RPC to a subgroup rank */
 	server_ep.ep_grp = test.t_sub_group;
@@ -559,37 +538,90 @@ sub_grp_create_cb(crt_group_t *grp, void *priv, int status)
 	D_ASSERTF(rc == 0, "crt_req_send() failed, rc %d\n", rc);
 
 	D_DEBUG(DB_TEST, "exiting\n");
-
-	return rc;
 }
 
 static void
 test_run(void)
 {
 	crt_group_id_t		sub_grp_id = "example_grpid";
-	d_rank_t		sub_grp_ranks[4] = {4, 3, 1, 2};
 	d_rank_list_t		sub_grp_membs;
+	bool			is_member = false;
 	int			i;
 	int			rc = 0;
 
-	if (test.t_my_group_size < 5 || test.t_my_rank != 3)
-		D_GOTO(out, 0);
+	if (test.t_my_group_size < 5) {
+		DBG_PRINT("need at least 5 ranks, exiting\n");
+		D_GOTO(out, rc);
+	}
+
+	for (i = 0; i < 4; i++)
+		if (test.t_my_rank == real_ranks[i])
+			is_member = true;
+
+	if (!is_member) {
+		DBG_PRINT("I am not a sub-group member\n");
+		for (;;) {
+			rc = crt_barrier(NULL, dummy_barrier_cb, NULL);
+			if (rc != -DER_BUSY)
+				break;
+			sched_yield();
+		}
+		DBG_PRINT("created barrier.\n");
+		D_GOTO(out, rc);
+	}
+	/* only subgroup members execute the following code */
 
 	/* root: rank 3, participants: rank 1, rank 2, rank 4 */
 	sub_grp_membs.rl_nr = 4;
-	sub_grp_membs.rl_ranks = sub_grp_ranks;
+	sub_grp_membs.rl_ranks = real_ranks;
 
 
-	rc = crt_group_create(sub_grp_id, &sub_grp_membs, 1,
-			      sub_grp_create_cb,
-			      &test.t_my_rank);
-	DBG_PRINT("crt_group_create rc: %d, my_rank %d.\n",
-		rc, test.t_my_rank);
-	D_ASSERT(rc == 0);
-	for (i = 0; i < test.t_my_group_size - 1; i++)
-		sem_wait(&test.t_all_done);
-	atomic_store_release(&test.t_shutdown, 1);
+	rc = crt_group_secondary_create(sub_grp_id, test.t_primary_group, NULL,
+					&test.t_sub_group);
+	if (rc != 0) {
+		D_ERROR("crt_group_secondary_create() failed; rc=%d\n", rc);
+		D_ASSERT(0);
+	}
+	D_ASSERT(test.t_sub_group != NULL);
+	test.t_sub_group = crt_group_lookup("example_grpid");
+	D_ASSERT(test.t_sub_group != NULL);
+
+	for (i = 0 ; i < 4; i++) {
+		rc = crt_group_secondary_rank_add(test.t_sub_group,
+					sec_ranks[i], real_ranks[i]);
+		if (rc != 0) {
+			D_ERROR("Rank addition failed; rc=%d\n", rc);
+			D_ASSERT(0);
+		}
+	}
+
+	/* test rank conversion */
+	test_rank_conversion();
+
+	if (test.t_my_rank == 3) {
+		for (;;) {
+			crt_barrier(NULL, sub_grp_ping_issue, NULL);
+			if (rc != -DER_BUSY)
+				break;
+			sched_yield();
+		}
+	} else {
+		for (;;) {
+			rc = crt_barrier(NULL, dummy_barrier_cb, NULL);
+			if (rc != -DER_BUSY)
+				break;
+			sched_yield();
+		}
+	}
+	DBG_PRINT("created barrier.\n");
+
 out:
+
+	if (test.t_my_rank == 3) {
+		for (i = 0; i < test.t_my_group_size - 1; i++)
+			sem_wait(&test.t_token);
+		atomic_store_release(&test.t_shutdown, 1);
+	}
 	D_ASSERT(rc == 0);
 }
 
@@ -641,37 +673,38 @@ static struct crt_proto_format my_proto_fmt_srv = {
 void
 test_init(void)
 {
-	int		rc = 0;
-	uint32_t	flag;
+	uint32_t	 flag;
+	char		*env_self_rank;
+	d_rank_t	 my_rank;
+	d_rank_list_t	*rank_list;
+	char		*grp_cfg_file;
+	int		 rc = 0;
 
+	env_self_rank = getenv("CRT_L_RANK");
+	if (env_self_rank == NULL) {
+		printf("CRT_L_RANK was not set\n");
+		return;
+	}
+
+	my_rank = atoi(env_self_rank);
+
+	/* rank, num_attach_retries, is_server, assert_on_error */
+	tc_test_init(my_rank, 20, true, true);
 	rc = d_log_init();
-	assert(rc == 0);
+	D_ASSERT(rc == 0);
 
-	D_DEBUG(DB_TEST, "local group: %s, target group: %s\n",
-		test.t_local_group_name,
-		test.t_target_group_name ? test.t_target_group_name : "NULL\n");
+	D_DEBUG(DB_TEST, "primary group: %s\n", test.t_primary_group_name);
 
-	flag = test.t_is_service ? CRT_FLAG_BIT_SERVER : 0;
-	flag |= CRT_FLAG_BIT_LM_DISABLE;
-	rc = crt_init(test.t_local_group_name, flag);
+	flag = CRT_FLAG_BIT_SERVER | CRT_FLAG_BIT_PMIX_DISABLE;
+	rc = crt_init(test.t_primary_group_name, flag);
 	D_ASSERTF(rc == 0, "crt_init() failed, rc: %d\n", rc);
 
-	test.t_local_group = crt_group_lookup(test.t_local_group_name);
-	D_ASSERTF(test.t_local_group != NULL, "crt_group_lookup() failed. "
-		  "local_group = %p\n", test.t_local_group);
+	rc = crt_rank_self_set(my_rank);
+	D_ASSERT(rc == 0);
 
-	rc = crt_group_rank(NULL, &test.t_my_rank);
-	D_ASSERTF(rc == 0, "crt_group_rank() failed, rc: %d\n", rc);
-	D_DEBUG(DB_TEST, "local rank is %d\n", test.t_my_rank);
-
-	test.t_my_pid = getpid();
-
-	rc = crt_group_size(NULL, &test.t_my_group_size);
-	D_ASSERTF(rc == 0, "crt_group_size() failed. rc: %d\n", rc);
-	D_DEBUG(DB_TEST, "local group size is %d\n", test.t_my_group_size);
-
-	rc = crt_context_create(&test.t_crt_ctx);
-	D_ASSERTF(rc == 0, "crt_context_create() failed. rc: %d\n", rc);
+	test.t_primary_group = crt_group_lookup(test.t_primary_group_name);
+	D_ASSERTF(test.t_primary_group != NULL, "crt_group_lookup() failed. "
+		  "primary_group = %p\n", test.t_primary_group);
 
 	rc = crt_proto_register(&my_proto_fmt_corpc);
 	D_ASSERTF(rc == 0, "crt_proto_register() for corpc failed, rc: %d\n",
@@ -680,52 +713,74 @@ test_init(void)
 	rc = crt_proto_register(&my_proto_fmt_srv);
 	D_ASSERTF(rc == 0, "crt_rpc_srv_register() failed, rc: %d\n", rc);
 
-	rc = sem_init(&test.t_all_done, 0, 0);
-	D_ASSERTF(rc == 0, "Could not initialize semaphore\n");
+	rc = crt_context_create(&test.t_crt_ctx);
+	D_ASSERTF(rc == 0, "crt_context_create() failed. rc: %d\n", rc);
 
 	rc = pthread_create(&test.t_tid, NULL, progress_thread,
 			    test.t_crt_ctx);
 	D_ASSERTF(rc == 0, "pthread_create() failed. rc: %d\n", rc);
 
-	if (test.t_is_client) {
-		rc = crt_group_attach(test.t_target_group_name,
-				      &test.t_target_group);
-		D_ASSERTF(rc == 0, "crt_group_attach() failed, rc: %d\n", rc);
-		D_ASSERTF(test.t_target_group != NULL,
-			  "attached group is NULL.\n");
-		rc = crt_group_size(test.t_target_group,
-			       &test.t_target_group_size);
-		D_ASSERTF(rc == 0, "crt_group_size() failed. rc: %d\n", rc);
-		D_DEBUG(DB_TEST, "sizeof %s is %d\n", test.t_target_group_name,
-			test.t_target_group_size);
+
+	grp_cfg_file = getenv("CRT_L_GRP_CFG");
+	if (grp_cfg_file == NULL) {
+		D_ERROR("CRT_L_GRP_CFG was not set\n");
+		D_ASSERT(0);
 	}
+
+	D_DEBUG(DB_TEST, "grp_cfg_file is %s\n", grp_cfg_file);
+	rc = tc_load_group_from_file(grp_cfg_file, test.t_crt_ctx,
+			test.t_primary_group, my_rank, false);
+	if (rc != 0) {
+		D_ERROR("Failed to load group file %s\n", grp_cfg_file);
+		D_ASSERT(0);
+	}
+
+	rc = crt_group_rank(NULL, &test.t_my_rank);
+	D_ASSERTF(rc == 0, "crt_group_rank() failed, rc: %d\n", rc);
+	D_DEBUG(DB_TEST, "primary rank is %d\n", test.t_my_rank);
+
+	test.t_my_pid = getpid();
+
+	rc = crt_group_size(NULL, &test.t_my_group_size);
+	D_ASSERTF(rc == 0, "crt_group_size() failed. rc: %d\n", rc);
+	D_DEBUG(DB_TEST, "primary group size is %d\n", test.t_my_group_size);
+
+	rc = crt_group_ranks_get(test.t_primary_group, &rank_list);
+	D_ASSERT(rc == 0);
+	rc = tc_wait_for_ranks(test.t_crt_ctx, test.t_primary_group, rank_list,
+			       0, 1, 5, 120);
+	D_ASSERT(rc == 0);
+
+	rc = sem_init(&test.t_token, 0, 0);
+	D_ASSERTF(rc == 0, "Could not initialize semaphore\n");
+
 }
 
 void
 test_fini()
 {
+	int		i;
 	int		rc;
-
-	if (test.t_holdtime != 0)
-		sleep(test.t_holdtime);
-
-	if (test.t_is_client) {
-		if (test.t_my_rank == 0)
-			target_shutdown_cmd_issue();
-
-		rc = crt_group_detach(test.t_target_group);
-		D_ASSERTF(rc == 0, "crt_group_detach failed, rc: %d\n", rc);
-	}
 
 	rc = pthread_join(test.t_tid, NULL);
 	D_ASSERTF(rc == 0, "pthread_join() failed, rc: %d\n", rc);
 
+	for (i = 0; i < 4; i++) {
+		if (test.t_my_rank != real_ranks[i])
+			continue;
+		rc = crt_group_secondary_destroy(test.t_sub_group);
+		DBG_PRINT("crt_group_secondary_destroy rc: %d, arg %p.\n",
+			  rc, &test.t_my_rank);
+	}
+
+	crt_swim_fini();
 	rc = crt_context_flush(test.t_crt_ctx, 60);
 	D_ASSERTF(rc == DER_SUCCESS || rc == -DER_TIMEDOUT,
 		  "crt_context_destroy() failed. rc: %d\n", rc);
 
 	rc = crt_context_destroy(test.t_crt_ctx, 0);
 	D_ASSERTF(rc == 0, "crt_context_destroy() failed. rc: %d\n", rc);
+
 	rc = crt_finalize();
 	D_ASSERTF(rc == 0, "crt_finalize() failed. rc: %d\n", rc);
 
@@ -734,13 +789,16 @@ test_fini()
 
 int main(int argc, char **argv)
 {
-	int	rc;
+	int		 rc;
 
+	opts.is_server = 1;
+	DBG_PRINT("here\n");
 	rc = test_parse_args(argc, argv);
 	if (rc != 0) {
 		DBG_PRINT("test_parse_args() failed, rc: %d.\n", rc);
 		return rc;
 	}
+
 	test_init();
 	test_run();
 	test_fini();
