@@ -225,14 +225,13 @@ corpc_ver_mismatch_hdlr(crt_rpc_t *rpc_req)
 		rpc_req_input->magic, rpc_req_output->result);
 
 	/* now everybody evicts rank 2 so group destroy can succeed */
-//	rc = crt_rank_evict(test.t_primary_group, 2);
 
 	if (0 && test.t_my_rank != 2) {
 		rc = test_rank_evict(test.t_primary_group, test.t_crt_ctx,
 				2);
 		if (rc != DER_SUCCESS)
-			D_ERROR("crt_rank_evcit(grp=%p, rank=2) failed, rc %d\n",
-					test.t_primary_group, rc);
+			D_ERROR("crt_rank_evcit(grp=%p, rank=2) failed, "
+				"rc %d\n", test.t_primary_group, rc);
 	}
 }
 
@@ -285,11 +284,9 @@ test_rank_evict_hdlr(crt_rpc_t *rpc_req)
 	DBG_PRINT("server received eviction request, opc: 0x%x.\n",
 		rpc_req->cr_opc);
 
-//	test.t_sub_group = crt_group_lookup("example_grpid");
 	if (test.t_sub_group == NULL)
-		DBG_PRINT("!!!!!!!! t_sub_group shuold not be NULL\n");
+		DBG_PRINT("test.t_sub_group shuold not be NULL\n");
 	D_ASSERTF(test.t_sub_group != NULL, "should not be NULL\n");
-//	rc = crt_rank_evict(test.t_primary_group, rpc_req_input->rank);
 	rc = test_rank_evict(test.t_primary_group, test.t_crt_ctx,
 			     rpc_req_input->rank);
 	D_ASSERT(rc == 0);
@@ -366,7 +363,7 @@ rank_evict_cb(crt_rpc_t *rpc_req)
 	if (rpc_req_output == NULL)
 		return -DER_INVAL;
 
-	// excluded ranks  contains secondary logical ranks
+	/* excluded ranks  contains secondary logical ranks */
 	excluded_membs.rl_nr = 1;
 	excluded_membs.rl_ranks = excluded_ranks;
 	rc = crt_corpc_req_create(test.t_crt_ctx, test.t_sub_group,
@@ -478,8 +475,7 @@ client_cb(const struct crt_cb_info *cb_info)
  * if rank updated membership list but group version hasnt changed yet
  */
 		D_ASSERTF((cb_info->cci_rc == -DER_MISMATCH),
-//				|| cb_info->cci_rc == -DER_NONEXIST),
-			"cb_info->cci_rc %d\n", cb_info->cci_rc);
+			  "cb_info->cci_rc %d\n", cb_info->cci_rc);
 		corpc_ver_mismatch_cb(rpc_req);
 		break;
 	case TEST_OPC_RANK_EVICT:
@@ -544,7 +540,6 @@ static void
 test_run(void)
 {
 	crt_group_id_t		sub_grp_id = "example_grpid";
-	d_rank_list_t		sub_grp_membs;
 	bool			is_member = false;
 	int			i;
 	int			rc = 0;
@@ -572,10 +567,6 @@ test_run(void)
 	/* only subgroup members execute the following code */
 
 	/* root: rank 3, participants: rank 1, rank 2, rank 4 */
-	sub_grp_membs.rl_nr = 4;
-	sub_grp_membs.rl_ranks = real_ranks;
-
-
 	rc = crt_group_secondary_create(sub_grp_id, test.t_primary_group, NULL,
 					&test.t_sub_group);
 	if (rc != 0) {
