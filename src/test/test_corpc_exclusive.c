@@ -49,8 +49,8 @@
 #include <gurt/common.h>
 #include <cart/api.h>
 
-static int g_do_shutdown;
-static 	d_rank_t my_rank;
+static int	g_do_shutdown;
+static d_rank_t my_rank;
 
 static int
 corpc_aggregate(crt_rpc_t *src, crt_rpc_t *result, void *priv)
