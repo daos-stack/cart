@@ -64,9 +64,10 @@ sync_timedwait(struct wfr_status *wfrs, int sec, int line_number)
 	deadline.tv_sec += sec;
 
 	/* If this fails timeout, return and retry
-	 * else, retry based on status of rpc */
+	 * else, retry based on status of rpc
+	 */
 	rc = sem_timedwait(&wfrs->sem, &deadline);
-	if(rc != 0)
+	if (rc != 0)
 		wfrs->rc = rc;
 }
 
@@ -80,7 +81,7 @@ ctl_client_cb(const struct crt_cb_info *info)
 
 	wfrs = (struct wfr_status *)info->cci_arg;
 
-	if(info->cci_rc == 0) {
+	if (info->cci_rc == 0) {
 		out_ls_args = crt_reply_get(info->cci_rpc);
 		wfrs->num_ctx = out_ls_args->cel_ctx_num;
 		wfrs->rc = out_ls_args->cel_rc;
@@ -92,9 +93,9 @@ ctl_client_cb(const struct crt_cb_info *info)
 			fprintf(stdout, "    %s\n", addr_str);
 				addr_str += (strlen(addr_str) + 1);
 		}
-	}
-	else
+	} else {
 		wfrs->rc = info->cci_rc;
+	}
 
 	sem_post(&wfrs->sem);
 }
@@ -114,10 +115,10 @@ wait_for_ranks(crt_context_t ctx, crt_group_t *grp, d_rank_list_t *rank_list,
 	int				rc = 0;
 
 	rc = d_gettime(&t1);
-	D_ASSERTF( rc == 0, "d_gettime() failed; rc=%d\n", rc);
+	D_ASSERTF(rc == 0, "d_gettime() failed; rc=%d\n", rc);
 
 	rc = sem_init(&ws.sem, 0, 0);
-	D_ASSERTF( rc == 0, "sem_init() failed; rc=%d\n", rc);
+	D_ASSERTF(rc == 0, "sem_init() failed; rc=%d\n", rc);
 
 	for (i = 0; i < rank_list->rl_nr; i++) {
 
@@ -128,22 +129,23 @@ wait_for_ranks(crt_context_t ctx, crt_group_t *grp, d_rank_list_t *rank_list,
 		server_ep.ep_grp = grp;
 
 		rc = crt_req_create(ctx, &server_ep, CRT_OPC_CTL_LS, &rpc);
-		D_ASSERTF( rc == 0, "crt_req_create failed; rc=%d\n", rc);
+		D_ASSERTF(rc == 0, "crt_req_create failed; rc=%d\n", rc);
 
 		in_args = crt_req_get(rpc);
 		in_args->cel_grp_id = grp->cg_grpid;
 		in_args->cel_rank = rank;
 
 		rc = crt_req_set_timeout(rpc, 5);
-		D_ASSERTF( rc == 0, "crt_req_set_timeout failed; rc=%d\n", rc);
+		D_ASSERTF(rc == 0, "crt_req_set_timeout failed; rc=%d\n", rc);
+
 		rc = crt_req_send(rpc, ctl_client_cb, &ws);
 
 		sync_timedwait(&ws, 10, __LINE__);
 
-		while(ws.rc != 0 && time_s < timeout){
+		while (ws.rc != 0 && time_s < timeout) {
 			rc = crt_req_create(ctx, &server_ep,
 					    CRT_OPC_CTL_LS, &rpc);
-			D_ASSERTF( rc == 0,
+			D_ASSERTF(rc == 0,
 				   "crt_req_create failed; rc=%d\n", rc);
 
 			in_args = crt_req_get(rpc);
@@ -151,7 +153,7 @@ wait_for_ranks(crt_context_t ctx, crt_group_t *grp, d_rank_list_t *rank_list,
 			in_args->cel_rank = rank;
 
 			rc = crt_req_set_timeout(rpc, 5);
-			D_ASSERTF( rc == 0,
+			D_ASSERTF(rc == 0,
 				   "crt_req_set_timeout failed; rc=%d\n", rc);
 
 			rc = crt_req_send(rpc, ctl_client_cb, &ws);
@@ -159,16 +161,16 @@ wait_for_ranks(crt_context_t ctx, crt_group_t *grp, d_rank_list_t *rank_list,
 			sync_timedwait(&ws, 10, __LINE__);
 
 			rc = d_gettime(&t2);
-			D_ASSERTF( rc == 0, "d_gettime() failed; rc=%d\n", rc);
+			D_ASSERTF(rc == 0, "d_gettime() failed; rc=%d\n", rc);
 			time_s = d_time2s(d_timediff(t1, t2));
 		}
 
-		if(ws.rc != 0){
+		if (ws.rc != 0) {
 			rc = ws.rc;
 			break;
 		}
 
-		if(ws.num_ctx < total_ctx){
+		if (ws.num_ctx < total_ctx) {
 			rc = -1;
 			break;
 		}

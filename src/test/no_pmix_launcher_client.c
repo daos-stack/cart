@@ -176,7 +176,8 @@ int main(int argc, char **argv)
 	/* This is needed until hg cancel is fully working.
 	 * RPCs in wait_for_ranks are expected to fail
 	 * and needs to be cancelled correctly.
-	 * It should be removed when hg cancel is fixed - HG PR #284 */
+	 * It should be removed when hg cancel is fixed - HG PR #284
+	 */
 	sleep(2);
 
 	rc = wait_for_ranks(crt_ctx, grp, rank_list, NUM_SERVER_CTX - 1,

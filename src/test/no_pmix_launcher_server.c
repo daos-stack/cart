@@ -117,7 +117,7 @@ int main(int argc, char **argv)
 
 	rc = pthread_create(&progress_thread[0], 0,
 			    progress_function, &crt_ctx[0]);
-	if (rc != 0){
+	if (rc != 0) {
 		D_ERROR("pthread_create() failed; rc=%d\n", rc);
 		assert(0);
 	}
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
 
 	/* load group info from a config file and delete file upon return */
 	rc = tc_load_group_from_file(grp_cfg_file, crt_ctx[0], grp, my_rank,
-                                        true);
+					true);
 	if (rc != 0) {
 		D_ERROR("tc_load_group_from_file() failed; rc=%d\n", rc);
 		assert(0);
@@ -165,7 +165,7 @@ int main(int argc, char **argv)
 	for (i = 1; i < NUM_SERVER_CTX; i++) {
 		rc = pthread_create(&progress_thread[i], 0,
 				    progress_function, &crt_ctx[i]);
-		if (rc != 0){
+		if (rc != 0) {
 			D_ERROR("pthread_create() failed; rc=%d\n", rc);
 			assert(0);
 		}
