@@ -86,11 +86,11 @@ ctl_client_cb(const struct crt_cb_info *info)
 		wfrs->num_ctx = out_ls_args->cel_ctx_num;
 		wfrs->rc = out_ls_args->cel_rc;
 
-		fprintf(stdout, "ctx_num: %d\n",
+		D_DEBUG(DB_TEST, "ctx_num: %d\n",
 			out_ls_args->cel_ctx_num);
 		addr_str = out_ls_args->cel_addr_str.iov_buf;
 		for (i = 0; i < out_ls_args->cel_ctx_num; i++) {
-			fprintf(stdout, "    %s\n", addr_str);
+			D_DEBUG(DB_TEST, "    %s\n", addr_str);
 				addr_str += (strlen(addr_str) + 1);
 		}
 	} else {
@@ -102,7 +102,8 @@ ctl_client_cb(const struct crt_cb_info *info)
 
 int
 wait_for_ranks(crt_context_t ctx, crt_group_t *grp, d_rank_list_t *rank_list,
-		int tag, int total_ctx, double timeout)
+		int tag, int total_ctx, double ping_timeout,
+		double total_timeout)
 {
 	struct wfr_status		ws;
 	struct timespec			t1, t2;
@@ -120,13 +121,14 @@ wait_for_ranks(crt_context_t ctx, crt_group_t *grp, d_rank_list_t *rank_list,
 	rc = sem_init(&ws.sem, 0, 0);
 	D_ASSERTF(rc == 0, "sem_init() failed; rc=%d\n", rc);
 
+	server_ep.ep_tag = tag;
+	server_ep.ep_grp = grp;
+
 	for (i = 0; i < rank_list->rl_nr; i++) {
 
 		rank = rank_list->rl_ranks[i];
 
 		server_ep.ep_rank = rank;
-		server_ep.ep_tag = tag;
-		server_ep.ep_grp = grp;
 
 		rc = crt_req_create(ctx, &server_ep, CRT_OPC_CTL_LS, &rpc);
 		D_ASSERTF(rc == 0, "crt_req_create failed; rc=%d\n", rc);
@@ -135,14 +137,18 @@ wait_for_ranks(crt_context_t ctx, crt_group_t *grp, d_rank_list_t *rank_list,
 		in_args->cel_grp_id = grp->cg_grpid;
 		in_args->cel_rank = rank;
 
-		rc = crt_req_set_timeout(rpc, 5);
+		rc = crt_req_set_timeout(rpc, ping_timeout);
 		D_ASSERTF(rc == 0, "crt_req_set_timeout failed; rc=%d\n", rc);
+
+		ws.rc = 0;
+		ws.num_ctx = 0;
 
 		rc = crt_req_send(rpc, ctl_client_cb, &ws);
 
-		sync_timedwait(&ws, 10, __LINE__);
+		if (rc == 0)
+			sync_timedwait(&ws, 120, __LINE__);
 
-		while (ws.rc != 0 && time_s < timeout) {
+		while (ws.rc != 0 && time_s < total_timeout) {
 			rc = crt_req_create(ctx, &server_ep,
 					    CRT_OPC_CTL_LS, &rpc);
 			D_ASSERTF(rc == 0,
@@ -152,13 +158,17 @@ wait_for_ranks(crt_context_t ctx, crt_group_t *grp, d_rank_list_t *rank_list,
 			in_args->cel_grp_id = grp->cg_grpid;
 			in_args->cel_rank = rank;
 
-			rc = crt_req_set_timeout(rpc, 5);
+			rc = crt_req_set_timeout(rpc, ping_timeout);
 			D_ASSERTF(rc == 0,
 				   "crt_req_set_timeout failed; rc=%d\n", rc);
 
+			ws.rc = 0;
+			ws.num_ctx = 0;
+
 			rc = crt_req_send(rpc, ctl_client_cb, &ws);
 
-			sync_timedwait(&ws, 10, __LINE__);
+			if (rc == 0)
+				sync_timedwait(&ws, 120, __LINE__);
 
 			rc = d_gettime(&t2);
 			D_ASSERTF(rc == 0, "d_gettime() failed; rc=%d\n", rc);
