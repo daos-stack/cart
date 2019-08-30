@@ -104,4 +104,83 @@ tc_sem_timedwait(sem_t *sem, int sec, int line_number)
 	D_ASSERTF(rc == 0, "sem_timedwait() failed at line %d rc: %d\n",
 		  line_number, rc);
 }
+
+int
+psr_start_basic()
+{
+	char		*env_self_rank;
+	d_rank_t	 my_rank;
+
+	env_self_rank = getenv("CRT_L_RANK");
+	my_rank = atoi(env_self_rank);
+
+        /* Set up for DBG_PRINT */
+	opts.self_rank = my_rank;
+	opts.mypid = getpid();
+	opts.is_server = 1;
+
+	rc = d_log_init();
+	assert(rc == 0);
+
+	DBG_PRINT("Server starting up\n");
+	rc = crt_init("server_grp", CRT_FLAG_BIT_SERVER |
+		CRT_FLAG_BIT_PMIX_DISABLE | CRT_FLAG_BIT_LM_DISABLE);
+	if (rc != 0) {
+		D_ERROR("crt_init() failed; rc=%d\n", rc);
+		assert(0);
+	}
+
+	grp = crt_group_lookup(NULL);
+	if (!grp) {
+		D_ERROR("Failed to lookup group\n");
+		assert(0);
+	}
+
+	rc = crt_rank_self_set(my_rank);
+	if (rc != 0) {
+		D_ERROR("crt_rank_self_set(%d) failed; rc=%d\n",
+			my_rank, rc);
+		assert(0);
+	}
+
+	rc = crt_context_create(&crt_ctx[0]);
+	if (rc != 0) {
+		D_ERROR("crt_context_create() failed; rc=%d\n", rc);
+		assert(0);
+	}
+
+	rc = pthread_create(&progress_thread[0], 0,
+			    progress_function, &crt_ctx[0]);
+	if (rc != 0) {
+		D_ERROR("pthread_create() failed; rc=%d\n", rc);
+		assert(0);
+	}
+
+	grp_cfg_file = getenv("CRT_L_GRP_CFG");
+
+	rc = crt_rank_uri_get(grp, my_rank, 0, &my_uri);
+	if (rc != 0) {
+		D_ERROR("crt_rank_uri_get() failed; rc=%d\n", rc);
+		assert(0);
+	}
+
+	/* load group info from a config file and delete file upon return */
+	rc = tc_load_group_from_file(grp_cfg_file, crt_ctx[0], grp, my_rank,
+					true);
+	if (rc != 0) {
+		D_ERROR("tc_load_group_from_file() failed; rc=%d\n", rc);
+		assert(0);
+	}
+
+	DBG_PRINT("self_rank=%d uri=%s grp_cfg_file=%s\n", my_rank,
+		  my_uri, grp_cfg_file);
+	D_FREE(my_uri);
+
+	rc = crt_group_size(NULL, &grp_size);
+	if (rc != 0) {
+		D_ERROR("crt_group_size() failed; rc=%d\n", rc);
+		assert(0);
+	}
+}
+
 #endif /* __TESTS_COMMON_H__ */

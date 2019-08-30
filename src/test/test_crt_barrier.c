@@ -131,7 +131,8 @@ int main(int argc, char **argv)
 	assert(rc == 0);
 
 	printf("Calling crt_init()\n");
-	rc = crt_init("crt_barrier_group", CRT_FLAG_BIT_SERVER);
+	rc = crt_init("crt_barrier_group", CRT_FLAG_BIT_SERVER | 
+			CRT_FLAG_BIT_PMIX_DISABLE | CRT_FLAG_BIT_LM_DISABLE);
 	D_ASSERTF(rc == 0, "Failed in crt_init, rc = %d\n", rc);
 
 	printf("Calling crt_context_create()\n");
