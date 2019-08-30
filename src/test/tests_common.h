@@ -64,8 +64,8 @@ sync_timedwait(struct wfr_status *wfrs, int sec, int line_number)
 	deadline.tv_sec += sec;
 
 	rc = sem_timedwait(&wfrs->sem, &deadline);
-	if (rc != 0)
-		wfrs->rc = rc;
+	D_ASSERTF(rc == 0, "Sync timed out at line %d rc: %d\n",
+		  line_number, rc);
 }
 
 static void
