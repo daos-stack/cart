@@ -63,9 +63,6 @@ sync_timedwait(struct wfr_status *wfrs, int sec, int line_number)
 
 	deadline.tv_sec += sec;
 
-	/* If this fails timeout, return and retry
-	 * else, retry based on status of rpc
-	 */
 	rc = sem_timedwait(&wfrs->sem, &deadline);
 	if (rc != 0)
 		wfrs->rc = rc;
@@ -147,6 +144,8 @@ wait_for_ranks(crt_context_t ctx, crt_group_t *grp, d_rank_list_t *rank_list,
 
 		if (rc == 0)
 			sync_timedwait(&ws, 120, __LINE__);
+		else
+			ws.rc = rc;
 
 		while (ws.rc != 0 && time_s < total_timeout) {
 			rc = crt_req_create(ctx, &server_ep,
@@ -169,6 +168,8 @@ wait_for_ranks(crt_context_t ctx, crt_group_t *grp, d_rank_list_t *rank_list,
 
 			if (rc == 0)
 				sync_timedwait(&ws, 120, __LINE__);
+			else
+				ws.rc = rc;
 
 			rc = d_gettime(&t2);
 			D_ASSERTF(rc == 0, "d_gettime() failed; rc=%d\n", rc);

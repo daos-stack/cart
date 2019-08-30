@@ -173,7 +173,7 @@ int main(int argc, char **argv)
 
 	/* Wait until shutdown is issued and progress threads exit */
 	for (i = 0; i < NUM_SERVER_CTX; i++)
-	pthread_join(progress_thread[i], NULL);
+		pthread_join(progress_thread[i], NULL);
 
 	rc = crt_finalize();
 	if (rc != 0) {
