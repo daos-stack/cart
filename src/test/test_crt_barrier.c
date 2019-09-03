@@ -128,38 +128,14 @@ int main(int argc, char **argv)
 	int			i;
 	pthread_t		tid;
 
-	/* This will be common in psr_start_basic
-
-	rc = d_log_init();
-	assert(rc == 0);
-
-	printf("Calling crt_init()\n");
-	rc = crt_init("crt_barrier_group", CRT_FLAG_BIT_SERVER | 
-			CRT_FLAG_BIT_PMIX_DISABLE | CRT_FLAG_BIT_LM_DISABLE);
-	D_ASSERTF(rc == 0, "Failed in crt_init, rc = %d\n", rc);
-
-	printf("Calling crt_context_create()\n");
-	rc = crt_context_create(&crt_ctx);
-	D_ASSERTF(rc == 0, "Failed in crt_context_create, rc = %d\n", rc);
-
-	printf("Starting progress thread\n");
-	rc = pthread_create(&tid, NULL, progress_thread, crt_ctx);
-	D_ASSERTF(rc == 0, "Failed to start progress thread, rc = %d\n",
-		  rc);
-
-	*/
-
-	printf("SCHAN15 - psr start basic\n");
 	psr_start_basic(&crt_ctx, &tid);
 
-	printf("SCHAN15 - barrier test start\n");
 	info = (struct proc_info *)malloc(sizeof(struct proc_info) *
 					  NUM_BARRIERS);
 	D_ASSERTF(info != NULL,
 		  "Could not allocate space for test");
-	crt_group_rank(NULL, &my_rank);
 
-	printf("SCHAN15 - my rank is %d\n", my_rank);
+	crt_group_rank(NULL, &my_rank);
 
 	for (i = 0; i < NUM_BARRIERS; i++) {
 		info[i].rank = my_rank;
@@ -184,12 +160,11 @@ int main(int argc, char **argv)
 
 	g_barrier_count = 0;
 
-	printf("SCHAN15 - barrier test end\n");
 	g_shutdown = 1;
+
 	pthread_join(tid, &check_ret);
 	D_ASSERTF(check_ret == NULL, "Progress thread failed\n");
-	//Destroyed in progress_fn on shutdown
-	//crt_context_destroy(crt_ctx, 0);
+
 	rc = crt_finalize();
 	D_ASSERTF(rc == 0, "Failed in crt_finalize, rc = %d\n", rc);
 

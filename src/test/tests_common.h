@@ -50,14 +50,14 @@ static int g_shutdown;
 static void *
 progress_fn(void *data)
 {
-        crt_context_t *p_ctx = (crt_context_t *)data;
+	crt_context_t *p_ctx = (crt_context_t *)data;
 
-        while (g_shutdown == 0)
-                crt_progress(*p_ctx, 1000, NULL, NULL);
+	while (g_shutdown == 0)
+		crt_progress(*p_ctx, 1000, NULL, NULL);
 
-        crt_context_destroy(*p_ctx, 1);
+	crt_context_destroy(*p_ctx, 1);
 
-        return NULL;
+	return NULL;
 }
 
 struct wfr_status {
