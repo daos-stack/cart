@@ -82,7 +82,7 @@ class CartNoPmixOneNodeTest(Test):
             self.utils.print("Error waiting for process. returning {}".format(rc))
             self.fail("Test failed.\n")
 
-        self.utils.print("Finished waiting for {}".format(p))
+        #self.utils.print("Finished waiting for {}".format(p))
 
 if __name__ == "__main__":
     main()
