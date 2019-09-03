@@ -41,7 +41,6 @@
 #include <cart/api.h>
 
 #include "tests_common.h"
-#include "common.h"
 
 #define NUM_BARRIERS 20
 

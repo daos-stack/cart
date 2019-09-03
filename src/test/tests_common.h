@@ -47,15 +47,41 @@
 
 static int g_shutdown;
 
+static inline int drain_queue(crt_context_t ctx)
+{
+	int	rc;
+	/* Drain the queue. Progress until 1 second timeout.  We need
+	 * a more robust method
+	 */
+	do {
+		rc = crt_progress(ctx, 1000000, NULL, NULL);
+		if (rc != 0 && rc != -DER_TIMEDOUT) {
+			printf("crt_progress failed rc: %d.\n", rc);
+			return rc;
+		}
+
+		if (rc == -DER_TIMEDOUT)
+			break;
+	} while (1);
+
+	printf("Done draining queue\n");
+	return 0;
+}
+
 static void *
 progress_fn(void *data)
 {
+	int rc = 0;
+
 	crt_context_t *p_ctx = (crt_context_t *)data;
 
 	while (g_shutdown == 0)
 		crt_progress(*p_ctx, 1000, NULL, NULL);
 
-	crt_context_destroy(*p_ctx, 1);
+	pthread_exit(drain_queue(*p_ctx) ? *p_ctx : NULL);
+
+	rc = crt_context_destroy(*p_ctx, 1);
+	D_ASSERTF(rc == 0, "crt_context_destroy failed, rc=%d\n", rc);
 
 	return NULL;
 }
