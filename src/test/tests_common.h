@@ -282,15 +282,9 @@ psr_start_basic(crt_context_t *crt_ctx, pthread_t *progress_thread)
 	env_self_rank = getenv("CRT_L_RANK");
 	my_rank = atoi(env_self_rank);
 
-        /* Set up for DBG_PRINT */
-	//opts.self_rank = my_rank;
-	//opts.mypid = getpid();
-	//opts.is_server = 1;
-
 	rc = d_log_init();
 	assert(rc == 0);
 
-	//DBG_PRINT("Server starting up\n");
 	rc = crt_init("server_grp", CRT_FLAG_BIT_SERVER |
 		CRT_FLAG_BIT_PMIX_DISABLE | CRT_FLAG_BIT_LM_DISABLE);
 	if (rc != 0) {
@@ -340,8 +334,6 @@ psr_start_basic(crt_context_t *crt_ctx, pthread_t *progress_thread)
 		assert(0);
 	}
 
-	//DBG_PRINT("self_rank=%d uri=%s grp_cfg_file=%s\n", my_rank,
-	//	  my_uri, grp_cfg_file);
 	D_FREE(my_uri);
 
 	rc = crt_group_size(NULL, &grp_size);
