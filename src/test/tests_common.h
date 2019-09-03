@@ -45,6 +45,21 @@
 
 #include "crt_internal.h"
 
+static int g_shutdown;
+
+static void *
+progress_fn(void *data)
+{
+        crt_context_t *p_ctx = (crt_context_t *)data;
+
+        while (g_shutdown == 0)
+                crt_progress(*p_ctx, 1000, NULL, NULL);
+
+        crt_context_destroy(*p_ctx, 1);
+
+        return NULL;
+}
+
 struct wfr_status {
 	sem_t	sem;
 	int	rc;
@@ -253,24 +268,29 @@ tc_sem_timedwait(sem_t *sem, int sec, int line_number)
 		  line_number, rc);
 }
 
-int
-psr_start_basic()
+void
+psr_start_basic(crt_context_t *crt_ctx, pthread_t *progress_thread)
 {
 	char		*env_self_rank;
+	char		*grp_cfg_file;
+	char		*my_uri;
+	crt_group_t	*grp;
 	d_rank_t	 my_rank;
+	uint32_t	 grp_size;
+	int		 rc = 0;
 
 	env_self_rank = getenv("CRT_L_RANK");
 	my_rank = atoi(env_self_rank);
 
         /* Set up for DBG_PRINT */
-	opts.self_rank = my_rank;
-	opts.mypid = getpid();
-	opts.is_server = 1;
+	//opts.self_rank = my_rank;
+	//opts.mypid = getpid();
+	//opts.is_server = 1;
 
 	rc = d_log_init();
 	assert(rc == 0);
 
-	DBG_PRINT("Server starting up\n");
+	//DBG_PRINT("Server starting up\n");
 	rc = crt_init("server_grp", CRT_FLAG_BIT_SERVER |
 		CRT_FLAG_BIT_PMIX_DISABLE | CRT_FLAG_BIT_LM_DISABLE);
 	if (rc != 0) {
@@ -291,14 +311,14 @@ psr_start_basic()
 		assert(0);
 	}
 
-	rc = crt_context_create(&crt_ctx[0]);
+	rc = crt_context_create(crt_ctx);
 	if (rc != 0) {
 		D_ERROR("crt_context_create() failed; rc=%d\n", rc);
 		assert(0);
 	}
 
-	rc = pthread_create(&progress_thread[0], 0,
-			    progress_function, &crt_ctx[0]);
+	rc = pthread_create(progress_thread, 0,
+			    progress_fn, crt_ctx);
 	if (rc != 0) {
 		D_ERROR("pthread_create() failed; rc=%d\n", rc);
 		assert(0);
@@ -320,8 +340,8 @@ psr_start_basic()
 		assert(0);
 	}
 
-	DBG_PRINT("self_rank=%d uri=%s grp_cfg_file=%s\n", my_rank,
-		  my_uri, grp_cfg_file);
+	//DBG_PRINT("self_rank=%d uri=%s grp_cfg_file=%s\n", my_rank,
+	//	  my_uri, grp_cfg_file);
 	D_FREE(my_uri);
 
 	rc = crt_group_size(NULL, &grp_size);

@@ -39,7 +39,8 @@
  */
 #include <pthread.h>
 #include <cart/api.h>
-#include <gurt/common.h>
+
+#include "tests_common.h"
 #include "common.h"
 
 #define NUM_BARRIERS 20
@@ -127,6 +128,8 @@ int main(int argc, char **argv)
 	int			i;
 	pthread_t		tid;
 
+	/* This will be common in psr_start_basic
+
 	rc = d_log_init();
 	assert(rc == 0);
 
@@ -144,11 +147,20 @@ int main(int argc, char **argv)
 	D_ASSERTF(rc == 0, "Failed to start progress thread, rc = %d\n",
 		  rc);
 
+	*/
+
+	printf("SCHAN15 - psr start basic\n");
+	psr_start_basic(&crt_ctx, &tid);
+
+	printf("SCHAN15 - barrier test start\n");
 	info = (struct proc_info *)malloc(sizeof(struct proc_info) *
 					  NUM_BARRIERS);
 	D_ASSERTF(info != NULL,
 		  "Could not allocate space for test");
 	crt_group_rank(NULL, &my_rank);
+
+	printf("SCHAN15 - my rank is %d\n", my_rank);
+
 	for (i = 0; i < NUM_BARRIERS; i++) {
 		info[i].rank = my_rank;
 		info[i].grp_rank = my_rank;
@@ -172,10 +184,12 @@ int main(int argc, char **argv)
 
 	g_barrier_count = 0;
 
+	printf("SCHAN15 - barrier test end\n");
 	g_shutdown = 1;
 	pthread_join(tid, &check_ret);
 	D_ASSERTF(check_ret == NULL, "Progress thread failed\n");
-	crt_context_destroy(crt_ctx, 0);
+	//Destroyed in progress_fn on shutdown
+	//crt_context_destroy(crt_ctx, 0);
 	rc = crt_finalize();
 	D_ASSERTF(rc == 0, "Failed in crt_finalize, rc = %d\n", rc);
 
