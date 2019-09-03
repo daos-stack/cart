@@ -54,50 +54,6 @@ struct proc_info {
 	int		complete;
 };
 
-void *progress_thread(void *arg)
-{
-	crt_context_t	crt_ctx = (crt_context_t)arg;
-	int		rc;
-
-	crt_ctx = (crt_context_t) arg;
-	/* progress loop */
-	do {
-		rc = crt_progress(crt_ctx, 1000, NULL, NULL);
-		if (rc != 0 && rc != -DER_TIMEDOUT) {
-			D_ERROR("crt_progress failed rc: %d.\n", rc);
-			break;
-		}
-
-		if (g_shutdown == 1)
-			break;
-	} while (1);
-
-	pthread_exit(drain_queue(crt_ctx) ? crt_ctx : NULL);
-}
-
-int grp_create_cb(crt_group_t *grp, void *priv, int status)
-{
-	int	*done = (int *)priv;
-
-	D_ASSERTF(status == 0, "Failed to create group, status = %d\n", status);
-
-	*done = 1;
-
-	return 0;
-}
-
-int grp_destroy_cb(void *priv, int status)
-{
-	int	*done = (int *)priv;
-
-	D_ASSERTF(status == 0,
-		  "Failed to destroy group, status = %d\n", status);
-
-	*done = 1;
-
-	return 0;
-}
-
 static void
 barrier_complete_cb(struct crt_barrier_cb_info *cb_info)
 {
