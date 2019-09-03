@@ -71,17 +71,12 @@ static inline int drain_queue(crt_context_t ctx)
 static void *
 progress_fn(void *data)
 {
-	int rc = 0;
-
 	crt_context_t *p_ctx = (crt_context_t *)data;
 
 	while (g_shutdown == 0)
 		crt_progress(*p_ctx, 1000, NULL, NULL);
 
 	pthread_exit(drain_queue(*p_ctx) ? *p_ctx : NULL);
-
-	rc = crt_context_destroy(*p_ctx, 1);
-	D_ASSERTF(rc == 0, "crt_context_destroy failed, rc=%d\n", rc);
 
 	return NULL;
 }
@@ -337,7 +332,7 @@ psr_start_basic(crt_context_t *crt_ctx, pthread_t *progress_thread)
 		assert(0);
 	}
 
-	rc = pthread_create(progress_thread, 0,
+	rc = pthread_create(progress_thread, NULL,
 			    progress_fn, crt_ctx);
 	if (rc != 0) {
 		D_ERROR("pthread_create() failed; rc=%d\n", rc);
