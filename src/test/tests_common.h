@@ -45,7 +45,7 @@
 
 #include "crt_internal.h"
 
-static int g_shutdown;
+int g_shutdown;
 
 static inline int drain_queue(crt_context_t ctx)
 {
@@ -77,6 +77,8 @@ progress_fn(void *data)
 		crt_progress(*p_ctx, 1000, NULL, NULL);
 
 	pthread_exit(drain_queue(*p_ctx) ? *p_ctx : NULL);
+
+	crt_context_destroy(*p_ctx, 0);
 
 	return NULL;
 }

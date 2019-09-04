@@ -45,7 +45,6 @@
 #define NUM_BARRIERS 20
 
 static int g_barrier_count;
-static int g_shutdown;
 
 struct proc_info {
 	d_rank_t	rank;
@@ -78,10 +77,10 @@ int main(int argc, char **argv)
 	struct proc_info	*info;
 	void			*check_ret;
 	crt_context_t		crt_ctx;
-	int			rc = 0;
 	d_rank_t		my_rank;
 	int			i;
 	pthread_t		tid;
+	int			rc = 0;
 
 	psr_start_basic(&crt_ctx, &tid);
 
@@ -119,8 +118,6 @@ int main(int argc, char **argv)
 
 	pthread_join(tid, &check_ret);
 	D_ASSERTF(check_ret == NULL, "Progress thread failed\n");
-
-	crt_context_destroy(crt_ctx, 0);
 
 	rc = crt_finalize();
 	D_ASSERTF(rc == 0, "Failed in crt_finalize, rc = %d\n", rc);

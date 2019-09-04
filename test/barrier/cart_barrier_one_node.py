@@ -37,7 +37,7 @@ class CartBarrierOneNodeTest(Test):
     """
     Runs basic CaRT barrier tests
 
-    :avocado: tags=all,barrier,one_node
+    :avocado: tags=all,barrier_disabled,one_node
     """
     def setUp(self):
         """ Test setup """
@@ -53,7 +53,7 @@ class CartBarrierOneNodeTest(Test):
         """
         Test CaRT barrier
 
-        :avocado: tags=all,barrier,one_node
+        :avocado: tags=all,barrier_disabled,one_node
         """
 
         cmd = self.utils.build_cmd(self, self.env, "srv")
