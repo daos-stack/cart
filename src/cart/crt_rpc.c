@@ -292,36 +292,6 @@ crt_rpc_priv_set_ep(struct crt_rpc_priv *rpc_priv, crt_endpoint_t *tgt_ep)
 	rpc_priv->crp_have_ep = 1;
 }
 
-int
-crt_req_create_internal(crt_context_t crt_ctx, crt_endpoint_t *tgt_ep,
-			crt_opcode_t opc, bool forward, crt_rpc_t **req)
-{
-	struct crt_rpc_priv	*rpc_priv = NULL;
-	int			 rc;
-
-	D_ASSERT(crt_ctx != CRT_CONTEXT_NULL && req != NULL);
-
-	rc = crt_rpc_priv_alloc(opc, &rpc_priv, forward);
-	if (rc != 0) {
-		D_ERROR("crt_rpc_priv_alloc, rc: %d, opc: %#x.\n", rc, opc);
-		D_GOTO(out, rc);
-	}
-	D_ASSERT(rpc_priv != NULL);
-	if (tgt_ep != NULL)
-		crt_rpc_priv_set_ep(rpc_priv, tgt_ep);
-
-	rc = crt_rpc_priv_init(rpc_priv, crt_ctx, false /* srv_flag */);
-	if (rc != 0) {
-		RPC_ERROR(rpc_priv,
-			  "crt_rpc_priv_init, rc: %d, opc: %#x\n", rc, opc);
-		crt_rpc_priv_free(rpc_priv);
-		D_GOTO(out, rc);
-	}
-
-	*req = &rpc_priv->crp_pub;
-out:
-	return rc;
-}
 
 static int check_ep(crt_endpoint_t *tgt_ep, struct crt_grp_priv **ret_grp_priv)
 {
@@ -361,6 +331,48 @@ out:
 		*ret_grp_priv = grp_priv;
 	}
 
+	return rc;
+}
+
+
+int
+crt_req_create_internal(crt_context_t crt_ctx, crt_endpoint_t *tgt_ep,
+			crt_opcode_t opc, bool forward, crt_rpc_t **req)
+{
+	struct crt_rpc_priv	*rpc_priv = NULL;
+	struct crt_grp_priv	*grp_priv = NULL;
+	int			 rc;
+
+	D_ASSERT(crt_ctx != CRT_CONTEXT_NULL && req != NULL);
+
+	rc = crt_rpc_priv_alloc(opc, &rpc_priv, forward);
+	if (rc != 0) {
+		D_ERROR("crt_rpc_priv_alloc, rc: %d, opc: %#x.\n", rc, opc);
+		D_GOTO(out, rc);
+	}
+
+	D_ASSERT(rpc_priv != NULL);
+
+	if (tgt_ep != NULL) {
+		rc = check_ep(tgt_ep, &grp_priv);
+		if (rc != 0)
+			D_GOTO(out, rc);
+
+		crt_rpc_priv_set_ep(rpc_priv, tgt_ep);
+
+		rpc_priv->crp_grp_priv = grp_priv;
+	}
+
+	rc = crt_rpc_priv_init(rpc_priv, crt_ctx, false /* srv_flag */);
+	if (rc != 0) {
+		RPC_ERROR(rpc_priv,
+			  "crt_rpc_priv_init, rc: %d, opc: %#x\n", rc, opc);
+		crt_rpc_priv_free(rpc_priv);
+		D_GOTO(out, rc);
+	}
+
+	*req = &rpc_priv->crp_pub;
+out:
 	return rc;
 }
 
@@ -987,7 +999,8 @@ crt_req_uri_lookup(struct crt_rpc_priv *rpc_priv)
 
 		/* lookup through PMIx */
 		grp_id = default_grp_priv->gp_pub.cg_grpid;
-		rc = crt_pmix_uri_lookup(grp_id, rank, &uri);
+
+		rc = crt_pmix_uri_lookup(grp_id, grp_priv_get_primary_rank(grp_priv, rank), &uri);
 		if (rc != 0) {
 			D_ERROR("crt_pmix_uri_lookup() failed, rc %d.\n", rc);
 			D_GOTO(out, rc);
@@ -1497,8 +1510,9 @@ crt_rpc_common_hdlr(struct crt_rpc_priv *rpc_priv)
 				rpc_priv->crp_corpc_info->co_grp_priv,
 				rpc_priv->crp_corpc_info->co_root);
 
-		if (pri_root == self_rank)
+		if (pri_root == self_rank) {
 			skip_check = true;
+		}
 	}
 		
 
@@ -1508,7 +1522,8 @@ crt_rpc_common_hdlr(struct crt_rpc_priv *rpc_priv)
 
 
 		if (!skip_check) {
-		D_ERROR("Mismatch opc: %x rank:%d tag:%d, self:%d cc_idx:%d ep_rank:%d ep_tag:%d\n",
+		D_ERROR("Mismatch rpc: %p opc: %x rank:%d tag:%d, self:%d cc_idx:%d ep_rank:%d ep_tag:%d\n",
+			rpc_priv,
 			rpc_priv->crp_pub.cr_opc,
 			rpc_priv->crp_req_hdr.cch_rank, rpc_priv->crp_req_hdr.cch_tag,
 			crt_gdata.cg_grp->gg_srv_pri_grp->gp_self,
@@ -1519,7 +1534,6 @@ crt_rpc_common_hdlr(struct crt_rpc_priv *rpc_priv)
 		}
 	}
 
-	// crt_gdata.cg_grp->gg_srv_pri_grp->gp_self
 	/* Set the reply pending bit unless this is a one-way OPCODE */
 	if (!rpc_priv->crp_opc_info->coi_no_reply)
 		rpc_priv->crp_reply_pending = 1;
