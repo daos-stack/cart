@@ -1000,7 +1000,9 @@ crt_req_uri_lookup(struct crt_rpc_priv *rpc_priv)
 		/* lookup through PMIx */
 		grp_id = default_grp_priv->gp_pub.cg_grpid;
 
-		rc = crt_pmix_uri_lookup(grp_id, grp_priv_get_primary_rank(grp_priv, rank), &uri);
+		rc = crt_pmix_uri_lookup(grp_id,
+				grp_priv_get_primary_rank(grp_priv, rank),
+				&uri);
 		if (rc != 0) {
 			D_ERROR("crt_pmix_uri_lookup() failed, rc %d.\n", rc);
 			D_GOTO(out, rc);
@@ -1502,7 +1504,7 @@ crt_rpc_common_hdlr(struct crt_rpc_priv *rpc_priv)
 	if (self_rank == CRT_NO_RANK)
 		skip_check = true;
 
-
+	/* Skip check when CORPC is sent to self */
 	if (rpc_priv->crp_coll) {
 		d_rank_t pri_root;
 
@@ -1510,27 +1512,26 @@ crt_rpc_common_hdlr(struct crt_rpc_priv *rpc_priv)
 				rpc_priv->crp_corpc_info->co_grp_priv,
 				rpc_priv->crp_corpc_info->co_root);
 
-		if (pri_root == self_rank) {
+		if (pri_root == self_rank)
 			skip_check = true;
-		}
 	}
-		
 
-	// This block is for testing purposes for now. TODO: change to proper rc
 	if ((self_rank != rpc_priv->crp_req_hdr.cch_rank) ||
 		(crt_ctx->cc_idx != rpc_priv->crp_req_hdr.cch_tag)) {
 
-
 		if (!skip_check) {
-		D_ERROR("Mismatch rpc: %p opc: %x rank:%d tag:%d, self:%d cc_idx:%d ep_rank:%d ep_tag:%d\n",
-			rpc_priv,
-			rpc_priv->crp_pub.cr_opc,
-			rpc_priv->crp_req_hdr.cch_rank, rpc_priv->crp_req_hdr.cch_tag,
-			crt_gdata.cg_grp->gg_srv_pri_grp->gp_self,
-			crt_ctx->cc_idx,
-			rpc_priv->crp_pub.cr_ep.ep_rank,
-			rpc_priv->crp_pub.cr_ep.ep_tag);
-		assert(0);
+			D_ERROR("Mismatch rpc: %p opc: %x rank:%d tag:%d,"
+				"  self:%d cc_idx:%d ep_rank:%d ep_tag:%d\n",
+				rpc_priv,
+				rpc_priv->crp_pub.cr_opc,
+				rpc_priv->crp_req_hdr.cch_rank,
+				rpc_priv->crp_req_hdr.cch_tag,
+				crt_gdata.cg_grp->gg_srv_pri_grp->gp_self,
+				crt_ctx->cc_idx,
+				rpc_priv->crp_pub.cr_ep.ep_rank,
+				rpc_priv->crp_pub.cr_ep.ep_tag);
+
+			D_GOTO(out, rc = -DER_BAD_TARGET);
 		}
 	}
 
@@ -1547,6 +1548,7 @@ crt_rpc_common_hdlr(struct crt_rpc_priv *rpc_priv)
 		rpc_priv->crp_opc_info->coi_rpc_cb(&rpc_priv->crp_pub);
 	}
 
+out:
 	return rc;
 }
 
