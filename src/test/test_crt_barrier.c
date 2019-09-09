@@ -82,7 +82,7 @@ int main(int argc, char **argv)
 	pthread_t		tid;
 	int			rc = 0;
 
-	psr_start_basic(&crt_ctx, &tid);
+	tc_srv_start_basic(&crt_ctx, &tid);
 
 	info = (struct proc_info *)malloc(sizeof(struct proc_info) *
 					  NUM_BARRIERS);

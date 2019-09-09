@@ -292,7 +292,7 @@ tc_sem_timedwait(sem_t *sem, int sec, int line_number)
 }
 
 void
-psr_start_basic(crt_context_t *crt_ctx, pthread_t *progress_thread)
+tc_srv_start_basic(crt_context_t *crt_ctx, pthread_t *progress_thread)
 {
 	char		*env_self_rank;
 	char		*grp_cfg_file;

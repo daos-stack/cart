@@ -36,6 +36,7 @@ from cart_utils import CartUtils
 class CartBarrierOneNodeTest(Test):
     """
     Runs basic CaRT barrier tests
+    Test is disabled until CART-761 is resolved
 
     :avocado: tags=all_disabled,barrier_disabled,one_node_disabled
     """
