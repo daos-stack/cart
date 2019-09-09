@@ -72,6 +72,10 @@ struct crt_na_dict crt_na_dict[] = {
 		.nad_str	= "ofi+psm2",
 		.nad_port_bind	= true,
 	}, {
+		.nad_type	= CRT_NA_OFI_TCP,
+		.nad_str	= "ofi+tcp",
+		.nad_port_bind	= true,
+	}, {
 		.nad_str	= NULL,
 	}
 };

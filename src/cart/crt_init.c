@@ -306,6 +306,12 @@ crt_init_opt(crt_group_id_t grpid, uint32_t flags, crt_init_options_t *opt)
 				addr_env);
 		}
 
+		if (strcmp(addr_env, "ofi+sockets") == 0) {
+			D_WARN("ofi+sockets is deprecated, switchign to "
+				" ofi+tcp instead\n");
+			addr_env = "ofi+tcp";
+		}
+
 		provider_found = false;
 		for (plugin_idx = 0; crt_na_dict[plugin_idx].nad_str != NULL;
 		     plugin_idx++) {
@@ -325,7 +331,8 @@ crt_init_opt(crt_group_id_t grpid, uint32_t flags, crt_init_options_t *opt)
 do_init:
 		/* the verbs provider only works with regular EP */
 		if ((crt_gdata.cg_na_plugin == CRT_NA_OFI_VERBS_RXM ||
-		     crt_gdata.cg_na_plugin == CRT_NA_OFI_VERBS) &&
+		     crt_gdata.cg_na_plugin == CRT_NA_OFI_VERBS ||
+		     crt_gdata.cg_na_plugin == CRT_NA_OFI_TCP) &&
 		    crt_gdata.cg_share_na) {
 			D_WARN("set CRT_CTX_SHARE_ADDR as 1 is invalid "
 			       "for verbs provider, ignore it.\n");
