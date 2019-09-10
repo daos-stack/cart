@@ -68,6 +68,7 @@ echo_check_in(d_rank_t src_rank, d_rank_t dst_rank, uint32_t dst_tag)
 	svr_ep.ep_grp = NULL;
 	svr_ep.ep_rank = dst_rank;
 	svr_ep.ep_tag = dst_tag;
+
 	rc = crt_req_create(gecho.crt_ctx, &svr_ep, ECHO_OPC_CHECKIN, &rpc_req);
 	assert(rc == 0 && rpc_req != NULL);
 
@@ -185,7 +186,7 @@ static int run_echo_srver(void)
 		printf("pthread_join failed rc: %d.\n", rc);
 
 out:
-	printf("echo_srver shuting down ...\n");
+	printf("echo_srver shuting down ... with rc=%d\n", rc);
 	return rc;
 }
 

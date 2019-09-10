@@ -52,43 +52,52 @@ struct echo_serv {
 	pthread_t	progress_thread;
 } echo_srv;
 
-static void *progress_handler(void *arg)
+void *_real_progress(void *arg)
 {
-	int rc, loop = 0, i;
+	crt_context_t *p_ctx;
+	int rc;
+	int loop = 0;
 
-	assert(arg == NULL);
-	/* progress loop */
+	p_ctx = (crt_context_t *)arg;
+
 	do {
-		rc = crt_progress(gecho.crt_ctx, 1, NULL, NULL);
+		rc = crt_progress(*p_ctx, 1, NULL, NULL);
 		if (rc != 0 && rc != -DER_TIMEDOUT) {
 			D_ERROR("crt_progress failed rc: %d.\n", rc);
 			break;
 		}
 
-		if (ECHO_EXTRA_CONTEXT_NUM > 0) {
-			for (i = 0; i < ECHO_EXTRA_CONTEXT_NUM; i++) {
-				rc = crt_progress(gecho.extra_ctx[i], 1, NULL,
-						  NULL);
-				if (rc != 0 && rc != -DER_TIMEDOUT) {
-					D_ERROR("crt_progress failed rc: %d.\n",
-					       rc);
-					break;
-				}
-			}
-		}
-
 		if (echo_srv.shutdown_by_client && echo_srv.shutdown_by_self) {
 			/* to ensure the last SHUTDOWN request be handled */
 			loop++;
+			crt_progress(*p_ctx, 1, NULL, NULL);
 			if (loop >= 100)
 				break;
 		}
 	} while (1);
 
-	printf("progress_handler: rc: %d, echo_srv.shutdown_by_client: %d, "
-		"echo_srv.shutdown_by_self: %d.\n",
-	       rc, echo_srv.shutdown_by_client, echo_srv.shutdown_by_self);
-	printf("progress_handler: progress thread exit ...\n");
+	pthread_exit(NULL);
+}
+
+static void *progress_handler(void *arg)
+{
+	int rc, i;
+	pthread_t _ctx_thread[ECHO_EXTRA_CONTEXT_NUM + 1];
+
+	assert(arg == NULL);
+
+	pthread_create(&_ctx_thread[0], NULL, _real_progress, &gecho.crt_ctx);
+
+	for (i = 0; i < ECHO_EXTRA_CONTEXT_NUM; i++)
+		pthread_create(&_ctx_thread[i + 1], NULL, _real_progress,
+				&gecho.extra_ctx[i]);
+
+	for (i = 0; i < ECHO_EXTRA_CONTEXT_NUM + 1; i++) {
+		rc = pthread_join(_ctx_thread[i], NULL);
+		if (rc != 0)
+			fprintf(stderr, "pthread_join failed for %d, rc:%d\n",
+				i, rc);
+	}
 
 	pthread_exit(NULL);
 }
