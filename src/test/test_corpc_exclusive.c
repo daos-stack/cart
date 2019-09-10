@@ -136,7 +136,7 @@ int main(void)
 	rc = d_log_init();
 	assert(rc == 0);
 
-	rc = crt_init(NULL, CRT_FLAG_BIT_SERVER);
+	rc = crt_init(NULL, CRT_FLAG_BIT_SERVER | CRT_FLAG_BIT_LM_DISABLE);
 	assert(rc == 0);
 
 	rc = crt_group_config_save(NULL, true);
