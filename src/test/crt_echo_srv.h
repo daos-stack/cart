@@ -52,7 +52,8 @@ struct echo_serv {
 	pthread_t	progress_thread;
 } echo_srv;
 
-void *_real_progress(void *arg)
+
+static void *_real_progress(void *arg)
 {
 	crt_context_t *p_ctx;
 	int rc;
