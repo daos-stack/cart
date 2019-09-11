@@ -2,7 +2,7 @@
 
 Name:          cart
 Version:       2.0.0
-Release:       0%{?relval}%{?dist}
+Release:       1%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
