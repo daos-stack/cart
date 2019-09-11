@@ -1,8 +1,8 @@
 %define carthome %{_exec_prefix}/lib/%{name}
 
 Name:          cart
-Version:       1.1.0
-Release:       1%{?relval}%{?dist}
+Version:       2.0.0
+Release:       0%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -122,6 +122,9 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %{carthome}/.build_vars-Linux.sh
 
 %changelog
+* Thu Sep 10 2019 Alexander A. Oganezov <alexander.a.oganezov@intel.com>
+- Libcart version 2.0.0
+
 * Thu Aug 08 2019 Alexander A. Oganezov <alexander.a.oganezov@intel.com>
 - Libcart version 1.1.0
 
