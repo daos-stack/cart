@@ -122,7 +122,7 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %{carthome}/.build_vars-Linux.sh
 
 %changelog
-* Thu Sep 10 2019 Alexander A. Oganezov <alexander.a.oganezov@intel.com>
+* Tue Sep 10 2019 Alexander A. Oganezov <alexander.a.oganezov@intel.com>
 - Libcart version 2.0.0
 
 * Thu Aug 08 2019 Alexander A. Oganezov <alexander.a.oganezov@intel.com>
