@@ -728,13 +728,18 @@ exit:
 }
 
 int
-crt_iv_namespace_add(crt_context_t crt_ctx, crt_group_t *grp, int tree_topo,
+crt_iv_namespace_create(crt_context_t crt_ctx, crt_group_t *grp, int tree_topo,
 		struct crt_iv_class *iv_classes, uint32_t num_classes,
 		uint32_t iv_ns_id, crt_iv_namespace_t *ivns)
 {
 	struct crt_ivns_internal	*ivns_internal = NULL;
 	struct crt_grp_priv		*grp_priv = NULL;
 	int				rc = 0;
+
+	if (ivns == NULL) {
+		D_ERROR("Passed ivns is NULL\n");
+		D_GOTO(exit, rc = -DER_INVAL);
+	}
 
 	grp_priv = crt_grp_pub2priv(grp);
 	if (grp_priv == NULL) {
@@ -752,8 +757,7 @@ crt_iv_namespace_add(crt_context_t crt_ctx, crt_group_t *grp, int tree_topo,
 		D_GOTO(exit, rc = -DER_NOMEM);
 	}
 
-	if (ivns)
-		*ivns = (crt_iv_namespace_t)ivns_internal;
+	*ivns = (crt_iv_namespace_t)ivns_internal;
 
 exit:
 	if (rc != 0) {

@@ -702,7 +702,7 @@ init_iv(void)
 		iv_class.ivc_feats = 0;
 		iv_class.ivc_ops = &g_ivc_ops;
 
-		rc = crt_iv_namespace_add(g_main_ctx, NULL, tree_topo,
+		rc = crt_iv_namespace_create(g_main_ctx, NULL, tree_topo,
 					&iv_class, 1, MY_IVNS_ID, &g_ivns);
 		assert(rc == 0);
 
@@ -769,9 +769,9 @@ iv_set_ivns(crt_rpc_t *rpc)
 	iv_class.ivc_ops = &g_ivc_ops;
 
 	/* Don't get back ivns handle as we don't need it */
-	rc = crt_iv_namespace_add(g_main_ctx, NULL,
+	rc = crt_iv_namespace_create(g_main_ctx, NULL,
 			crt_tree_topo(CRT_TREE_KNOMIAL, 2),
-			&iv_class, 1, MY_IVNS_ID, NULL);
+			&iv_class, 1, MY_IVNS_ID, &g_ivns);
 	assert(rc == 0);
 
 	output->rc = 0;

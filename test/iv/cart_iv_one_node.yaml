@@ -29,7 +29,7 @@ tests: !mux
     srv_bin: crt_launch
     srv_arg: "-e tests/iv_server -v 3"
     srv_env: "-x CRT_ALLOW_SINGLETON=1"
-    srv_ppn: "2"
+    srv_ppn: "5"
 
     cli_bin: tests/iv_client
     cli_arg: ""
