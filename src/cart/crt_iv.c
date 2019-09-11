@@ -56,16 +56,16 @@
 	D_DEBUG(DB_TRACE, "[key=%p] " msg, (key)->iov_buf, ##__VA_ARGS__)
 
 static D_LIST_HEAD(ns_list);
-static uint32_t ns_id;
 
 /* Lock for manimuplation of ns_list and ns_id */
 static pthread_mutex_t ns_list_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /* Structure for uniquely identifying iv namespace */
 struct crt_ivns_id {
-	/* Rank of the namespace */
-	d_rank_t	ii_rank;
-	/* Unique ID within the rank */
+	/* Group name associated with namespace */
+	crt_group_id_t	ii_group_name;
+
+	/* Unique namespace ID within the group */
 	uint32_t	ii_nsid;
 };
 
@@ -187,7 +187,9 @@ ivns_destroy(struct crt_ivns_internal *ivns_internal)
 	D_SPIN_DESTROY(&ivns_internal->cii_ref_lock);
 
 	D_FREE_PTR(ivns_internal->cii_iv_classes);
+	D_FREE(ivns_internal->cii_gns.gn_ivns_id.ii_group_name);
 	D_FREE_PTR(ivns_internal);
+
 
 	if (destroy_cb)
 		destroy_cb(ivns, cb_arg);
@@ -629,8 +631,9 @@ crt_ivns_internal_lookup(struct crt_ivns_id *ivns_id)
 
 	D_MUTEX_LOCK(&ns_list_lock);
 	d_list_for_each_entry(entry, &ns_list, cii_link) {
-		if (entry->cii_gns.gn_ivns_id.ii_rank == ivns_id->ii_rank &&
-			entry->cii_gns.gn_ivns_id.ii_nsid == ivns_id->ii_nsid) {
+		if ((entry->cii_gns.gn_ivns_id.ii_nsid == ivns_id->ii_nsid) &&
+		(strcmp(entry->cii_gns.gn_ivns_id.ii_group_name,
+			ivns_id->ii_group_name) == 0)) {
 
 			IVNS_ADDREF(entry);
 
@@ -661,11 +664,10 @@ crt_ivns_internal_get(crt_iv_namespace_t ivns)
 static struct crt_ivns_internal *
 crt_ivns_internal_create(crt_context_t crt_ctx, struct crt_grp_priv *grp_priv,
 		struct crt_iv_class *iv_classes, uint32_t num_class,
-		int tree_topo, struct crt_ivns_id *ivns_id)
+		int tree_topo, uint32_t nsid)
 {
 	struct crt_ivns_internal	*ivns_internal;
 	struct crt_ivns_id		*internal_ivns_id;
-	uint32_t			next_ns_id;
 	int				rc;
 
 	D_ALLOC_PTR(ivns_internal);
@@ -699,20 +701,10 @@ crt_ivns_internal_create(crt_context_t crt_ctx, struct crt_grp_priv *grp_priv,
 
 	internal_ivns_id = &ivns_internal->cii_gns.gn_ivns_id;
 
-	/* If we are not passed an ivns_id, create new one */
-	if (ivns_id == NULL) {
-		D_MUTEX_LOCK(&ns_list_lock);
-		next_ns_id = ns_id;
-		ns_id++;
-		D_MUTEX_UNLOCK(&ns_list_lock);
-
-		internal_ivns_id->ii_rank = grp_priv->gp_self;
-		internal_ivns_id->ii_nsid = next_ns_id;
-	} else {
-		/* We are attaching ivns, created by someone else */
-		internal_ivns_id->ii_rank = ivns_id->ii_rank;
-		internal_ivns_id->ii_nsid = ivns_id->ii_nsid;
-	}
+	internal_ivns_id->ii_nsid = nsid;
+	D_STRNDUP(internal_ivns_id->ii_group_name,
+		grp_priv->gp_pub.cg_grpid,
+		CRT_GROUP_ID_MAX_LEN);
 
 	memcpy(ivns_internal->cii_iv_classes, iv_classes,
 	       sizeof(*iv_classes) * num_class);
@@ -736,18 +728,13 @@ exit:
 }
 
 int
-crt_iv_namespace_create(crt_context_t crt_ctx, crt_group_t *grp, int tree_topo,
-			struct crt_iv_class *iv_classes, uint32_t num_class,
-			crt_iv_namespace_t *ivns, d_iov_t *g_ivns)
+crt_iv_namespace_add(crt_context_t crt_ctx, crt_group_t *grp, int tree_topo,
+		struct crt_iv_class *iv_classes, uint32_t num_classes,
+		uint32_t iv_ns_id, crt_iv_namespace_t *ivns)
 {
 	struct crt_ivns_internal	*ivns_internal = NULL;
 	struct crt_grp_priv		*grp_priv = NULL;
 	int				rc = 0;
-
-	if (ivns == NULL || g_ivns == NULL) {
-		D_ERROR("invalid parameter of NULL for ivns/g_ivns\n");
-		D_GOTO(exit, rc = -DER_INVAL);
-	}
 
 	grp_priv = crt_grp_pub2priv(grp);
 	if (grp_priv == NULL) {
@@ -758,19 +745,15 @@ crt_iv_namespace_create(crt_context_t crt_ctx, crt_group_t *grp, int tree_topo,
 	crt_grp_priv_addref(grp_priv);
 
 	ivns_internal = crt_ivns_internal_create(crt_ctx, grp_priv,
-						iv_classes, num_class,
-						tree_topo, NULL);
+						iv_classes, num_classes,
+						tree_topo, iv_ns_id);
 	if (ivns_internal == NULL) {
 		D_ERROR("Failed to create internal ivns\n");
 		D_GOTO(exit, rc = -DER_NOMEM);
 	}
 
-	*ivns = (crt_iv_namespace_t)ivns_internal;
-
-	/* TODO: Need to flatten the structure */
-	g_ivns->iov_buf = &ivns_internal->cii_gns;
-	g_ivns->iov_buf_len = sizeof(struct crt_global_ns);
-	g_ivns->iov_len = sizeof(struct crt_global_ns);
+	if (ivns)
+		*ivns = (crt_iv_namespace_t)ivns_internal;
 
 exit:
 	if (rc != 0) {
@@ -783,70 +766,18 @@ exit:
 }
 
 int
-crt_iv_namespace_attach(crt_context_t crt_ctx, d_iov_t *g_ivns,
-			struct crt_iv_class *iv_classes, uint32_t num_class,
-			crt_iv_namespace_t *ivns)
+crt_iv_namespace_id_get(crt_iv_namespace_t *ivns, uint32_t *id)
 {
-	struct crt_ivns_internal	*ivns_internal = NULL;
-	struct crt_global_ns		*ivns_global = NULL;
-	struct crt_grp_priv		*grp_priv = NULL;
-	int				rc = 0;
-
-	if (g_ivns == NULL) {
-		D_ERROR("global ivns is NULL\n");
-		D_GOTO(exit, rc = -DER_INVAL);
-	}
-
-	if (iv_classes == NULL) {
-		D_ERROR("iv_classes is NULL\n");
-		D_GOTO(exit, rc = -DER_INVAL);
-	}
+	struct crt_ivns_internal        *ivns_internal;
+	int                             rc = 0;
 
 	if (ivns == NULL) {
-		D_ERROR("ivns is NULL\n");
+		D_ERROR("NULL ivns passed\n");
 		D_GOTO(exit, rc = -DER_INVAL);
 	}
 
-	/* TODO: Need to unflatten the structure */
-	ivns_global = (struct crt_global_ns *)g_ivns->iov_buf;
-
-	grp_priv = crt_grp_lookup_int_grpid(ivns_global->gn_int_grp_id);
-
-	if (grp_priv == NULL) {
-		D_ERROR("Group lookup failed for 0x%lx\n",
-			ivns_global->gn_int_grp_id);
-		D_GOTO(exit, rc = -DER_NOMEM);
-	}
-
-	ivns_internal = crt_ivns_internal_create(crt_ctx, grp_priv,
-					iv_classes, num_class,
-					ivns_global->gn_tree_topo,
-					&ivns_global->gn_ivns_id);
-	if (ivns_internal == NULL) {
-		D_ERROR("Failed to create new ivns internal\n");
-		D_GOTO(exit, rc = -DER_NOMEM);
-	}
-
-	*ivns = (crt_iv_namespace_t)ivns_internal;
-
-exit:
-	if (rc != 0) {
-		/* addref done in crt_grp_lookup_int_grpid */
-		if (grp_priv)
-			crt_grp_priv_decref(grp_priv);
-	}
-
-	return rc;
-}
-
-int
-crt_iv_global_namespace_get(crt_iv_namespace_t *ivns, d_iov_t *g_ivns)
-{
-	struct crt_ivns_internal	*ivns_internal;
-	int				rc = 0;
-
-	if (g_ivns == NULL) {
-		D_ERROR("NULL g_ivns passed\n");
+	if (id == NULL) {
+		D_ERROR("NULL id passed\n");
 		D_GOTO(exit, rc = -DER_INVAL);
 	}
 
@@ -856,9 +787,7 @@ crt_iv_global_namespace_get(crt_iv_namespace_t *ivns, d_iov_t *g_ivns)
 		D_GOTO(exit, rc = -DER_INVAL);
 	}
 
-	g_ivns->iov_buf = &ivns_internal->cii_gns;
-	g_ivns->iov_buf_len = sizeof(struct crt_global_ns);
-	g_ivns->iov_len = sizeof(struct crt_global_ns);
+	*id = ivns_internal->cii_gns.gn_ivns_id.ii_nsid;
 
 	IVNS_DECREF(ivns_internal);
 exit:
@@ -1206,8 +1135,8 @@ crt_ivf_rpc_issue(d_rank_t dest_node, crt_iv_key_t *iv_key,
 	input->ifi_class_id = cb_info->ifc_class_id;
 	input->ifi_root_node = root_node;
 
-	d_iov_set(&input->ifi_nsid, &ivns_internal->cii_gns.gn_ivns_id,
-		 sizeof(struct crt_ivns_id));
+	input->ifi_ivns_id = ivns_internal->cii_gns.gn_ivns_id.ii_nsid;
+	input->ifi_ivns_group = ivns_internal->cii_gns.gn_ivns_id.ii_group_name;
 
 	rc = crt_req_send(rpc, handle_ivfetch_response, cb_info);
 
@@ -1288,7 +1217,7 @@ crt_hdlr_iv_fetch_aux(void *arg)
 {
 	struct crt_iv_fetch_in		*input;
 	struct crt_iv_fetch_out		*output;
-	struct crt_ivns_id		*ivns_id;
+	struct crt_ivns_id		ivns_id;
 	struct crt_ivns_internal	*ivns_internal;
 	struct crt_iv_ops		*iv_ops = NULL;
 	d_sg_list_t			 iv_value = {0};
@@ -1301,9 +1230,10 @@ crt_hdlr_iv_fetch_aux(void *arg)
 	input = crt_req_get(rpc_req);
 	output = crt_reply_get(rpc_req);
 
-	ivns_id = (struct crt_ivns_id *)input->ifi_nsid.iov_buf;
+	ivns_id.ii_group_name = input->ifi_ivns_group;
+	ivns_id.ii_nsid = input->ifi_ivns_id;
 
-	ivns_internal = crt_ivns_internal_lookup(ivns_id);
+	ivns_internal = crt_ivns_internal_lookup(&ivns_id);
 	if (ivns_internal == NULL) {
 		D_ERROR("Failed to lookup ivns internal!\n");
 		D_GOTO(send_error, rc = -DER_NONEXIST);
@@ -1436,7 +1366,7 @@ crt_hdlr_iv_fetch(crt_rpc_t *rpc_req)
 {
 	struct crt_iv_fetch_in		*input;
 	struct crt_iv_fetch_out		*output;
-	struct crt_ivns_id		*ivns_id;
+	struct crt_ivns_id		ivns_id;
 	struct crt_ivns_internal	*ivns_internal;
 	struct crt_iv_ops		*iv_ops;
 	int				 rc;
@@ -1444,12 +1374,13 @@ crt_hdlr_iv_fetch(crt_rpc_t *rpc_req)
 	input = crt_req_get(rpc_req);
 	output = crt_reply_get(rpc_req);
 
-	ivns_id = (struct crt_ivns_id *)input->ifi_nsid.iov_buf;
+	ivns_id.ii_group_name = input->ifi_ivns_group;
+	ivns_id.ii_nsid = input->ifi_ivns_id;
 
-	ivns_internal = crt_ivns_internal_lookup(ivns_id);
+	ivns_internal = crt_ivns_internal_lookup(&ivns_id);
 	if (ivns_internal == NULL) {
-		D_ERROR("Failed to look up ivns_id! ivns_id=%d:%d\n",
-			ivns_id->ii_rank, ivns_id->ii_nsid);
+		D_ERROR("Failed to look up ivns_id! ivns_id=%s:%d\n",
+			ivns_id.ii_group_name, ivns_id.ii_nsid);
 		D_GOTO(send_error, rc = -DER_NONEXIST);
 	}
 
@@ -1669,7 +1600,7 @@ crt_hdlr_iv_sync_aux(void *arg)
 	struct crt_iv_sync_out		*output;
 	struct crt_ivns_internal	*ivns_internal;
 	struct crt_iv_ops		*iv_ops = NULL;
-	struct crt_ivns_id		*ivns_id;
+	struct crt_ivns_id		ivns_id;
 	crt_iv_sync_t			*sync_type;
 	d_sg_list_t			iv_value = {0};
 	bool				 need_put = false;
@@ -1684,17 +1615,18 @@ crt_hdlr_iv_sync_aux(void *arg)
 	output = crt_reply_get(rpc_req);
 	D_ASSERT(output != NULL);
 
-	ivns_id = (struct crt_ivns_id *)input->ivs_nsid.iov_buf;
+	ivns_id.ii_group_name = input->ivs_ivns_group;
+	ivns_id.ii_nsid = input->ivs_ivns_id;
 	sync_type = (crt_iv_sync_t *)input->ivs_sync_type.iov_buf;
 
-	ivns_internal = crt_ivns_internal_lookup(ivns_id);
+	ivns_internal = crt_ivns_internal_lookup(&ivns_id);
 
 	/* In some use-cases sync can arrive to a node that hasn't attached
 	* iv namespace yet. Treat such errors as fatal if the flag is set.
 	**/
 	if (ivns_internal == NULL) {
-		D_ERROR("ivns_internal was NULL. ivns_id=%d:%d\n",
-			ivns_id->ii_rank, ivns_id->ii_nsid);
+		D_ERROR("ivns_internal was NULL. ivns_id=%s:%d\n",
+			ivns_id.ii_group_name, ivns_id.ii_nsid);
 
 		if (sync_type->ivs_flags & CRT_IV_SYNC_FLAG_NS_ERRORS_FATAL)
 			D_ASSERT(ivns_internal != NULL);
@@ -1790,7 +1722,7 @@ crt_hdlr_iv_sync(crt_rpc_t *rpc_req)
 	struct crt_iv_sync_out		*output;
 	struct crt_ivns_internal	*ivns_internal;
 	struct crt_iv_ops		*iv_ops = NULL;
-	struct crt_ivns_id		*ivns_id;
+	struct crt_ivns_id		ivns_id;
 	crt_iv_sync_t			*sync_type;
 	int				 rc = 0;
 
@@ -1801,17 +1733,18 @@ crt_hdlr_iv_sync(crt_rpc_t *rpc_req)
 	output = crt_reply_get(rpc_req);
 	D_ASSERT(output != NULL);
 
-	ivns_id = (struct crt_ivns_id *)input->ivs_nsid.iov_buf;
+	ivns_id.ii_group_name = input->ivs_ivns_group;
+	ivns_id.ii_nsid = input->ivs_ivns_id;
 	sync_type = (crt_iv_sync_t *)input->ivs_sync_type.iov_buf;
 
-	ivns_internal = crt_ivns_internal_lookup(ivns_id);
+	ivns_internal = crt_ivns_internal_lookup(&ivns_id);
 
 	/* In some use-cases sync can arrive to a node that hasn't attached
 	* iv namespace yet. Treat such errors as fatal if the flag is set.
 	**/
 	if (ivns_internal == NULL) {
-		D_ERROR("ivns_internal was NULL. ivns_id=%d:%d\n",
-			ivns_id->ii_rank, ivns_id->ii_nsid);
+		D_ERROR("ivns_internal was NULL. ivns_id=%s:%d\n",
+			ivns_id.ii_group_name, ivns_id.ii_nsid);
 
 		D_ASSERT(!(sync_type->ivs_flags &
 			   CRT_IV_SYNC_FLAG_NS_ERRORS_FATAL));
@@ -2022,8 +1955,8 @@ crt_ivsync_rpc_issue(struct crt_ivns_internal *ivns_internal, uint32_t class_id,
 
 	iv_sync_cb->isc_sync_type = sync_type;
 
-	d_iov_set(&input->ivs_nsid, &ivns_internal->cii_gns.gn_ivns_id,
-		  sizeof(struct crt_ivns_id));
+	input->ivs_ivns_id = ivns_internal->cii_gns.gn_ivns_id.ii_nsid;
+	input->ivs_ivns_group = ivns_internal->cii_gns.gn_ivns_id.ii_group_name;
 	d_iov_set(&input->ivs_key, iv_key->iov_buf, iv_key->iov_buf_len);
 	d_iov_set(&input->ivs_sync_type, &iv_sync_cb->isc_sync_type,
 		sizeof(crt_iv_sync_t));
@@ -2364,8 +2297,8 @@ crt_ivu_rpc_issue(d_rank_t dest_rank, crt_iv_key_t *iv_key,
 		cb_info->uci_iv_value = *iv_value;
 
 
-	d_iov_set(&input->ivu_nsid, &ivns_internal->cii_gns.gn_ivns_id,
-		 sizeof(struct crt_ivns_id));
+	input->ivu_ivns_id = ivns_internal->cii_gns.gn_ivns_id.ii_nsid;
+	input->ivu_ivns_group = ivns_internal->cii_gns.gn_ivns_id.ii_group_name;
 
 	cb_info->uci_sync_type = *sync_type;
 	d_iov_set(&input->ivu_sync_type, &cb_info->uci_sync_type, sizeof(crt_iv_sync_t));
@@ -2591,7 +2524,7 @@ crt_hdlr_iv_update(crt_rpc_t *rpc_req)
 {
 	struct crt_iv_update_in		*input;
 	struct crt_iv_update_out	*output;
-	struct crt_ivns_id		*ivns_id;
+	struct crt_ivns_id		ivns_id;
 	struct crt_ivns_internal	*ivns_internal;
 	struct crt_iv_ops		*iv_ops;
 	d_sg_list_t			iv_value = {0};
@@ -2612,8 +2545,9 @@ crt_hdlr_iv_update(crt_rpc_t *rpc_req)
 	D_ASSERT(input != NULL);
 	D_ASSERT(output != NULL);
 
-	ivns_id = (struct crt_ivns_id *)input->ivu_nsid.iov_buf;
-	ivns_internal = crt_ivns_internal_lookup(ivns_id);
+	ivns_id.ii_group_name = input->ivu_ivns_group;
+	ivns_id.ii_nsid = input->ivu_ivns_id;
+	ivns_internal = crt_ivns_internal_lookup(&ivns_id);
 
 	if (ivns_internal == NULL) {
 		D_ERROR("Invalid internal ivns\n");
