@@ -400,7 +400,7 @@ struct crt_iv_class {
  *				one IV namespace should have at least one IV
  *				class.
  * \param[in] iv_ns_id		Unique id, identifying the namespace within the
- * 				group.
+ *				group.
  * \param[out] ivns		the local handle of the IV namespace
  *
  * \return			DER_SUCCESS on success, negative value if error
@@ -409,6 +409,17 @@ int
 crt_iv_namespace_add(crt_context_t crt_ctx, crt_group_t *grp, int tree_topo,
 		struct crt_iv_class *iv_classes, uint32_t num_classes,
 		uint32_t iv_ns_id, crt_iv_namespace_t *ivns);
+
+/**
+ * Retrieve IV namespace id from the handle.
+ *
+ * \param[in] ivns		Incast variable namespace handle
+ * \param[out] id		Associated id returned
+ *
+ * \return			DER_SUCCESS on success, negative value on error
+ */
+int
+crt_iv_namespace_id_get(crt_iv_namespace_t *ivns, uint32_t *id)
 
 /**
  * Completion callback for \ref crt_iv_namespace_destroy.
