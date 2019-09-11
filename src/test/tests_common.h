@@ -71,14 +71,22 @@ static inline int drain_queue(crt_context_t ctx)
 static void *
 progress_fn(void *data)
 {
+	int rc;
+
 	crt_context_t *p_ctx = (crt_context_t *)data;
 
 	while (g_shutdown == 0)
 		crt_progress(*p_ctx, 1000, NULL, NULL);
 
-	pthread_exit(drain_queue(*p_ctx) ? *p_ctx : NULL);
+	rc = drain_queue(*p_ctx);
 
-	crt_context_destroy(*p_ctx, 0);
+	if (crt_context_destroy(*p_ctx, 0) != 0) {
+		D_ERROR("Failed to destroy context\n");
+		assert(0);
+	}
+
+	pthread_exit(rc ? *p_ctx : NULL);
+
 
 	return NULL;
 }

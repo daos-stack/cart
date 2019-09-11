@@ -36,9 +36,8 @@ from cart_utils import CartUtils
 class CartBarrierTwoNodeTest(Test):
     """
     Runs basic CaRT tests on one-node and two-node
-    Test is disabled until CART-761 is resolved
 
-    :avocado: tags=all_disabled,barrier_disabled,two_node_disabled
+    :avocado: tags=all,barrier,two_node
     """
     def setUp(self):
         """ Test setup """
@@ -54,7 +53,7 @@ class CartBarrierTwoNodeTest(Test):
         """
         Test CaRT barrier
 
-        :avocado: tags=all_disabled,barrier_disabled,two_node_disabled
+        :avocado: tags=all,barrier,two_node
         """
 
         cmd = self.utils.build_cmd(self, self.env, "srv")

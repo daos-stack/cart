@@ -36,9 +36,8 @@ from cart_utils import CartUtils
 class CartBarrierOneNodeTest(Test):
     """
     Runs basic CaRT barrier tests
-    Test is disabled until CART-761 is resolved
 
-    :avocado: tags=all_disabled,barrier_disabled,one_node_disabled
+    :avocado: tags=all,barrier,one_node
     """
     def setUp(self):
         """ Test setup """
@@ -54,7 +53,7 @@ class CartBarrierOneNodeTest(Test):
         """
         Test CaRT barrier
 
-        :avocado: tags=all_disabled,barrier_disabled,one_node_disabled
+        :avocado: tags=all,barrier,one_node
         """
 
         cmd = self.utils.build_cmd(self, self.env, "srv")
