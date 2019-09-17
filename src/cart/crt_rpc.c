@@ -944,13 +944,13 @@ crt_req_uri_lookup(struct crt_rpc_priv *rpc_priv)
 		(!CRT_PMIX_ENABLED() && !crt_is_service())) {
 			/* send an RPC to the PSR */
 			RPC_TRACE(DB_NET, rpc_priv,
-				  "Querying PSR to find out target NA Address.\n");
+			"Querying PSR to find out target NA Address.\n");
 			rc = crt_req_uri_lookup_psr(rpc_priv,
-						    crt_req_uri_lookup_by_rpc_cb,
-						    rpc_priv);
+					crt_req_uri_lookup_by_rpc_cb,
+					rpc_priv);
 			if (rc != 0) {
 				rpc_priv->crp_state = RPC_STATE_INITED;
-				D_ERROR("crt_grp_uri_lookup_psr() failed, rc %d.\n",
+				D_ERROR("psr uri lookup failed, rc %d.\n",
 					rc);
 			}
 			D_GOTO(out, rc);
