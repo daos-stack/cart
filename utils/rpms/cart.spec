@@ -2,19 +2,20 @@
 
 Name:          cart
 Version:       1.0.0
-Release:       1%{?dist}
+Release:       2%{?relval}%{?dist}
+
 Summary:       CaRT
 
 License:       Apache
-URL:           https//github.com/daos-stack/cart
+URL:           https://github.com/daos-stack/cart
 Source0:       %{name}-%{version}.tar.gz
 Source1:       scons_local-%{version}.tar.gz
 
-BuildRequires: scons
+BuildRequires: scons >= 2.4
 BuildRequires: libfabric-devel
 BuildRequires: pmix-devel
 BuildRequires: openpa-devel
-BuildRequires: mercury-devel
+BuildRequires: mercury-devel < 1.0.1-14
 BuildRequires: ompi-devel
 BuildRequires: libevent-devel
 BuildRequires: boost-devel
@@ -23,23 +24,17 @@ BuildRequires: hwloc-devel
 BuildRequires: openssl-devel
 BuildRequires: libcmocka-devel
 BuildRequires: libyaml-devel
-Requires: libfabric
-Requires: pmix
-Requires: openpa
-Requires: mercury
-Requires: ompi
-Requires: libevent
-%if (0%{?rhel} >= 7)
-Requires:libuuid
-Requires: libyaml
-%else
 %if (0%{?suse_version} >= 1315)
-Requires: libuuid1
-Requires: libyaml-0-2
+# these are needed to prefer packages that both provide the same requirement
+# prefer over libpsm2-compat
+BuildRequires: libpsm_infinipath1
+# prefer over libcurl4-mini
+BuildRequires: libcurl4
 %endif
+BuildRequires: gcc-c++
+%if %{defined sha1}
+Provides: %{name}-%{sha1}
 %endif
-Requires: hwloc
-Requires: openssl
 
 %description
 Collective and RPC Transport (CaRT)
@@ -55,10 +50,18 @@ Summary: CaRT devel
 # since the so is unversioned, it only exists in the main package
 # at this time
 Requires: %{name} = %{version}-%{release}
-
 Requires: libuuid-devel
 Requires: libyaml-devel
 Requires: boost-devel
+Requires: mercury-devel < 1.0.1-14
+Requires: openpa-devel
+Requires: libfabric-devel
+Requires: ompi-devel
+Requires: pmix-devel
+Requires: hwloc-devel
+%if %{defined sha1}
+Provides: %{name}-devel-%{sha1}
+%endif
 
 %description devel
 CaRT devel
@@ -67,12 +70,14 @@ CaRT devel
 Summary: CaRT tests
 
 Requires: %{name} = %{version}-%{release}
+%if %{defined sha1}
+Provides: %{name}-tests-%{sha1}
+%endif
 
 %description tests
 CaRT tests
 
 %prep
-%setup -q
 %setup -q -a 1
 
 
@@ -103,11 +108,21 @@ cp -al multi-node-test.sh utils %{?buildroot}%{carthome}/
 mv %{?buildroot}%{_prefix}/{TESTING,lib/cart/}
 ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 
+#%if 0%{?suse_version} >= 01315
+#%post -n %{suse_libname} -p /sbin/ldconfig
+#%postun -n %{suse_libname} -p /sbin/ldconfig
+#%else
+%post -p /sbin/ldconfig
+%postun -p /sbin/ldconfig
+#%endif
+
 %files
 %defattr(-, root, root, -)
 %{_bindir}/*
 %{_libdir}/*.so.*
+%dir %{carthome}
 %{carthome}/utils
+%dir %{_prefix}%{_sysconfdir}
 %{_prefix}%{_sysconfdir}/*
 %doc
 
@@ -122,7 +137,16 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %{carthome}/.build_vars-Linux.sh
 
 %changelog
-* Fri Jul 26 2019 Alexander A. Oganezov <alexander.a.oganezov@intel.com>
+* Fri Oct 04 2019 Brian J. Murrell <brian.murrell@intel.com> - 1.0.0-2
+- Remove explicit library Requires
+- Add dependent libraries to -devel BR
+- Add git hash and commit count to release
+- Add necessary ldconfig
+- Don't unpack sources twice
+- Add Provides: cart-$sha1 so that consumers can find the exact
+  version cart RPMs desired
+
+* Fri Jul 26 2019 Alexander A. Oganezov <alexander.a.oganezov@intel.com> - 1.0.0-1
 - Libcart version 1.0.0
 
 * Fri Jun 21 2019 Brian J. Murrell <brian.murrell@intel.com>
