@@ -58,7 +58,7 @@
 #if defined(__has_warning)
 #define D_HAS_WARNING(gcc_version, warning)	__has_warning(warning)
 #else  /* !defined(__has_warning) */
-#define D_HAS_WARNING(gcc_version, warning) (__GNUC__ >= gcc_version)
+#define D_HAS_WARNING(gcc_version, warning) ((gcc_version) <= __GNUC__)
 #endif /* defined(__has_warning) */
 
 /**
