@@ -55,6 +55,12 @@
 
 #include <boost/preprocessor.hpp>
 
+#if defined(__has_warning)
+#define D_HAS_WARNING(gcc_version, warning)	__has_warning(warning)
+#else  /* !defined(__has_warning) */
+#define D_HAS_WARNING(gcc_version, warning) (__GNUC__ >= gcc_version)
+#endif /* defined(__has_warning) */
+
 /**
  * Initialization options passed during crt_init() call.
  *
