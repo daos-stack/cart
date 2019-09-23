@@ -627,9 +627,16 @@ crt_ep_abort(crt_endpoint_t *ep);
 #if __GNUC__ >= 8 /* warning was introduced in version 8 of GCC */
 #define CRT_DISABLE_SIZEOF_POINTER_DIV					\
 	_Pragma("GCC diagnostic ignored \"-Wsizeof-pointer-div\"")
-#else /* __GNUC__ < 8 */
+#elif defined(__has_warning) /* clang check */
+#if __has_warning("-Wsizeof-pointer-div")
+#define CRT_DISABLE_SIZEOF_POINTER_DIV					\
+	_Pragma("GCC diagnostic ignored \"-Wsizeof-pointer-div\"")
+#endif /* clang check available */
+#endif /* Platforms with the warning */
+
+#if !defined(CRT_DISABLE_SIZEOF_POINTER_DIV)
 #define CRT_DISABLE_SIZEOF_POINTER_DIV
-#endif /* __GNUC__ >= 8 */
+#endif /* platforms without this warning */
 
 #define CRT_RPC_DEFINE(rpc_name, fields_in, fields_out)			\
 	CRT_GEN_PROC(rpc_name##_in, fields_in)				\
@@ -981,6 +988,7 @@ struct crt_corpc_ops {
 	 *				node.
 	 */
 	int (*co_post_reply)(crt_rpc_t *rpc, void *arg);
+
 };
 
 /**
