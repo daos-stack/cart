@@ -48,9 +48,18 @@
 #include <semaphore.h>
 #include <cart/api.h>
 
+#include <libpmemobj.h>
+
+
 #include "tests_common.h"
-#define LEN1 200
-#define LEN2 120
+#define LEN1 (1024*1024)
+#define LEN2 (2*1024*1024)
+#define GAP (1024*4096)
+
+#define NUM_IOVS 2
+#define TOTAL_BUFF (15*1024 * 1024)
+#define POOL_SIZE (1024*1024*1024)
+
 #define DATA_BUFF1 'a'
 #define DATA_BUFF2 'e'
 
@@ -180,7 +189,7 @@ handler_ping(crt_rpc_t *rpc)
 	iovs[1].iov_buf_len = LEN2;
 	iovs[1].iov_len = LEN2;
 
-	sgl.sg_nr = 2;
+	sgl.sg_nr = NUM_IOVS;
 	sgl.sg_iovs = iovs;
 
 	memset(output_buff1, 0x0, LEN1);
@@ -408,11 +417,26 @@ int main(int argc, char **argv)
 	}
 	if (my_rank == 0) {
 
+		char *input_buff;
 		crt_bulk_t bulk_hdl;
-		char buff1[LEN1];
-		char buff2[LEN2];
 		d_sg_list_t	sgl;
 		d_iov_t		iovs[2];
+		char	*buff1;
+		char	*buff2;
+		PMEMobjpool *my_pool;
+		PMEMoid root_oid;
+
+
+		my_pool = pmemobj_create("/mnt/daos0/alexpool", "test_pool", POOL_SIZE, 0666);
+		DBG_PRINT("pmemobj_create returned %p ptr for pool \n", my_pool);
+		root_oid = pmemobj_root(my_pool, TOTAL_BUFF);
+		DBG_PRINT("After pmemboj_root\n");
+		input_buff = pmemobj_direct(root_oid);
+
+//		input_buff = malloc(TOTAL_BUFF);
+
+		buff1 = input_buff;
+		buff2  = input_buff + LEN1 + GAP;
 
 		iovs[0].iov_buf = buff1;
 		iovs[0].iov_buf_len = LEN1;
@@ -422,7 +446,7 @@ int main(int argc, char **argv)
 		iovs[1].iov_buf_len = LEN2;
 		iovs[1].iov_len = LEN2;
 
-		sgl.sg_nr = 2;
+		sgl.sg_nr = NUM_IOVS;
 		sgl.sg_iovs = iovs;
 
 		memset(buff1, DATA_BUFF1, LEN1);
@@ -457,6 +481,7 @@ int main(int argc, char **argv)
 		tc_sem_timedwait(&sem, 10, __LINE__);
 		DBG_PRINT("Ping response from %d:%d\n", 1, 0);
 
+	//	free(input_buff);
 	}
 
 	for (i = 0; i < NUM_SERVER_CTX; i++)
