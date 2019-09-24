@@ -44,12 +44,19 @@ if [ -f .localenv ]; then
     . .localenv
 fi
 
+NODE_COUNT="$1"
+
 NFS_SERVER=${NFS_SERVER:-${HOSTNAME%%.*}}
 
 trap 'echo "encountered an unchecked return code, exiting with error"' ERR
 
-# shellcheck disable=SC1091
-. .build_vars-Linux.sh
+read -r -a nodes <<< "${2//,/ }"
+if [ "$NODE_COUNT" = "5" ]; then
+    # first node is a test runner, get rid of it
+    read -r -a nodes <<< "${nodes[*]:1}"
+fi
+#reduce set down to desired number
+read -r -a nodes <<< "${nodes[*]:0:$NODE_COUNT}"
 
 if [ -z "$CART_TEST_MODE"  ]; then
   CART_TEST_MODE="native"
@@ -61,15 +68,32 @@ else
   CART_DIR="${1}"
 fi
 
-IFS=" " read -r -a nodes <<< "${2//,/ }"
+# For nodes that are only rebooted between CI nodes left over mounts
+# need to be cleaned up.
+pre_clean () {
+    i=5
+    while [ $i -gt 0 ]; do
+        if clush "${CLUSH_ARGS[@]}" -B -l "${REMOTE_ACCT:-jenkins}" -R ssh \
+              -S -w "$(IFS=','; echo "${nodes[*]}")" "set -ex
+              mapfile -t mounts < <(grep 'added by multi-node-test-$NODE_COUNT.sh' /etc/fstab)
+              for n_mnt in \"\${mounts[@]}\"; do
+                  mpnt=(\${n_mnt})
+                  sudo umount \${mpnt[1]}
+              done
+              sudo sed -i -e \"/added by multi-node-test-$NODE_COUNT.sh/d\" /etc/fstab"; then
+            break
+        fi
+        ((i-=1)) || true
+    done
+}
 
 # shellcheck disable=SC1004
 # shellcheck disable=SC2154
 trap 'set +e
 i=5
 while [ $i -gt 0 ]; do
-    pdsh -l jenkins -R ssh -S \
-         -w "$(IFS=','; echo ${nodes[*]:0:$1})" "set -x
+        if clush "${CLUSH_ARGS[@]}" -B -l "${REMOTE_ACCT:-jenkins}" -R ssh \
+             -S -w "$(IFS=','; echo "${nodes[*]}")" "set -x
     x=0
     rc=0
     while [ \$x -lt 30 ] &&
@@ -96,14 +120,21 @@ while [ $i -gt 0 ]; do
     let i-=1
 done' EXIT
 
+pre_clean
+
+# shellcheck disable=SC1091
+. .build_vars-Linux.sh
+
+read -r -a CLUSH_ARGS <<< "$CLUSH_ARGS"
+
 CART_BASE="${SL_PREFIX%/install/*}"
-if ! pdsh -l jenkins -R ssh -S \
-          -w "$(IFS=','; echo "${nodes[*]:0:$1}")" "set -ex
+if ! clush "${CLUSH_ARGS[@]}" -B -l "${REMOTE_ACCT:-jenkins}" -R ssh -S \
+    -w "$(IFS=','; echo "${nodes[*]}")" "set -ex
 ulimit -c unlimited
 sudo mkdir -p $CART_BASE
 sudo ed <<EOF /etc/fstab
 \\\$a
-$NFS_SERVER:$PWD $CART_BASE nfs defaults 0 0 # added by multi-node-test-$1.sh
+$NFS_SERVER:$PWD $CART_BASE nfs defaults 0 0 # added by multi-node-test-$NODE_COUNT.sh
 .
 wq
 EOF
@@ -112,7 +143,7 @@ sudo mount $CART_BASE
 # TODO: package this in to an RPM
 pip3 install --user tabulate
 
-df -h" 2>&1 | dshbak -c; then
+df -h"; then
     echo "Cluster setup (i.e. provisioning) failed"
     exit 1
 fi
@@ -124,7 +155,8 @@ TESTDIR=${SL_PREFIX}/TESTING
 LOGDIR="$TESTDIR/avocado/job-results/CART_${CART_DIR}node"
 
 # shellcheck disable=SC2029
-if ! ssh -i ci_key jenkins@"${nodes[0]}" "set -ex
+# shellcheck disable=SC2086
+if ! ssh $SSH_KEY_ARGS ${REMOTE_ACCT:-jenkins}@"${nodes[0]}" "set -ex
 ulimit -c unlimited
 cd $CART_BASE
 
@@ -146,6 +178,66 @@ dmesg
 df -h
 EOF
 
+    # apply patch for https://github.com/avocado-framework/avocado/pull/3076/
+    if ! grep TIMEOUT_TEARDOWN \
+        /usr/lib/python2.7/site-packages/avocado/core/runner.py; then
+        sudo yum -y install patch
+        sudo patch -p0 -d/ << \"EOF\"
+From d9e5210cd6112b59f7caff98883a9748495c07dd Mon Sep 17 00:00:00 2001
+From: Cleber Rosa <crosa@redhat.com>
+Date: Wed, 20 Mar 2019 12:46:57 -0400
+Subject: [PATCH] [RFC] Runner: add extra timeout for tests in teardown
+
+The current time given to tests performing teardown is pretty limited.
+Let's add a 60 seconds fixed timeout just for validating the idea, and
+once settled, we can turn that into a configuration setting.
+
+Signed-off-by: Cleber Rosa <crosa@redhat.com>
+---
+ avocado/core/runner.py             | 11 +++++++++--
+ examples/tests/longteardown.py     | 29 +++++++++++++++++++++++++++++
+ selftests/functional/test_basic.py | 18 ++++++++++++++++++
+ 3 files changed, 56 insertions(+), 2 deletions(-)
+ create mode 100644 examples/tests/longteardown.py
+
+diff --git /usr/lib/python2.7/site-packages/avocado/core/runner.py.old /usr/lib/python2.7/site-packages/avocado/core/runner.py
+index 1fc84844b..17e6215d0 100644
+--- /usr/lib/python2.7/site-packages/avocado/core/runner.py.old
++++ /usr/lib/python2.7/site-packages/avocado/core/runner.py
+@@ -45,6 +45,8 @@
+ TIMEOUT_PROCESS_DIED = 10
+ #: when test reported status but the process did not finish
+ TIMEOUT_PROCESS_ALIVE = 60
++#: extra timeout to give to a test in TEARDOWN phase
++TIMEOUT_TEARDOWN = 60
+ 
+ 
+ def add_runner_failure(test_state, new_status, message):
+@@ -219,7 +221,7 @@ def finish(self, proc, started, step, deadline, result_dispatcher):
+         wait.wait_for(lambda: not proc.is_alive() or self.status, 1, 0, step)
+         if self.status:     # status exists, wait for process to finish
+             deadline = min(deadline, time.time() + TIMEOUT_PROCESS_ALIVE)
+-            while time.time() < deadline:
++            while time.time() < deadline + TIMEOUT_TEARDOWN:
+                 result_dispatcher.map_method('test_progress', False)
+                 if wait.wait_for(lambda: not proc.is_alive(), 1, 0, step):
+                     return self._add_status_failures(self.status)
+@@ -422,7 +424,12 @@ def sigtstp_handler(signum, frame):     # pylint: disable=W0613
+ 
+         while True:
+             try:
+-                if time.time() >= deadline:
++                now = time.time()
++                if test_status.status.get('phase') == 'TEARDOWN':
++                    reached = now >= deadline + TIMEOUT_TEARDOWN
++                else:
++                    reached = now >= deadline
++                if reached:
+                     abort_reason = \"Timeout reached\"
+                     try:
+                         os.kill(proc.pid, signal.SIGTERM)
+EOF
+    fi
 # apply fix for https://github.com/avocado-framework/avocado/issues/2908
 sudo ed <<EOF /usr/lib/python2.7/site-packages/avocado/core/runner.py
 /TIMEOUT_TEST_INTERRUPTED/s/[0-9]*$/60/
@@ -218,10 +310,12 @@ fi
 
 mkdir -p install/Linux/TESTING/avocado/job-results
 
-scp -i ci_key -r jenkins@${nodes[0]}:"$TESTDIR/testLogs-${CART_DIR}_node" \
-                                      install/Linux/TESTING/
+# shellcheck disable=SC2086
+scp $SSH_KEY_ARGS -r "${REMOTE_ACCT:-jenkins}"@"${nodes[0]}":\
+"$TESTDIR"/testLogs-"${CART_DIR}"_node install/Linux/TESTING/
 
-scp -i ci_key -r jenkins@${nodes[0]}:"$LOGDIR" \
+# shellcheck disable=SC2086
+scp $SSH_KEY_ARGS -r "${REMOTE_ACCT:-jenkins}"@"${nodes[0]}":"$LOGDIR" \
                                       install/Linux/TESTING/avocado/job-results
 
 exit "$rc"

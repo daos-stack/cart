@@ -1023,8 +1023,7 @@ pipeline {
                                        node_count: 1,
                                        snapshot: true
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
-                                           export CART_TEST_MODE=native
+                                script: '''export CART_TEST_MODE=native
                                            bash -x ./multi-node-test.sh 1 ''' +
                                            env.NODELIST + ''' one_node''',
                                 junit_files: "install/Linux/TESTING/avocado/job-results/CART_1node/*/*.xml"
@@ -1077,8 +1076,7 @@ pipeline {
                                        node_count: 1,
                                        snapshot: true
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
-                                           export CART_TEST_MODE=memcheck
+                                script: '''export CART_TEST_MODE=memcheck
                                            bash -x ./multi-node-test.sh 1 ''' +
                                            env.NODELIST + ''' one_node''',
                                 junit_files: "install/Linux/TESTING/avocado/job-results/CART_1vgdnode/*/*.xml"
@@ -1145,8 +1143,7 @@ pipeline {
                                        node_count: 2,
                                        snapshot: true
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
-                                           export CART_TEST_MODE=none
+                                script: '''export CART_TEST_MODE=none
                                            bash -x ./multi-node-test.sh 2 ''' +
                                            env.NODELIST + ''' two_node''',
                                 junit_files: "install/Linux/TESTING/avocado/job-results/CART_2node/*/*.xml"
@@ -1199,8 +1196,7 @@ pipeline {
                                        node_count: 3,
                                        snapshot: true
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
-                                           export CART_TEST_MODE=none
+                                script: '''export CART_TEST_MODE=none
                                            bash -x ./multi-node-test.sh 3 ''' +
                                            env.NODELIST + ''' three_node''',
                                 junit_files: "install/Linux/TESTING/avocado/job-results/CART_3node/*/*.xml"
@@ -1253,8 +1249,7 @@ pipeline {
                                        node_count: 5,
                                        snapshot: true
                         runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
-                                           export CART_TEST_MODE=none
+                                script: '''export CART_TEST_MODE=none
                                            bash -x ./multi-node-test.sh 5 ''' +
                                            env.NODELIST + ''' five_node''',
                                 junit_files: "install/Linux/TESTING/avocado/job-results/CART_5node/*/*.xml"
@@ -1273,6 +1268,75 @@ pipeline {
                                       echo "The STAGE_NAME environment variable is missing!"
                                       false
                                   fi'''
+                            junit env.STAGE_NAME + '/*/results.xml'
+                            archiveArtifacts artifacts: env.STAGE_NAME + '/**'
+                        }
+                        /* temporarily moved into runTest->stepResult due to JENKINS-39203
+                        success {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'test/' + env.STAGE_NAME,
+                                         status: 'SUCCESS'
+                        }
+                        unstable {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'test/' + env.STAGE_NAME,
+                                         status: 'FAILURE'
+                        }
+                        failure {
+                            githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                         description: env.STAGE_NAME,
+                                         context: 'test/' + env.STAGE_NAME,
+                                         status: 'ERROR'
+                        }
+                        */
+                    }
+                }
+                stage('Five-node_Hardware') {
+                    agent {
+                        label 'ci_nvme9'
+                    }
+                    steps {
+                        provisionNodes NODELIST: env.NODELIST,
+                                       node_count: 1,
+                                       snapshot: true,
+                                       inst_repos: component_repos,
+                                       inst_rpms: cart_rpms
+                        // Then just reboot the physical nodes
+                        provisionNodes NODELIST: env.NODELIST,
+                                       node_count: 6,
+                                       power_only: true,
+                                       inst_repos: component_repos,
+                                       inst_rpms: cart_rpms
+                        runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
+                                script: '''export CART_TEST_MODE=none
+                                           find install/Linux/TESTING -name \\*.yaml |
+                                               xargs -r sed -i -e 's/\\(CRT_PHY_ADDR_STR:\\) *"ofi+sockets"/\\1 "ofi+psm2"/'            \
+                                                               -e 's/\\(OFI_INTERFACE:\\) *"eth0"/\\1 "ib0"/'                           \
+                                                               -e '/OFI_INTERFACE: */a\\ \\ FI_PSM2_DISCONNECT: 1\\n  PSM2_MULTI_EP: 1'
+                                           bash -x ./multi-node-test.sh 5 ''' +
+                                           env.NODELIST + ''' five_node''',
+                                junit_files: "install/Linux/TESTING/avocado/job-results/CART_5node/*/*.xml"
+                    }
+                    post {
+                        always {
+                            sh '''rm -rf install/Linux/TESTING/avocado/job-results/CART_5node/*/html/
+                                  if [ -n "$STAGE_NAME" ]; then
+                                      rm -rf "$STAGE_NAME/"
+                                      mkdir "$STAGE_NAME/"
+                                      mv install/Linux/TESTING/avocado/job-results/CART_5node/* \
+                                         "$STAGE_NAME/" || true
+                                      mv install/Linux/TESTING/testLogs-5_node \
+                                         "$STAGE_NAME/" || true
+                                  else
+                                      echo "The STAGE_NAME environment variable is missing!"
+                                      false
+                                  fi'''
+                            sh 'for file in ' + env.STAGE_NAME + '''/*/results.xml; do
+                                    echo "-------- $file --------"
+                                    cat $file
+                                done'''
                             junit env.STAGE_NAME + '/*/results.xml'
                             archiveArtifacts artifacts: env.STAGE_NAME + '/**'
                         }
