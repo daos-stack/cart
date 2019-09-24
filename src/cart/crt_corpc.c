@@ -893,8 +893,8 @@ crt_corpc_req_hdlr(struct crt_rpc_priv *rpc_priv)
 		 * Convert here to secondary ranks.
 		 */
 		if (CRT_PMIX_ENABLED() && !co_info->co_grp_priv->gp_primary) {
-			uint32_t	 	idx;
-			d_rank_list_t		*membs;
+			uint32_t	idx;
+			d_rank_list_t	*membs;
 
 			membs = grp_priv_get_membs(co_info->co_grp_priv);
 
