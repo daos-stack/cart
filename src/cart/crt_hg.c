@@ -437,6 +437,9 @@ crt_get_info_string(char **string)
 	int	 port;
 	int	 plugin;
 	char	*plugin_str;
+	char	*domain;
+
+        domain = getenv("OFI_DOMAIN");
 
 	plugin = crt_gdata.cg_na_plugin;
 	D_ASSERT(plugin == crt_na_dict[plugin].nad_type);
@@ -447,7 +450,7 @@ crt_get_info_string(char **string)
 	} else {
 		port = crt_na_ofi_conf.noc_port;
 		crt_na_ofi_conf.noc_port++;
-		D_ASPRINTF(*string, "%s://%s:%d", plugin_str,
+		D_ASPRINTF(*string, "%s+%s://%s:%d", plugin_str, domain,
 			   crt_na_ofi_conf.noc_ip_str, port);
 	}
 	if (*string == NULL)
