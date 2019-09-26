@@ -424,6 +424,16 @@ uint64_t
 crt_hlc_get(void);
 
 /**
+ * Return the second timestamp of hlc.
+ *
+ * \param[in] hlc              HLC timestamp
+ *
+ * \return                     The timestamp in second
+ */
+uint64_t
+crt_hlc2sec(uint64_t hlc);
+
+/**
  * Abort an RPC request.
  *
  * \param[in] req              pointer to RPC request
@@ -624,12 +634,13 @@ crt_ep_abort(crt_endpoint_t *ep);
 		CRT_GEN_STRUCT(rpc_name##_out, fields_out), )		\
 	extern struct crt_req_format CQF_##rpc_name;
 
-#if __GNUC__ >= 8 /* warning was introduced in version 8 of GCC */
+/* warning was introduced in version 8 of GCC */
+#if D_HAS_WARNING(8, "-Wsizeof-pointer-div")
 #define CRT_DISABLE_SIZEOF_POINTER_DIV					\
 	_Pragma("GCC diagnostic ignored \"-Wsizeof-pointer-div\"")
-#else /* __GNUC__ < 8 */
+#else /* warning not available */
 #define CRT_DISABLE_SIZEOF_POINTER_DIV
-#endif /* __GNUC__ >= 8 */
+#endif /* warning is available */
 
 #define CRT_RPC_DEFINE(rpc_name, fields_in, fields_out)			\
 	CRT_GEN_PROC(rpc_name##_in, fields_in)				\
@@ -964,6 +975,23 @@ struct crt_corpc_ops {
 	 *				cause CORPC to abort.
 	 */
 	int (*co_pre_forward)(crt_rpc_t *rpc, void *arg);
+
+	/**
+	 * Collective RPC post-reply callback.
+	 * This is an optional callback. If specified, it will execute after
+	 * reply is sent to parent (after co_aggregate executes).
+	 *
+	 * \param[in] rpc		the rpc structure of the parent
+	 * \param[in] arg		the private pointer, valid only on
+	 *				collective RPC initiator (same as the
+	 *				priv pointer passed in for
+	 *				crt_corpc_req_create).
+	 *				Can be used to share data between
+	 *				co_aggregate and co_post_reply  when
+	 *				executing those callbacks on the same
+	 *				node.
+	 */
+	int (*co_post_reply)(crt_rpc_t *rpc, void *arg);
 };
 
 /**

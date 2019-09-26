@@ -788,8 +788,15 @@ aggregate_done:
 
 	D_SPIN_UNLOCK(&parent_rpc_priv->crp_lock);
 
-	if (req_done)
+	if (req_done) {
+		RPC_ADDREF(parent_rpc_priv);
 		crt_corpc_complete(parent_rpc_priv);
+
+		if (co_ops->co_post_reply)
+			co_ops->co_post_reply(&parent_rpc_priv->crp_pub,
+					co_info->co_priv);
+		RPC_DECREF(parent_rpc_priv);
+	}
 
 out:
 	return;
@@ -798,7 +805,6 @@ out:
 int
 crt_corpc_req_hdlr(struct crt_rpc_priv *rpc_priv)
 {
-	d_rank_list_t		*membs;
 	struct crt_corpc_info	*co_info;
 	d_rank_list_t		*children_rank_list = NULL;
 	d_rank_t		 grp_rank;
@@ -877,7 +883,6 @@ crt_corpc_req_hdlr(struct crt_rpc_priv *rpc_priv)
 		D_GOTO(forward_done, rc);
 	}
 
-	membs = grp_priv_get_membs(co_info->co_grp_priv);
 
 	/* firstly forward RPC to children if any */
 	for (i = 0; i < co_info->co_child_num; i++) {
@@ -890,7 +895,10 @@ crt_corpc_req_hdlr(struct crt_rpc_priv *rpc_priv)
 		 * Convert here to secondary ranks.
 		 */
 		if (CRT_PMIX_ENABLED() && !co_info->co_grp_priv->gp_primary) {
-			uint32_t	 idx;
+			uint32_t	idx;
+			d_rank_list_t	*membs;
+
+			membs = grp_priv_get_membs(co_info->co_grp_priv);
 
 			rc = d_idx_in_rank_list(membs,
 				children_rank_list->rl_ranks[i], &idx);
@@ -907,6 +915,7 @@ crt_corpc_req_hdlr(struct crt_rpc_priv *rpc_priv)
 		} else {
 			tgt_ep.ep_rank = children_rank_list->rl_ranks[i];
 		}
+
 		tgt_ep.ep_grp = &co_info->co_grp_priv->gp_pub;
 
 		rc = crt_req_create_internal(rpc_priv->crp_pub.cr_ctx, &tgt_ep,

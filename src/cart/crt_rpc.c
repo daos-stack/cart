@@ -964,19 +964,23 @@ crt_req_uri_lookup(struct crt_rpc_priv *rpc_priv)
 
 
 	/* this is a remote group, contact the PSR */
-	if (grp_priv->gp_local == 0 && !crt_is_service()) {
-		/* send an RPC to the PSR */
-		RPC_TRACE(DB_NET, rpc_priv,
-			  "Querying PSR to find out target NA Address.\n");
-		rc = crt_req_uri_lookup_psr(rpc_priv,
-					    crt_req_uri_lookup_by_rpc_cb,
-					    rpc_priv);
-		if (rc != 0) {
-			rpc_priv->crp_state = RPC_STATE_INITED;
-			D_ERROR("crt_grp_uri_lookup_psr() failed, rc %d.\n",
-				rc);
+	if (grp_priv->gp_local == 0) {
+		/* Note: In case of no-pmix all groups are local */
+		if (CRT_PMIX_ENABLED() ||
+		(!CRT_PMIX_ENABLED() && !crt_is_service())) {
+			/* send an RPC to the PSR */
+			RPC_TRACE(DB_NET, rpc_priv,
+			"Querying PSR to find out target NA Address.\n");
+			rc = crt_req_uri_lookup_psr(rpc_priv,
+					crt_req_uri_lookup_by_rpc_cb,
+					rpc_priv);
+			if (rc != 0) {
+				rpc_priv->crp_state = RPC_STATE_INITED;
+				D_ERROR("psr uri lookup failed, rc %d.\n",
+					rc);
+			}
+			D_GOTO(out, rc);
 		}
-		D_GOTO(out, rc);
 	}
 
 	/* this is a local group */
@@ -1306,7 +1310,7 @@ int
 crt_req_abort(crt_rpc_t *req)
 {
 	struct crt_rpc_priv	*rpc_priv;
-	int			rc = 0;
+	int			 rc = 0;
 
 	if (req == NULL) {
 		D_ERROR("invalid parameter (NULL req).\n");
@@ -1315,22 +1319,29 @@ crt_req_abort(crt_rpc_t *req)
 
 	rpc_priv = container_of(req, struct crt_rpc_priv, crp_pub);
 
-	if (rpc_priv->crp_state == RPC_STATE_FWD_UNREACH) {
+	if (rpc_priv->crp_state == RPC_STATE_CANCELED ||
+	    rpc_priv->crp_state == RPC_STATE_COMPLETED) {
 		RPC_TRACE(DB_NET, rpc_priv,
-			  "failed to send, no need to abort.\n");
-		D_GOTO(out, 0);
+			  "aborted or completed, need not abort again.\n");
+		D_GOTO(out, rc = -DER_ALREADY);
 	}
 
-	if (rpc_priv->crp_state == RPC_STATE_CANCELED) {
+	if (rpc_priv->crp_state != RPC_STATE_REQ_SENT ||
+	    rpc_priv->crp_on_wire != 1) {
 		RPC_TRACE(DB_NET, rpc_priv,
-			  "aborted, need not abort again.\n");
-		D_GOTO(out, rc);
+			  "rpc_priv->crp_state %#x, not inflight, complete it "
+			  "as canceled.\n",
+			  rpc_priv->crp_state);
+		crt_rpc_complete(rpc_priv, -DER_CANCELED);
+		D_GOTO(out, rc = 0);
 	}
 
 	rc = crt_hg_req_cancel(rpc_priv);
 	if (rc != 0) {
 		D_ERROR("crt_hg_req_cancel failed, rc: %d, opc: %#x.\n",
 			rc, rpc_priv->crp_pub.cr_opc);
+		crt_rpc_complete(rpc_priv, rc);
+		D_GOTO(out, rc = 0);
 	}
 
 out:
