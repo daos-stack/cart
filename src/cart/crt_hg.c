@@ -852,10 +852,15 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 	D_ASSERT(proc != NULL);
 	opc = rpc_tmp.crp_req_hdr.cch_opc;
 
-	/* Set the opcode in the temp RPC so that it can be correctly logged on
-	 * failure
+	/**
+	 * Set the opcode, rank and tag in the temp RPC so that it can be
+	 * correctly logged.
 	 */
 	rpc_tmp.crp_pub.cr_opc = opc;
+	rpc_tmp.crp_pub.cr_ep.ep_rank = rpc_tmp.crp_req_hdr.cch_rank;
+	rpc_tmp.crp_pub.cr_ep.ep_tag = rpc_tmp.crp_req_hdr.cch_tag;
+	RPC_TRACE(DB_TRACE, &rpc_tmp, "received.\n");
+
 
 	opc_info = crt_opc_lookup(crt_gdata.cg_opc_map, opc, CRT_UNLOCK);
 	if (opc_info == NULL) {
@@ -891,10 +896,10 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 	rpc_priv->crp_opc_info = opc_info;
 	rpc_pub->cr_opc = rpc_tmp.crp_pub.cr_opc;
 
-	RPC_TRACE(DB_TRACE, rpc_priv,
-		  "(opc: %#x rpc_pub: %p) allocated per RPC request received.\n",
-		  rpc_priv->crp_opc_info->coi_opc,
-		  &rpc_priv->crp_pub);
+	D_DEBUG(DB_TRACE, rpc_priv,
+		"(opc: %#x rpc_pub: %p) allocated per RPC request received.\n",
+		rpc_priv->crp_opc_info->coi_opc,
+		&rpc_priv->crp_pub);
 
 	rc = crt_rpc_priv_init(rpc_priv, crt_ctx, true /* srv_flag */);
 	if (rc != 0) {
