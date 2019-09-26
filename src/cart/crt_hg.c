@@ -896,7 +896,7 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 	rpc_priv->crp_opc_info = opc_info;
 	rpc_pub->cr_opc = rpc_tmp.crp_pub.cr_opc;
 
-	D_DEBUG(DB_TRACE, rpc_priv,
+	D_DEBUG(DB_TRACE,
 		"(opc: %#x rpc_pub: %p) allocated per RPC request received.\n",
 		rpc_priv->crp_opc_info->coi_opc,
 		&rpc_priv->crp_pub);
