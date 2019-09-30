@@ -1540,8 +1540,8 @@ crt_rpc_common_hdlr(struct crt_rpc_priv *rpc_priv)
 		(crt_ctx->cc_idx != rpc_priv->crp_req_hdr.cch_tag)) {
 
 		if (!skip_check) {
-			D_ERROR("Mismatch rpc: %p opc: %x rank:%d tag:%d,"
-				"  self:%d cc_idx:%d ep_rank:%d ep_tag:%d\n",
+			D_DEBUG(DB_TRACE, "Mismatch rpc: %p opc: %x rank:%d "
+			"tag:%d self:%d cc_idx:%d ep_rank:%d ep_tag:%d\n",
 				rpc_priv,
 				rpc_priv->crp_pub.cr_opc,
 				rpc_priv->crp_req_hdr.cch_rank,
