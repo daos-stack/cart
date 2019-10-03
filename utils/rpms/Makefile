@@ -5,7 +5,7 @@ PATCHES  = scons_local-$(VERSION).tar.$(SRC_EXT)
 
 SLES_12_PR_REPOS := scons
 LEAP_42_PR_REPOS := scons
-PR_REPOS         := pmix
+PR_REPOS         := pmix mercury@PR-22
 LEAP_42_REPOS    := https://download.opensuse.org/repositories/science:/HPC/openSUSE_Leap_42.3
 SLES_12_REPOS    := https://download.opensuse.org/repositories/science:/HPC/openSUSE_Leap_42.3            \
 	            https://download.opensuse.org/repositories/science:/HPC:/SLE12SP3_Missing/SLE_12_SP3/ \

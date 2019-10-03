@@ -43,7 +43,7 @@
 def arch = "-Linux"
 def sanitized_JOB_NAME = JOB_NAME.toLowerCase().replaceAll('/', '-').replaceAll('%2f', '-')
 
-def component_repos = "pmix"
+def component_repos = "pmix mercury@PR-22"
 def cart_repo = "cart@${env.BRANCH_NAME}:${env.BUILD_NUMBER}"
 def cart_repos = component_repos + ' ' + cart_repo
 //def cart_rpms = "openpa libfabric pmix ompi mercury"
