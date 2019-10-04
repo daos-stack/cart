@@ -76,14 +76,6 @@ static void wait_for_namespace(void)
 	}
 }
 
-#define DBG_PRINT(x...)							\
-	do {								\
-		printf("[%s:%d:SERV]\t", g_hostname, g_my_rank);	\
-		printf(x);						\
-	} while (0)
-
-
-
 /* Verbose mode:
  * 0 - disabled
  * 1 - Entry/Exists

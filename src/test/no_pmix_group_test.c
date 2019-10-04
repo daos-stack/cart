@@ -50,21 +50,7 @@
 
 #include "tests_common.h"
 
-struct test_options {
-	int		self_rank;
-	int		mypid;
-};
-
-static struct test_options opts;
 static int g_do_shutdown;
-
-#define DBG_PRINT(x...)							\
-	do {								\
-		fprintf(stderr, "SRV [rank=%d pid=%d]\t",		\
-			opts.self_rank,					\
-			opts.mypid);					\
-		fprintf(stderr, x);					\
-	} while (0)
 
 #define MY_BASE 0x010000000
 #define MY_VER  0

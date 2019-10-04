@@ -45,6 +45,27 @@
 
 #include "crt_internal.h"
 
+#define DBG_PRINT(x...)                                                 \
+	do {                                                            \
+		if (opts.is_server)                                     \
+			fprintf(stderr, "SRV [rank=%d pid=%d]\t",       \
+			opts.self_rank,                                 \
+			opts.mypid);                                    \
+		else                                                    \
+			fprintf(stderr, "CLI [rank=%d pid=%d]\t",       \
+			opts.self_rank,                                 \
+			opts.mypid);                                    \
+		fprintf(stderr, x);                                     \
+	} while (0)
+
+struct test_options {
+	int	self_rank;
+	int	mypid;
+	int	is_server;
+};
+
+struct test_options opts;
+
 int g_shutdown;
 
 static inline int drain_queue(crt_context_t ctx)
@@ -68,7 +89,7 @@ static inline int drain_queue(crt_context_t ctx)
 	return 0;
 }
 
-static void *
+void *
 progress_fn(void *data)
 {
 	int rc;
@@ -86,7 +107,6 @@ progress_fn(void *data)
 	}
 
 	pthread_exit(rc ? *p_ctx : NULL);
-
 
 	return NULL;
 }
@@ -300,28 +320,97 @@ tc_sem_timedwait(sem_t *sem, int sec, int line_number)
 }
 
 void
-tc_srv_start_basic(crt_context_t *crt_ctx, pthread_t *progress_thread)
+tc_cli_start_basic(char *local_group_name, char *srv_group_name,
+		   crt_group_t **grp, d_rank_list_t **rank_list,
+		   crt_context_t *crt_ctx, pthread_t *progress_thread,
+		   unsigned int total_srv_ctx)
+{
+	char		*grp_cfg_file;
+	uint32_t	 grp_size;
+	int		 rc = 0;
+
+	rc = d_log_init();
+	assert(rc == 0);
+
+	rc = crt_init(local_group_name, CRT_FLAG_BIT_SINGLETON |
+		      CRT_FLAG_BIT_PMIX_DISABLE | CRT_FLAG_BIT_LM_DISABLE);
+	if (rc != 0) {
+		D_ERROR("crt_init() failed; rc=%d\n", rc);
+		assert(0);
+	}
+
+	rc = crt_group_view_create(srv_group_name, grp);
+	if (!*grp || rc != 0) {
+		D_ERROR("Failed to create group view; rc=%d\n", rc);
+		assert(0);
+	}
+
+	rc = crt_context_create(crt_ctx);
+	if (rc != 0) {
+		D_ERROR("crt_context_create() failed; rc=%d\n", rc);
+		assert(0);
+	}
+
+	rc = pthread_create(progress_thread, NULL, progress_fn, crt_ctx);
+	if (rc != 0) {
+		D_ERROR("pthread_create() failed; rc=%d\n", rc);
+		assert(0);
+	}
+
+	grp_cfg_file = getenv("CRT_L_GRP_CFG");
+
+	/* load group info from a config file and delete file upon return */
+	rc = tc_load_group_from_file(grp_cfg_file, *crt_ctx, *grp, -1, true);
+	if (rc != 0) {
+		D_ERROR("tc_load_group_from_file() failed; rc=%d\n", rc);
+		assert(0);
+	}
+
+	rc = crt_group_size(*grp, &grp_size);
+	if (rc != 0) {
+		D_ERROR("crt_group_size() failed; rc=%d\n", rc);
+		assert(0);
+	}
+
+	rc = crt_group_ranks_get(*grp, rank_list);
+	if (rc != 0) {
+		D_ERROR("crt_group_ranks_get() failed; rc=%d\n", rc);
+		assert(0);
+	}
+
+	if ((*rank_list)->rl_nr != grp_size) {
+		D_ERROR("rank_list differs in size. expected %d got %d\n",
+			 grp_size, (*rank_list)->rl_nr);
+		assert(0);
+	}
+
+	rc = crt_group_psr_set(*grp, (*rank_list)->rl_ranks[0]);
+	if (rc != 0) {
+		D_ERROR("crt_group_psr_set() failed; rc=%d\n", rc);
+		assert(0);
+	}
+}
+
+void
+tc_srv_start_basic(char *srv_group_name, crt_context_t *crt_ctx,
+		   pthread_t *progress_thread, crt_group_t *grp,
+		   uint32_t *grp_size)
 {
 	char		*env_self_rank;
 	char		*grp_cfg_file;
 	char		*my_uri;
-	crt_group_t	*grp;
 	d_rank_t	 my_rank;
-	uint32_t	 grp_size;
 	int		 rc = 0;
 
 	env_self_rank = getenv("CRT_L_RANK");
 	my_rank = atoi(env_self_rank);
 
 	rc = d_log_init();
-	assert(rc == 0);
+	D_ASSERT(rc == 0);
 
-	rc = crt_init("server_grp", CRT_FLAG_BIT_SERVER |
-		CRT_FLAG_BIT_PMIX_DISABLE | CRT_FLAG_BIT_LM_DISABLE);
-	if (rc != 0) {
-		D_ERROR("crt_init() failed; rc=%d\n", rc);
-		assert(0);
-	}
+	rc = crt_init(srv_group_name, CRT_FLAG_BIT_SERVER |
+			CRT_FLAG_BIT_PMIX_DISABLE | CRT_FLAG_BIT_LM_DISABLE);
+	D_ASSERTF(rc == 0, "crt_init() failed, rc: %d\n", rc);
 
 	grp = crt_group_lookup(NULL);
 	if (!grp) {
@@ -332,7 +421,7 @@ tc_srv_start_basic(crt_context_t *crt_ctx, pthread_t *progress_thread)
 	rc = crt_rank_self_set(my_rank);
 	if (rc != 0) {
 		D_ERROR("crt_rank_self_set(%d) failed; rc=%d\n",
-			my_rank, rc);
+			 my_rank, rc);
 		assert(0);
 	}
 
@@ -367,7 +456,7 @@ tc_srv_start_basic(crt_context_t *crt_ctx, pthread_t *progress_thread)
 
 	D_FREE(my_uri);
 
-	rc = crt_group_size(NULL, &grp_size);
+	rc = crt_group_size(NULL, grp_size);
 	if (rc != 0) {
 		D_ERROR("crt_group_size() failed; rc=%d\n", rc);
 		assert(0);
