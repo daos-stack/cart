@@ -24,9 +24,7 @@
 
 from __future__ import print_function
 
-import os
 import sys
-import subprocess
 
 from avocado       import Test
 from avocado       import main
@@ -35,52 +33,32 @@ sys.path.append('./util')
 
 from cart_utils import CartUtils
 
-class CartNoPmixOneNodeTest(Test):
+class CartCoRpcOneNodeTest(Test):
     """
-    Runs basic CaRT no_pmix tests
+    Runs CaRT ghost rank RPC test
 
-    :avocado: tags=all,no_pmix,one_node
+    :avocado: tags=all,ghost_rank_rpc,one_node
     """
     def setUp(self):
         """ Test setup """
         print("Running setup\n")
         self.utils = CartUtils()
         self.env = self.utils.get_env(self)
-        crt_phy_addr = self.params.get("CRT_PHY_ADDR_STR", '/run/defaultENV/')
-        ofi_interface = self.params.get("OFI_INTERFACE", '/run/defaultENV/')
-        ofi_ctx_num = self.params.get("CRT_CTX_NUM", '/run/defaultENV/')
-        ofi_share_addr = self.params.get("CRT_CTX_SHARE_ADDR",
-                                               '/run/defaultENV/')
-
-        self.pass_env = {"CRT_PHY_ADDR_STR": crt_phy_addr,
-                         "OFI_INTERFACE": ofi_interface,
-                         "CRT_CTX_SHARE_ADDR": ofi_share_addr,
-                         "CRT_CTX_NUM": ofi_ctx_num}
 
     def tearDown(self):
-        """ Test tear down """
+        """ Test teardown """
         print("Run TearDown\n")
 
-    def test_cart_no_pmix(self):
+    def test_cart_ghost_rank_rpc(self):
         """
-        Test CaRT NoPmix
+        Test ghost rank RPC
 
-        :avocado: tags=all,no_pmix,one_node
+        :avocado: tags=all,ghost_rank_rpc,one_node
         """
 
-        cmd = self.params.get("tst_bin", '/run/tests/*/')
+        cmd = self.utils.build_cmd(self, self.env, "srv")
 
-        self.utils.print("\nTest cmd : %s\n" % cmd)
-
-        test_env = self.pass_env
-        p = subprocess.Popen([cmd], env=test_env, stdout=subprocess.PIPE)
-
-        rc = self.utils.wait_process(p, 10)
-        if rc != 0:
-            self.utils.print("Error waiting for process. returning {}".format(rc))
-            self.fail("Test failed.\n")
-
-        self.utils.print("Finished waiting for {}".format(p))
+        self.utils.launch_test(self, cmd)
 
 if __name__ == "__main__":
     main()

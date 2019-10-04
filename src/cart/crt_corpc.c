@@ -426,10 +426,12 @@ crt_corpc_req_create(crt_context_t crt_ctx, crt_group_t *grp,
 		D_GOTO(out, rc);
 	}
 
+	rpc_priv->crp_grp_priv = grp_priv;
+
 	/* grp_root is logical rank number in this group */
 
 	grp_root = grp_priv->gp_self;
-	pri_root = grp_priv_get_primary_rank(grp_priv, grp_root);
+	pri_root = crt_grp_priv_get_primary_rank(grp_priv, grp_root);
 
 	tobe_filter_ranks = filter_ranks;
 	/*
@@ -790,7 +792,7 @@ aggregate_done:
 		RPC_ADDREF(parent_rpc_priv);
 		crt_corpc_complete(parent_rpc_priv);
 
-		if (co_ops->co_post_reply)
+		if (co_ops && co_ops->co_post_reply)
 			co_ops->co_post_reply(&parent_rpc_priv->crp_pub,
 					co_info->co_priv);
 		RPC_DECREF(parent_rpc_priv);
@@ -938,6 +940,8 @@ crt_corpc_req_hdlr(struct crt_rpc_priv *rpc_priv)
 		child_rpc_priv = container_of(child_rpc, struct crt_rpc_priv,
 					      crp_pub);
 		corpc_add_child_rpc(rpc_priv, child_rpc_priv);
+
+		child_rpc_priv->crp_grp_priv = co_info->co_grp_priv;
 
 		rc = crt_req_send(child_rpc, crt_corpc_reply_hdlr, rpc_priv);
 		if (rc != 0) {
