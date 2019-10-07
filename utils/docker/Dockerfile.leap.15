@@ -40,8 +40,8 @@
 #
 
 # Pull base image
-FROM opensuse/leap:15.0
-MAINTAINER Johann Lombardi <johann.lombardi@intel.com>
+FROM opensuse/leap:15
+MAINTAINER daos-stack <daos@daos.groups.io>
 
 # Build arguments can be set via -build-arg
 # use same UID as host and default value of 1000 if not specified
