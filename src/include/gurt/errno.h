@@ -168,7 +168,7 @@
 	/** Not a service replica */					\
 	ACTION(DER_NOTREPLICA,		(DER_ERR_DAOS_BASE + 20))	\
 	/** Data corruption found */					\
-	ACTION(DER_CORRUPT_DATA,	(DER_ERR_DAOS_BASE + 21))
+	ACTION(DER_CSUM,		(DER_ERR_DAOS_BASE + 21))
 
 #define D_FOREACH_ERR_RANGE(ACTION)	\
 	ACTION(GURT,	1000)		\
