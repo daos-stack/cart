@@ -581,12 +581,13 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild(clean: "_build.external${arch}",
+                        sconsBuild(scons_exe: "scons-3",
+                                   clean: "_build.external${arch}",
                                    scons_args: '--build-config=utils/build-master.config')
                         // this really belongs in the test stage CORCI-530
-                        sh '''scons utest --utest-mode=memcheck
+                        sh '''scons-3 utest --utest-mode=memcheck
                               mv build/Linux/src/utest{,_valgrind}
-                              scons utest'''
+                              scons-3 utest'''
                         stash name: 'CentOS-master-install', includes: 'install/**'
                         stash name: 'CentOS-master-build-vars', includes: ".build_vars${arch}.*"
                     }
@@ -622,11 +623,12 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}"
+                        sconsBuild(scons_exe: "scons-3",
+                                   clean: "_build.external${arch}")
                         // this really belongs in the test stage CORCI-530
-                        sh '''scons utest --utest-mode=memcheck
+                        sh '''scons-3 utest --utest-mode=memcheck
                               mv build/Linux/src/utest{,_valgrind}
-                              scons utest'''
+                              scons-3 utest'''
                         stash name: 'CentOS-install', includes: 'install/**'
                         stash name: 'CentOS-build-vars', includes: ".build_vars${arch}.*"
                     }
@@ -684,7 +686,9 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}", COMPILER: "clang"
+                        sconsBuild(scons_exe: "scons-3",
+                                   clean: "_build.external${arch}",
+                                   COMPILER: "clang")
                     }
                     post {
                         always {
@@ -741,7 +745,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite"
                     }
                     post {
                         always {
@@ -801,7 +805,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}", COMPILER: "clang"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite", COMPILER: "clang"
                     }
                     post {
                         always {
@@ -862,7 +866,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite"
                     }
                     post {
                         always {
@@ -925,7 +929,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite"
                     }
                     post {
                         always {
@@ -984,7 +988,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite"
                     }
                     post {
                         always {
@@ -1041,7 +1045,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}", COMPILER: "clang"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite", COMPILER: "clang"
                     }
                     post {
                         always {
@@ -1102,7 +1106,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}", COMPILER: "icc"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite", COMPILER: "icc"
                     }
                     post {
                         always {
