@@ -196,7 +196,7 @@ pipeline {
                             publishToRepository product: 'cart',
                                                 format: 'yum',
                                                 maturity: 'stable',
-                                                tech: 'centos-7',
+                                                tech: 'el-7',
                                                 repo_dir: 'artifacts/centos7/'
                             stepResult name: env.STAGE_NAME, context: "build",
                                        result: "SUCCESS"
