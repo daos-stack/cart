@@ -100,7 +100,7 @@ test_run(void)
 		}
 
 		for (i = 0; i < rank_list->rl_nr; i++) {
-                	tc_sem_timedwait(&test_g.t_token_to_proceed, 61,
+			tc_sem_timedwait(&test_g.t_token_to_proceed, 61,
 					 __LINE__);
 		}
 	}
