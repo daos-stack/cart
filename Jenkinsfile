@@ -478,7 +478,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch} .sconsign-Linux.dblite"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite"
                     }
                     post {
                         always {
@@ -538,7 +538,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch} .sconsign-Linux.dblite", COMPILER: "clang"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite", COMPILER: "clang"
                     }
                     post {
                         always {
@@ -600,7 +600,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch} .sconsign-Linux.dblite"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite"
                     }
                     post {
                         always {
@@ -664,7 +664,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch} .sconsign-Linux.dblite"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite"
                     }
                     post {
                         always {
@@ -728,7 +728,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch} .sconsign-Linux.dblite"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite"
                     }
                     post {
                         always {
@@ -790,7 +790,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch} .sconsign-Linux.dblite", COMPILER: "clang"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite", COMPILER: "clang"
                     }
                     post {
                         always {
@@ -851,7 +851,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch} .sconsign-Linux.dblite", COMPILER: "icc"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite", COMPILER: "icc"
                     }
                     post {
                         always {
