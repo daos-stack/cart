@@ -53,54 +53,53 @@
 void
 test_run(void)
 {
-        crt_group_t             *grp = NULL;
-        d_rank_list_t           *rank_list = NULL;
-        d_rank_t                rank;
-	int			tag;
-        crt_endpoint_t                   server_ep = {0};
-        crt_rpc_t                       *rpc_req = NULL;
-	int		i;
-	int		rc = 0;
+	crt_group_t	*grp = NULL;
+	d_rank_list_t	*rank_list = NULL;
+	d_rank_t	 rank;
+	int		 tag;
+	crt_endpoint_t	 server_ep = {0};
+	crt_rpc_t	*rpc_req = NULL;
+	int		 i;
+	int		 rc = 0;
 
 	tc_cli_start_basic(test_g.t_local_group_name,
 			   test_g.t_remote_group_name,
 			   &grp, &rank_list, &test_g.t_crt_ctx[0],
 			   &test_g.t_tid[0], test_g.t_srv_ctx_num);
 
-        rc = sem_init(&test_g.t_token_to_proceed, 0, 0);
-        D_ASSERTF(rc == 0, "sem_init() failed.\n");
+	rc = sem_init(&test_g.t_token_to_proceed, 0, 0);
+	D_ASSERTF(rc == 0, "sem_init() failed.\n");
 
 	/* register RPCs */
 	rc = crt_proto_register(&my_proto_fmt_test_group2);
 	D_ASSERTF(rc == 0, "crt_proto_register() failed. rc: %d\n",
 			rc);
 
-        sleep(2);
+	sleep(2);
 
-        rc = wait_for_ranks(test_g.t_crt_ctx[0], grp, rank_list,
+	rc = wait_for_ranks(test_g.t_crt_ctx[0], grp, rank_list,
 			    test_g.t_srv_ctx_num - 1, test_g.t_srv_ctx_num,
 			    5, 150);
-        if (rc != 0) {
-                D_ERROR("wait_for_ranks() failed; rc=%d\n", rc);
-                assert(0);
-        }
+	if (rc != 0) {
+		D_ERROR("wait_for_ranks() failed; rc=%d\n", rc);
+		assert(0);
+	}
 
 	test_g.t_fault_attr_1000 = d_fault_attr_lookup(1000);
 	test_g.t_fault_attr_5000 = d_fault_attr_lookup(5000);
 
-        if (!test_g.t_shut_only) {
+	if (!test_g.t_shut_only) {
 
-        	for (i = 0; i < rank_list->rl_nr; i++) {
-
-                	rank = rank_list->rl_ranks[i];
+		for (i = 0; i < rank_list->rl_nr; i++) {
+			rank = rank_list->rl_ranks[i];
 
 			for (tag = 0; tag < test_g.t_srv_ctx_num; tag++) {
-                		DBG_PRINT("Sending rpc to %d:%d\n", rank, tag);
+				DBG_PRINT("Sending rpc to %d:%d\n", rank, tag);
 				check_in(grp, rank, tag);
 			}
-        	}
+		}
 
-		for (i = 0; i < rank_list->rl_nr; i++){
+		for (i = 0; i < rank_list->rl_nr; i++) {
                 	tc_sem_timedwait(&test_g.t_token_to_proceed, 61,
 					 __LINE__);
 		}
@@ -140,8 +139,8 @@ test_run(void)
 
 	rc = pthread_join(test_g.t_tid[0], NULL);
 	if (rc != 0)
-	        fprintf(stderr, "pthread_join failed. rc: %d\n", rc);
-        D_DEBUG(DB_TEST, "joined progress thread.\n");
+		fprintf(stderr, "pthread_join failed. rc: %d\n", rc);
+	D_DEBUG(DB_TEST, "joined progress thread.\n");
 
 	rc = sem_destroy(&test_g.t_token_to_proceed);
 	D_ASSERTF(rc == 0, "sem_destroy() failed.\n");

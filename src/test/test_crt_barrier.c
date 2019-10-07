@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 	d_rank_t		 my_rank;
 	int			 i;
 	pthread_t		 tid;
-	crt_group_t 		*grp = NULL;
+	crt_group_t		*grp = NULL;
 	uint32_t		 grp_size;
 	int			 rc = 0;
 
