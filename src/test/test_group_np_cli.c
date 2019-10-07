@@ -77,7 +77,7 @@ test_run(void)
 
 	sleep(2);
 
-	rc = wait_for_ranks(test_g.t_crt_ctx[0], grp, rank_list,
+	rc = tc_wait_for_ranks(test_g.t_crt_ctx[0], grp, rank_list,
 			    test_g.t_srv_ctx_num - 1, test_g.t_srv_ctx_num,
 			    5, 150);
 	if (rc != 0) {

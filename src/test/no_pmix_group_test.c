@@ -550,7 +550,7 @@ int main(int argc, char **argv)
 		assert(0);
 	}
 
-	rc = wait_for_ranks(crt_ctx[0], grp, rank_list, 0,
+	rc = tc_wait_for_ranks(crt_ctx[0], grp, rank_list, 0,
 			NUM_SERVER_CTX, 10, 100.0);
 	if (rc != 0) {
 		D_ERROR("wait_for_ranks() failed; rc=%d\n", rc);

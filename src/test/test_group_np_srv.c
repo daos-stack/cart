@@ -82,7 +82,7 @@ test_run(void)
 	for (i = 1; i < test_g.t_srv_ctx_num; i++) {
 		rc = crt_context_create(&test_g.t_crt_ctx[i]);
 		D_ASSERTF(rc == 0, "crt_context_create() failed. rc: %d\n", rc);
-		rc = pthread_create(&test_g.t_tid[i], NULL, progress_fn,
+		rc = pthread_create(&test_g.t_tid[i], NULL, tc_progress_fn,
 				    &test_g.t_crt_ctx[i]);
 		D_ASSERTF(rc == 0, "pthread_create() failed. rc: %d\n", rc);
 	}

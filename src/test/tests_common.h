@@ -68,7 +68,8 @@ struct test_options opts;
 
 int g_shutdown;
 
-static inline int tc_drain_queue(crt_context_t ctx)
+static inline int
+tc_drain_queue(crt_context_t ctx)
 {
 	int	rc;
 	/* Drain the queue. Progress until 1 second timeout.  We need
@@ -90,7 +91,7 @@ static inline int tc_drain_queue(crt_context_t ctx)
 }
 
 void *
-progress_fn(void *data)
+tc_progress_fn(void *data)
 {
 	int rc;
 
@@ -123,7 +124,7 @@ struct wfr_status {
 };
 
 static inline void
-sync_timedwait(struct wfr_status *wfrs, int sec, int line_number)
+tc_sync_timedwait(struct wfr_status *wfrs, int sec, int line_number)
 {
 	struct timespec	deadline;
 	int		rc;
@@ -169,7 +170,7 @@ ctl_client_cb(const struct crt_cb_info *info)
 }
 
 int
-wait_for_ranks(crt_context_t ctx, crt_group_t *grp, d_rank_list_t *rank_list,
+tc_wait_for_ranks(crt_context_t ctx, crt_group_t *grp, d_rank_list_t *rank_list,
 		int tag, int total_ctx, double ping_timeout,
 		double total_timeout)
 {
@@ -214,7 +215,7 @@ wait_for_ranks(crt_context_t ctx, crt_group_t *grp, d_rank_list_t *rank_list,
 		rc = crt_req_send(rpc, ctl_client_cb, &ws);
 
 		if (rc == 0)
-			sync_timedwait(&ws, 120, __LINE__);
+			tc_sync_timedwait(&ws, 120, __LINE__);
 		else
 			ws.rc = rc;
 
@@ -238,7 +239,7 @@ wait_for_ranks(crt_context_t ctx, crt_group_t *grp, d_rank_list_t *rank_list,
 			rc = crt_req_send(rpc, ctl_client_cb, &ws);
 
 			if (rc == 0)
-				sync_timedwait(&ws, 120, __LINE__);
+				tc_sync_timedwait(&ws, 120, __LINE__);
 			else
 				ws.rc = rc;
 
@@ -356,7 +357,7 @@ tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 		assert(0);
 	}
 
-	rc = pthread_create(progress_thread, NULL, progress_fn, crt_ctx);
+	rc = pthread_create(progress_thread, NULL, tc_progress_fn, crt_ctx);
 	if (rc != 0) {
 		D_ERROR("pthread_create() failed; rc=%d\n", rc);
 		assert(0);
@@ -437,7 +438,7 @@ tc_srv_start_basic(char *srv_group_name, crt_context_t *crt_ctx,
 	}
 
 	rc = pthread_create(progress_thread, NULL,
-			    progress_fn, crt_ctx);
+			    tc_progress_fn, crt_ctx);
 	if (rc != 0) {
 		D_ERROR("pthread_create() failed; rc=%d\n", rc);
 		assert(0);
