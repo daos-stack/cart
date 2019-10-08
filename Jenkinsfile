@@ -182,8 +182,13 @@ pipeline {
                     }
                 }
                 stage('Build RPM on SLES 12.3') {
-                    when { beforeAgent true
-                           environment name: 'SLES12_3_DOCKER', value: 'true' }
+                    when {
+                        beforeAgent true
+                        allOf {
+                            expression { false }
+                            environment name: 'SLES12_3_DOCKER', value: 'true'
+                        }
+                    }
                     agent {
                         dockerfile {
                             filename 'Dockerfile-rpmbuild.sles.12.3'
@@ -236,6 +241,10 @@ pipeline {
                     }
                 }
                 stage('Build RPM on Leap 42.3') {
+                    when {
+                        beforeAgent true
+                        expression { false }
+                    }
                     agent {
                         dockerfile {
                             filename 'Dockerfile-rpmbuild.leap.42.3'
@@ -287,119 +296,6 @@ pipeline {
                         }
                     }
                 }
-                stage('Build DEB on Ubuntu 18.04') {
-                    agent {
-                        dockerfile {
-                            filename 'Dockerfile-debbuild.ubuntu.18.04'
-                            dir 'utils/docker'
-                            label 'docker_runner'
-                            additionalBuildArgs '--build-arg UID=$(id -u) ' +
-                              ' --build-arg JENKINS_URL=' + env.JENKINS_URL +
-                              ' --build-arg CACHEBUST=' +
-                              currentBuild.startTimeInMillis
-                        }
-                    }
-                    steps {
-                         githubNotify credentialsId: 'daos-jenkins-commit-status',
-                                      description: env.STAGE_NAME,
-                                      context: "build" + "/" + env.STAGE_NAME,
-                                      status: "PENDING"
-                        checkoutScm withSubmodules: true
-                        sh label: env.STAGE_NAME,
-                           script: '''rm -rf artifacts/ubuntu18.04/
-                              mkdir -p artifacts/ubuntu18.04/
-                              : "${DEBEMAIL:="$env.DAOS_EMAIL"}"
-                              : "${DEBFULLNAME:="$env.DAOS_FULLNAME"}"
-                              export DEBEMAIL
-                              export DEBFULLNAME
-                              make debs'''
-                    }
-                    post {
-                        success {
-                            sh '''ln -v \
-                                   _topdir/BUILD/*{.build,.changes,.deb,.dsc,.gz,.xz} \
-                                   artifacts/ubuntu18.04/
-                                  pushd artifacts/ubuntu18.04/
-                                    dpkg-scanpackages . /dev/null | \
-                                      gzip -9c > Packages.gz
-                                  popd'''
-                            archiveArtifacts artifacts: 'artifacts/ubuntu18.04/**'
-                            stepResult name: env.STAGE_NAME, context: "build",
-                                       result: "SUCCESS"
-                        }
-                        unstable {
-                            sh script: "cat _topdir/BUILD/*.build",
-                               returnStatus: true
-                            archiveArtifacts artifacts: 'artifacts/ubuntu18.04/**'
-                            stepResult name: env.STAGE_NAME, context: "build",
-                                       result: "UNSTABLE"
-                        }
-                        failure {
-                            sh script: "cat _topdir/BUILD/*.build",
-                               returnStatus: true
-                            archiveArtifacts artifacts: 'artifacts/ubuntu18.04/**'
-                            stepResult name: env.STAGE_NAME, context: "build",
-                                       result: "FAILURE"
-                        }
-                    }
-                }
-                stage('Build DEB on Ubuntu 18.10') {
-                    when { expression { true } }
-                    agent {
-                        dockerfile {
-                            filename 'Dockerfile-debbuild.ubuntu.18.10'
-                            dir 'utils/docker'
-                            label 'docker_runner'
-                            additionalBuildArgs '--build-arg UID=$(id -u) ' +
-                              ' --build-arg JENKINS_URL=' + env.JENKINS_URL +
-                              ' --build-arg CACHEBUST=' +
-                              currentBuild.startTimeInMillis
-                        }
-                    }
-                    steps {
-                         githubNotify credentialsId: 'daos-jenkins-commit-status',
-                                      description: env.STAGE_NAME,
-                                      context: "build" + "/" + env.STAGE_NAME,
-                                      status: "PENDING"
-                        checkoutScm withSubmodules: true
-                        sh label: env.STAGE_NAME,
-                           script: '''rm -rf artifacts/ubuntu18.10/
-                              mkdir -p artifacts/ubuntu18.10/
-                              : "${DEBEMAIL:="$env.DAOS_EMAIL"}"
-                              : "${DEBFULLNAME:="$env.DAOS_FULLNAME"}"
-                              export DEBEMAIL
-                              export DEBFULLNAME
-                              make debs'''
-                    }
-                    post {
-                        success {
-                            sh '''ln -v \
-                                   _topdir/BUILD/*{.build,.changes,.deb,.dsc,.gz,.xz} \
-                                   artifacts/ubuntu18.10/
-                                  pushd artifacts/ubuntu18.10/
-                                    dpkg-scanpackages . /dev/null | \
-                                      gzip -9c > Packages.gz
-                                  popd'''
-                            archiveArtifacts artifacts: 'artifacts/ubuntu18.10/**'
-                            stepResult name: env.STAGE_NAME, context: "build",
-                                       result: "SUCCESS"
-                        }
-                        unstable {
-                            sh script: "cat _topdir/BUILD/*.build",
-                               returnStatus: true
-                            archiveArtifacts artifacts: 'artifacts/ubuntu18.10/**'
-                            stepResult name: env.STAGE_NAME, context: "build",
-                                       result: "UNSTABLE"
-                        }
-                        failure {
-                            sh script: "cat _topdir/BUILD/*.build",
-                               returnStatus: true
-                            archiveArtifacts artifacts: 'artifacts/ubuntu18.10/**'
-                            stepResult name: env.STAGE_NAME, context: "build",
-                                       result: "FAILURE"
-                        }
-                    }
-                }
                 stage('Build master CentOS 7') {
                     when { beforeAgent true
                            branch 'master' }
@@ -412,12 +308,13 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild(clean: "_build.external${arch}",
+                        sconsBuild(scons_exe: "scons-3",
+                                   clean: "_build.external${arch}",
                                    scons_args: '--build-config=utils/build-master.config')
                         // this really belongs in the test stage CORCI-530
-                        sh '''scons utest --utest-mode=memcheck
+                        sh '''scons-3 utest --utest-mode=memcheck
                               mv build/Linux/src/utest{,_valgrind}
-                              scons utest'''
+                              scons-3 utest'''
                         stash name: 'CentOS-master-install', includes: 'install/**'
                         stash name: 'CentOS-master-build-vars', includes: ".build_vars${arch}.*"
                     }
@@ -456,11 +353,12 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}"
+                        sconsBuild(scons_exe: "scons-3",
+                                   clean: "_build.external${arch}")
                         // this really belongs in the test stage CORCI-530
-                        sh '''scons utest --utest-mode=memcheck
+                        sh '''scons-3 utest --utest-mode=memcheck
                               mv build/Linux/src/utest{,_valgrind}
-                              scons utest'''
+                              scons-3 utest'''
                         stash name: 'CentOS-install', includes: 'install/**'
                         stash name: 'CentOS-build-vars', includes: ".build_vars${arch}.*"
                     }
@@ -525,7 +423,9 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}", COMPILER: "clang"
+                        sconsBuild(scons_exe: "scons-3",
+                                   clean: "_build.external${arch}",
+                                   COMPILER: "clang")
                     }
                     post {
                         always {
@@ -587,7 +487,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite"
                     }
                     post {
                         always {
@@ -647,7 +547,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}", COMPILER: "clang"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite", COMPILER: "clang"
                     }
                     post {
                         always {
@@ -709,7 +609,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite"
                     }
                     post {
                         always {
@@ -773,7 +673,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite"
                     }
                     post {
                         always {
@@ -837,7 +737,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite"
                     }
                     post {
                         always {
@@ -899,7 +799,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}", COMPILER: "clang"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite", COMPILER: "clang"
                     }
                     post {
                         always {
@@ -960,7 +860,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sconsBuild clean: "_build.external${arch}", COMPILER: "icc"
+                        sconsBuild clean: "_build.external${arch} .sconsign${arch}.dblite", COMPILER: "icc"
                     }
                     post {
                         always {
