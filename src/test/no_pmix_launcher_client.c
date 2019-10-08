@@ -187,34 +187,55 @@ int main(int argc, char **argv)
 		assert(0);
 	}
 
-	/* Cycle through all ranks and 8 tags and send rpc to each */
-	for (i = 0; i < rank_list->rl_nr; i++) {
 
-		rank = rank_list->rl_ranks[i];
+	int buff_size;
+	d_iov_t iov;
 
-		for (tag = 0; tag < NUM_SERVER_CTX; tag++) {
-			DBG_PRINT("Sending ping to %d:%d\n", rank, tag);
+	for (buff_size = 1024; buff_size <= 4096; buff_size+= 1024) {
 
-			server_ep.ep_rank = rank;
-			server_ep.ep_tag = tag;
-			server_ep.ep_grp = grp;
+		iov.iov_buf = malloc(buff_size);
+		iov.iov_buf_len = buff_size;
+		iov.iov_len = buff_size;
 
-			rc = crt_req_create(crt_ctx, &server_ep,
-					RPC_PING, &rpc);
-			if (rc != 0) {
-				D_ERROR("crt_req_create() failed; rc=%d\n",
-					rc);
-				assert(0);
+
+		memset(iov.iov_buf, 'a', buff_size);
+
+		DBG_PRINT("Testing with size %d\n", buff_size);
+
+		/* Cycle through all ranks and 8 tags and send rpc to each */
+		for (i = 0; i < 1; i++) {//rank_list->rl_nr; i++) {
+
+			rank = rank_list->rl_ranks[i];
+
+			for (tag = 0; tag < 1; tag++) { //NUM_SERVER_CTX; tag++) {
+				DBG_PRINT("Sending ping to %d:%d\n", rank, tag);
+
+				server_ep.ep_rank = rank;
+				server_ep.ep_tag = tag;
+				server_ep.ep_grp = grp;
+
+				rc = crt_req_create(crt_ctx, &server_ep,
+						RPC_PING, &rpc);
+				if (rc != 0) {
+					D_ERROR("crt_req_create() failed; rc=%d\n",
+						rc);
+					assert(0);
+				}
+
+				input = crt_req_get(rpc);
+				input->tag = tag;
+
+				input->test_data = iov;
+
+				rc = crt_req_send(rpc, rpc_handle_reply, &sem);
+				tc_sem_timedwait(&sem, 10, __LINE__);
+				DBG_PRINT("Ping response from %d:%d\n", rank, tag);
 			}
-
-			input = crt_req_get(rpc);
-			input->tag = tag;
-
-			rc = crt_req_send(rpc, rpc_handle_reply, &sem);
-			tc_sem_timedwait(&sem, 10, __LINE__);
-			DBG_PRINT("Ping response from %d:%d\n", rank, tag);
 		}
+
+		free(iov.iov_buf);
 	}
+
 
 	/* Send shutdown RPC to each server */
 	for (i = 0; i < rank_list->rl_nr; i++) {
