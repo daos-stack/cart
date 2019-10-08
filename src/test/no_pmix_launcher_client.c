@@ -180,7 +180,7 @@ int main(int argc, char **argv)
 	 */
 	sleep(2);
 
-	rc = wait_for_ranks(crt_ctx, grp, rank_list, NUM_SERVER_CTX - 1,
+	rc = tc_wait_for_ranks(crt_ctx, grp, rank_list, NUM_SERVER_CTX - 1,
 			    NUM_SERVER_CTX, 5, 150);
 	if (rc != 0) {
 		D_ERROR("wait_for_ranks() failed; rc=%d\n", rc);

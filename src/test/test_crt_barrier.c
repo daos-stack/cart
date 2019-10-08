@@ -76,13 +76,15 @@ int main(int argc, char **argv)
 {
 	struct proc_info	*info;
 	void			*check_ret;
-	crt_context_t		crt_ctx;
-	d_rank_t		my_rank;
-	int			i;
-	pthread_t		tid;
-	int			rc = 0;
+	crt_context_t		 crt_ctx;
+	d_rank_t		 my_rank;
+	int			 i;
+	pthread_t		 tid;
+	crt_group_t		*grp = NULL;
+	uint32_t		 grp_size;
+	int			 rc = 0;
 
-	tc_srv_start_basic(&crt_ctx, &tid);
+	tc_srv_start_basic("server_grp", &crt_ctx, &tid, grp, &grp_size);
 
 	info = (struct proc_info *)malloc(sizeof(struct proc_info) *
 					  NUM_BARRIERS);

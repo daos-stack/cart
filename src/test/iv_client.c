@@ -65,13 +65,6 @@ static crt_endpoint_t	g_server_ep;
 static char		g_hostname[100];
 static bool		g_do_shutdown;
 
-
-#define DBG_PRINT(x...)					\
-	do {						\
-		fprintf(stderr, "[%s::CLIENT]\t", g_hostname);	\
-		fprintf(stderr, x);				\
-	} while (0)
-
 static void
 print_usage(const char *err_msg)
 {
