@@ -275,8 +275,7 @@ print_usage_msg(const char *msg)
 	if (msg)
 		printf("\nERROR: %s\n", msg);
 	printf("Usage: cart_ctl <cmd> --group-name name --rank "
-	       "start-end,start-end,rank,rank\n"
-	       "--path path-to-attach-info\n");
+	       "start-end,start-end,rank,rank\n");
 	printf("\ncmds: get_uri_cache, list_ctx, get_hostname, get_pid\n");
 	printf("\nget_uri_cache:\n");
 	printf("\tPrint rank, tag and uri from uri cache\n");
@@ -296,8 +295,6 @@ print_usage_msg(const char *msg)
 	printf("\tspecify the name of the remote group\n");
 	printf("--rank start-end,start-end,rank,rank\n");
 	printf("\tspecify target ranks\n");
-	printf("--path path-to-attach-info\n");
-	printf("\tspecify the location of the attach info file\n");
 }
 
 static int
@@ -337,7 +334,6 @@ parse_args(int argc, char **argv)
 			{"group-name", required_argument, 0, 'g'},
 			{"rank", required_argument, 0, 'r'},
 			{"attr", required_argument, 0, 'a'},
-			{"path", required_argument, 0, 'p'},
 			{0, 0, 0, 0},
 		};
 
@@ -358,13 +354,6 @@ parse_args(int argc, char **argv)
 		case 'a':
 			ctl_parse_fi_attr(optarg, &ctl_gdata.cg_fi_attr);
 			ctl_gdata.cg_fi_attr_inited = 1;
-			break;
-		case 'p':
-			rc = crt_group_config_path_set(optarg);
-			if (rc != 0) {
-				printf("Bad attach prefix: %s\n", optarg);
-				exit(-1);
-			}
 			break;
 		default:
 			break;
@@ -521,64 +510,6 @@ ctl_fill_rpc_args(crt_rpc_t *rpc_req, int index)
 	in_args->cel_rank = ctl_gdata.cg_ranks[index];
 }
 
-/*
-static int
-ctl_issue_cmd(void)
-{
-	int				 i;
-	crt_rpc_t			*rpc_req;
-	crt_endpoint_t			 ep;
-	struct cb_info			 info;
-	int				 rc = 0;
-
-	D_DEBUG(DB_TRACE, "num requested ranks %d\n", ctl_gdata.cg_num_ranks);
-
-	info.cmd = ctl_gdata.cg_cmd_code;
-
-	for (i = 0; i < ctl_gdata.cg_num_ranks; i++) {
-		ep.ep_grp = ctl_gdata.cg_target_group;
-		ep.ep_rank = ctl_gdata.cg_ranks[i];
-		ep.ep_tag = 0;
-		rc = crt_req_create(ctl_gdata.cg_crt_ctx, &ep,
-				    cmd2opcode(info.cmd), &rpc_req);
-		if (rc != 0) {
-			D_ERROR("crt_req_create() failed. rc %d.\n", rc);
-			D_GOTO(out, rc);
-		}
-
-		switch (info.cmd) {
-		case (CMD_ENABLE_FI):
-			ctl_fill_fi_toggle_rpc_args(rpc_req, 1);
-			break;
-		case (CMD_DISABLE_FI):
-			ctl_fill_fi_toggle_rpc_args(rpc_req, 0);
-			break;
-		case (CMD_SET_FI_ATTR):
-			ctl_fill_fi_set_attr_rpc_args(rpc_req);
-			break;
-		default:
-			ctl_fill_rpc_args(rpc_req, i);
-		}
-
-		D_DEBUG(DB_NET, "rpc_req %p rank %d tag %d seq %d\n",
-			rpc_req, ep.ep_rank, ep.ep_tag, i);
-
-		rc = crt_req_send(rpc_req, ctl_client_cb, &info);
-		if (rc != 0) {
-			D_ERROR("crt_req_send() failed. rpc_req %p rank %d tag "
-				"%d rc %d.\n",
-				rpc_req, ep.ep_rank, ep.ep_tag, rc);
-			D_GOTO(out, rc);
-		}
-	}
-	for (i = 0; i < ctl_gdata.cg_num_ranks; i++)
-		sem_wait(&ctl_gdata.cg_num_reply);
-
-out:
-	return rc;
-}
-*/
-
 static int
 ctl_init()
 {
@@ -608,6 +539,8 @@ ctl_init()
 	}
 
 	// test start
+	ctl_gdata.cg_target_group = grp;
+
         info.cmd = ctl_gdata.cg_cmd_code;
 
         for (i = 0; i < ctl_gdata.cg_num_ranks; i++) {
@@ -647,6 +580,15 @@ ctl_init()
         }
 
 	// test end
+
+	D_FREE(rank_list->rl_ranks);
+	D_FREE(rank_list);
+
+	rc = crt_group_view_destroy(grp);
+	if (rc != 0) {
+		D_ERROR("crt_group_view_destroy() failed; rc=%d\n", rc);
+		assert(0);
+	}
 
 	g_shutdown = 1;
 

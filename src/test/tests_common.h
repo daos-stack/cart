@@ -335,6 +335,8 @@ tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 	uint32_t	 grp_size;
 	int		 rc = 0;
 
+	DBG_PRINT("local = %s, rmeote = %s\n", local_group_name, srv_group_name);
+
 	rc = d_log_init();
 	assert(rc == 0);
 
