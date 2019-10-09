@@ -101,16 +101,10 @@ tc_progress_fn(void *data)
 		crt_progress(*p_ctx, 1000, NULL, NULL);
 
 	rc = tc_drain_queue(*p_ctx);
-	if (rc != 0) {
-		D_ERROR("tc_drain_queue() failed with rc=%d\n", rc);
-		assert(0);
-	}
+	D_ASSERTF(rc == 0, "tc_drain_queue() failed with rc=%d\n", rc);
 
 	rc = crt_context_destroy(*p_ctx, 0);
-	if (rc != 0) {
-		D_ERROR("Failed to destroy context rc=%d\n", rc);
-		assert(0);
-	}
+	D_ASSERTF(rc == 0, "Failed to destroy context rc=%d\n", rc);
 
 	pthread_exit(rc ? *p_ctx : NULL);
 
@@ -183,6 +177,13 @@ tc_wait_for_ranks(crt_context_t ctx, crt_group_t *grp, d_rank_list_t *rank_list,
 	double				time_s = 0;
 	int				i = 0;
 	int				rc = 0;
+
+	/* This is needed until hg cancel is fully working.
+	 * RPCs in wait_for_ranks are expected to fail
+	 * and needs to be cancelled correctly.
+	 * It should be removed when hg cancel is fixed - HG PR #284
+	 */
+	sleep(2);
 
 	rc = d_gettime(&t1);
 	D_ASSERTF(rc == 0, "d_gettime() failed; rc=%d\n", rc);
@@ -336,14 +337,11 @@ tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 	int		 rc = 0;
 
 	rc = d_log_init();
-	assert(rc == 0);
+	D_ASSERTF(rc == 0, "d_log_init failed, rc=%d\n", rc);
 
 	rc = crt_init(local_group_name, CRT_FLAG_BIT_SINGLETON |
 		      CRT_FLAG_BIT_PMIX_DISABLE | CRT_FLAG_BIT_LM_DISABLE);
-	if (rc != 0) {
-		D_ERROR("crt_init() failed; rc=%d\n", rc);
-		assert(0);
-	}
+	D_ASSERTF(rc == 0, "crt_init() failed; rc=%d\n", rc);
 
 	rc = crt_group_view_create(srv_group_name, grp);
 	if (!*grp || rc != 0) {
@@ -352,35 +350,25 @@ tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 	}
 
 	rc = crt_context_create(crt_ctx);
-	if (rc != 0) {
-		D_ERROR("crt_context_create() failed; rc=%d\n", rc);
-		assert(0);
-	}
+	D_ASSERTF(rc == 0, "crt_context_create() failed; rc=%d\n", rc);
 
 	rc = pthread_create(progress_thread, NULL, tc_progress_fn, crt_ctx);
-	if (rc != 0) {
-		D_ERROR("pthread_create() failed; rc=%d\n", rc);
-		assert(0);
-	}
+	D_ASSERTF(rc == 0, "pthread_create() failed; rc=%d\n", rc);
 
 	grp_cfg_file = getenv("CRT_L_GRP_CFG");
 
 	/* load group info from a config file and delete file upon return */
 	rc = tc_load_group_from_file(grp_cfg_file, *crt_ctx, *grp, -1, true);
-	if (rc != 0) {
-		D_ERROR("tc_load_group_from_file() failed; rc=%d\n", rc);
-		assert(0);
-	}
+	D_ASSERTF(rc == 0, "tc_load_group_from_file() failed; rc=%d\n", rc);
 
 	rc = crt_group_size(*grp, &grp_size);
-	if (rc != 0) {
-		D_ERROR("crt_group_size() failed; rc=%d\n", rc);
-		assert(0);
-	}
+	D_ASSERTF(rc == 0, "crt_group_size() failed; rc=%d\n", rc);
 
 	rc = crt_group_ranks_get(*grp, rank_list);
-	if (rc != 0) {
-		D_ERROR("crt_group_ranks_get() failed; rc=%d\n", rc);
+	D_ASSERTF(rc == 0, "crt_group_ranks_get() failed; rc=%d\n", rc);
+
+	if (!*rank_list) {
+		D_ERROR("Rank list is NULL\n");
 		assert(0);
 	}
 
@@ -391,10 +379,7 @@ tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 	}
 
 	rc = crt_group_psr_set(*grp, (*rank_list)->rl_ranks[0]);
-	if (rc != 0) {
-		D_ERROR("crt_group_psr_set() failed; rc=%d\n", rc);
-		assert(0);
-	}
+	D_ASSERTF(rc == 0, "crt_group_psr_set() failed; rc=%d\n", rc);
 }
 
 void
@@ -425,48 +410,29 @@ tc_srv_start_basic(char *srv_group_name, crt_context_t *crt_ctx,
 	}
 
 	rc = crt_rank_self_set(my_rank);
-	if (rc != 0) {
-		D_ERROR("crt_rank_self_set(%d) failed; rc=%d\n",
-			 my_rank, rc);
-		assert(0);
-	}
+	D_ASSERTF(rc == 0, "crt_rank_self_set(%d) failed; rc=%d\n",
+		   my_rank, rc);
 
 	rc = crt_context_create(crt_ctx);
-	if (rc != 0) {
-		D_ERROR("crt_context_create() failed; rc=%d\n", rc);
-		assert(0);
-	}
+	D_ASSERTF(rc == 0, "crt_context_create() failed; rc=%d\n", rc);
 
-	rc = pthread_create(progress_thread, NULL,
-			    tc_progress_fn, crt_ctx);
-	if (rc != 0) {
-		D_ERROR("pthread_create() failed; rc=%d\n", rc);
-		assert(0);
-	}
+	rc = pthread_create(progress_thread, NULL, tc_progress_fn, crt_ctx);
+	D_ASSERTF(rc == 0, "pthread_create() failed; rc=%d\n", rc);
 
 	grp_cfg_file = getenv("CRT_L_GRP_CFG");
 
 	rc = crt_rank_uri_get(grp, my_rank, 0, &my_uri);
-	if (rc != 0) {
-		D_ERROR("crt_rank_uri_get() failed; rc=%d\n", rc);
-		assert(0);
-	}
+	D_ASSERTF(rc == 0, "crt_rank_uri_get() failed; rc=%d\n", rc);
 
 	/* load group info from a config file and delete file upon return */
 	rc = tc_load_group_from_file(grp_cfg_file, crt_ctx[0], grp, my_rank,
 					true);
-	if (rc != 0) {
-		D_ERROR("tc_load_group_from_file() failed; rc=%d\n", rc);
-		assert(0);
-	}
+	D_ASSERTF(rc == 0, "tc_load_group_from_file() failed; rc=%d\n", rc);
 
 	D_FREE(my_uri);
 
 	rc = crt_group_size(NULL, grp_size);
-	if (rc != 0) {
-		D_ERROR("crt_group_size() failed; rc=%d\n", rc);
-		assert(0);
-	}
+	D_ASSERTF(rc == 0, "crt_group_size() failed; rc=%d\n", rc);
 }
 
 #endif /* __TESTS_COMMON_H__ */

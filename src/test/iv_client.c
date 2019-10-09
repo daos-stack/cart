@@ -62,7 +62,6 @@
 
 static crt_context_t	g_crt_ctx;
 static crt_endpoint_t	g_server_ep;
-static char		g_hostname[100];
 static bool		g_do_shutdown;
 
 static void
@@ -419,8 +418,6 @@ int main(int argc, char **argv)
 	pthread_t		 progress_thread;
 	int			 c;
 	int			 attach_retries_left;
-
-	init_hostname(g_hostname, sizeof(g_hostname));
 
 	while ((c = getopt(argc, argv, "k:o:r:s:v:x:l:")) != -1) {
 		switch (c) {

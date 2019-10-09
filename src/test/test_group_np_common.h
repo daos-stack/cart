@@ -35,7 +35,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This is a simple example of cart rpc group test based on crt API.
+ * This is a cart test_group common file, running with no pmix.
  */
 #ifndef __TEST_GROUP_NP_COMMON_H__
 #define __TEST_GROUP_NP_COMMON_H__
@@ -47,18 +47,18 @@
 
 
 struct test_t {
-	char		*t_local_group_name;
-	char		*t_remote_group_name;
-	int		 t_hold;
-	int		 t_shut_only;
-	uint32_t	 t_hold_time;
-	unsigned int	 t_srv_ctx_num;
-	crt_context_t	 t_crt_ctx[TEST_CTX_MAX_NUM];
-	pthread_t	 t_tid[TEST_CTX_MAX_NUM];
-	sem_t		 t_token_to_proceed;
-	int		 t_roomno;
-	struct d_fault_attr_t	 *t_fault_attr_1000;
-	struct d_fault_attr_t	 *t_fault_attr_5000;
+	char			*t_local_group_name;
+	char			*t_remote_group_name;
+	int			 t_hold;
+	int			 t_shut_only;
+	uint32_t		 t_hold_time;
+	unsigned int		 t_srv_ctx_num;
+	crt_context_t		 t_crt_ctx[TEST_CTX_MAX_NUM];
+	pthread_t		 t_tid[TEST_CTX_MAX_NUM];
+	sem_t			 t_token_to_proceed;
+	int			 t_roomno;
+	struct d_fault_attr_t	*t_fault_attr_1000;
+	struct d_fault_attr_t	*t_fault_attr_5000;
 };
 
 struct test_t test_g = { .t_hold_time = 0,

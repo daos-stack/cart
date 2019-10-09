@@ -35,7 +35,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This is a simple example of cart rpc group test based on crt API.
+ * This is a simple example of cart test_group client running with no pmix.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +46,6 @@
 #include <semaphore.h>
 
 #include "tests_common.h"
-#include "crt_fake_events.h"
 #include "test_group_rpc.h"
 #include "test_group_np_common.h"
 
@@ -75,15 +74,10 @@ test_run(void)
 	D_ASSERTF(rc == 0, "crt_proto_register() failed. rc: %d\n",
 			rc);
 
-	sleep(2);
-
 	rc = tc_wait_for_ranks(test_g.t_crt_ctx[0], grp, rank_list,
 			    test_g.t_srv_ctx_num - 1, test_g.t_srv_ctx_num,
 			    5, 150);
-	if (rc != 0) {
-		D_ERROR("wait_for_ranks() failed; rc=%d\n", rc);
-		assert(0);
-	}
+	D_ASSERTF(rc == 0, "wait_for_ranks() failed; rc=%d\n", rc);
 
 	test_g.t_fault_attr_1000 = d_fault_attr_lookup(1000);
 	test_g.t_fault_attr_5000 = d_fault_attr_lookup(5000);
@@ -130,10 +124,7 @@ test_run(void)
 	D_FREE(rank_list);
 
 	rc = crt_group_view_destroy(grp);
-	if (rc != 0) {
-		D_ERROR("crt_group_view_destroy() failed; rc=%d\n", rc);
-		assert(0);
-	}
+	D_ASSERTF(rc == 0, "crt_group_view_destroy() failed; rc=%d\n", rc);
 
 	g_shutdown = 1;
 
@@ -148,9 +139,9 @@ test_run(void)
 	rc = crt_finalize();
 	D_ASSERTF(rc == 0, "crt_finalize() failed. rc: %d\n", rc);
 
-	d_log_fini();
-
 	D_DEBUG(DB_TEST, "exiting.\n");
+
+	d_log_fini();
 }
 
 int main(int argc, char **argv)

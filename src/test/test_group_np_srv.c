@@ -35,7 +35,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This is a simple example of cart rpc group test based on crt API.
+ * This is a simple example of cart test_group server, running with no pmix.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,22 +46,16 @@
 #include <semaphore.h>
 
 #include "tests_common.h"
-#include "crt_fake_events.h"
 #include "test_group_rpc.h"
 #include "test_group_np_common.h"
 
 void
 test_run(void)
 {
-	char		*env_self_rank;
-	d_rank_t	 my_rank;
 	crt_group_t	*grp = NULL;
 	uint32_t	 grp_size;
 	int		i;
 	int		rc = 0;
-
-	env_self_rank = getenv("CRT_L_RANK");
-	my_rank = atoi(env_self_rank);
 
 	tc_srv_start_basic(test_g.t_local_group_name, &test_g.t_crt_ctx[0],
 			   &test_g.t_tid[0], grp, &grp_size);
@@ -71,9 +65,6 @@ test_run(void)
 
 	test_g.t_fault_attr_1000 = d_fault_attr_lookup(1000);
 	test_g.t_fault_attr_5000 = d_fault_attr_lookup(5000);
-
-	crt_fake_event_init(my_rank);
-	D_ASSERTF(rc == 0, "crt_fake_event_init() failed. rc: %d\n", rc);
 
 	rc = crt_proto_register(&my_proto_fmt_test_group1);
 	D_ASSERTF(rc == 0, "crt_proto_register() failed. rc: %d\n",
@@ -97,7 +88,6 @@ test_run(void)
 		D_DEBUG(DB_TEST, "joined progress thread.\n");
 	}
 
-	crt_fake_event_fini(my_rank);
 	rc = sem_destroy(&test_g.t_token_to_proceed);
 	D_ASSERTF(rc == 0, "sem_destroy() failed.\n");
 
