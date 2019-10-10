@@ -132,7 +132,7 @@ int main(int argc, char **argv)
 
 	/* load group info from a config file and delete file upon return */
 	rc = tc_load_group_from_file(grp_cfg_file, crt_ctx[0], grp, my_rank,
-					true);
+					false);
 	if (rc != 0) {
 		D_ERROR("tc_load_group_from_file() failed; rc=%d\n", rc);
 		assert(0);
