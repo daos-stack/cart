@@ -252,12 +252,11 @@ crt_hdlr_ctl_ls(crt_rpc_t *rpc_req)
 	if (rc != 0)
 		D_GOTO(out, rc);
 
-
-	out_args->cel_ctx_num = crt_gdata.cg_ctx_num;
-	D_DEBUG(DB_TRACE, "out_args->cel_ctx_num %d\n", crt_gdata.cg_ctx_num);
 	addr_buf_len = 0;
 
 	D_RWLOCK_RDLOCK(&crt_gdata.cg_rwlock);
+	D_DEBUG(DB_TRACE, "out_args->cel_ctx_num %d\n", crt_gdata.cg_ctx_num);
+	out_args->cel_ctx_num = crt_gdata.cg_ctx_num;
 
 	d_list_for_each_entry(ctx, &crt_gdata.cg_ctx_list, cc_link) {
 		str_size = CRT_ADDR_STR_MAX_LEN;
