@@ -3207,7 +3207,7 @@ done:
 out:
 	/* For pmix disabled case. Lock taken above before loop start */
 	if (grp_priv && locked)
-		D_RWLOCK_RDLOCK(&grp_priv->gp_rwlock);
+		D_RWLOCK_RDUNLOCK(&grp_priv->gp_rwlock);
 
 	D_FREE(filename);
 	if (tmp_name != NULL) {
