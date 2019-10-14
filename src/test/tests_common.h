@@ -330,7 +330,7 @@ void
 tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 		   crt_group_t **grp, d_rank_list_t **rank_list,
 		   crt_context_t *crt_ctx, pthread_t *progress_thread,
-		   unsigned int total_srv_ctx)
+		   unsigned int total_srv_ctx, int save_cfg)
 {
 	char		*grp_cfg_file;
 	uint32_t	 grp_size;
@@ -343,23 +343,41 @@ tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 		      CRT_FLAG_BIT_PMIX_DISABLE | CRT_FLAG_BIT_LM_DISABLE);
 	D_ASSERTF(rc == 0, "crt_init() failed; rc=%d\n", rc);
 
-	rc = crt_group_view_create(srv_group_name, grp);
-	if (!*grp || rc != 0) {
-		D_ERROR("Failed to create group view; rc=%d\n", rc);
-		assert(0);
-	}
-
 	rc = crt_context_create(crt_ctx);
 	D_ASSERTF(rc == 0, "crt_context_create() failed; rc=%d\n", rc);
 
 	rc = pthread_create(progress_thread, NULL, tc_progress_fn, crt_ctx);
 	D_ASSERTF(rc == 0, "pthread_create() failed; rc=%d\n", rc);
 
-	grp_cfg_file = getenv("CRT_L_GRP_CFG");
+	if (save_cfg) {
+		/* try until success to avoid intermittent failuresxi
+		 * under valgrind.
+		 */
+		do {
+			sleep(1);
+			rc = crt_group_attach(srv_group_name, grp);
+		} while (rc != 0);
+		D_ASSERTF(rc == 0, "crt_group_attach failed, rc: %d\n", rc);
+		D_ASSERTF(*grp != NULL, "NULL attached remote grp\n");
+	} else {
+		rc = crt_group_view_create(srv_group_name, grp);
+		if (!*grp || rc != 0) {
+			D_ERROR("Failed to create group view; rc=%d\n", rc);
+			assert(0);
+		}
 
-	/* load group info from a config file and delete file upon return */
-	rc = tc_load_group_from_file(grp_cfg_file, *crt_ctx, *grp, -1, true);
-	D_ASSERTF(rc == 0, "tc_load_group_from_file() failed; rc=%d\n", rc);
+		grp_cfg_file = getenv("CRT_L_GRP_CFG");
+
+		/* load group info from a config file and
+		 * delete file upon return
+		 */
+		rc = tc_load_group_from_file(grp_cfg_file, *crt_ctx, *grp, -1,
+					     true);
+		D_ASSERTF(rc == 0, "tc_load_group_from_file() failed; rc=%d\n",
+			  rc);
+	}
+
+	printf("attach success\n");
 
 	rc = crt_group_size(*grp, &grp_size);
 	D_ASSERTF(rc == 0, "crt_group_size() failed; rc=%d\n", rc);

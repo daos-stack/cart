@@ -51,6 +51,8 @@ struct test_t {
 	char			*t_remote_group_name;
 	int			 t_hold;
 	int			 t_shut_only;
+	int			 t_save_cfg;
+	char			*t_cfg_path;
 	uint32_t		 t_hold_time;
 	unsigned int		 t_srv_ctx_num;
 	crt_context_t		 t_crt_ctx[TEST_CTX_MAX_NUM];
@@ -311,6 +313,7 @@ test_parse_args(int argc, char **argv)
 		{"hold", no_argument, &test_g.t_hold, 1},
 		{"srv_ctx_num", required_argument, 0, 'c'},
 		{"shut_only", no_argument, &test_g.t_shut_only, 1},
+		{"cfg_path", required_argument, 0, 's'},
 		{0, 0, 0, 0}
 	};
 
@@ -348,6 +351,10 @@ test_parse_args(int argc, char **argv)
 		case 'h':
 			test_g.t_hold = 1;
 			test_g.t_hold_time = atoi(optarg);
+			break;
+		case 's':
+			test_g.t_save_cfg = 1;
+			test_g.t_cfg_path = optarg;
 			break;
 		case '?':
 			return 1;
