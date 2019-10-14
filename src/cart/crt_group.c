@@ -3059,7 +3059,7 @@ crt_group_config_path_set(const char *path)
 int
 crt_group_config_save(crt_group_t *grp, bool forall)
 {
-	struct crt_grp_priv	*grp_priv;
+	struct crt_grp_priv	*grp_priv = NULL;
 	FILE			*fp = NULL;
 	char			*filename = NULL;
 	char			*tmp_name = NULL;
@@ -3067,6 +3067,9 @@ crt_group_config_save(crt_group_t *grp, bool forall)
 	d_rank_t		 rank;
 	crt_phy_addr_t		 addr = NULL;
 	bool			 addr_free = false;
+	bool			 locked = false;
+	d_rank_list_t		*membs = NULL;
+	int			 i;
 	int			 rc = 0;
 
 
@@ -3138,10 +3141,21 @@ crt_group_config_save(crt_group_t *grp, bool forall)
 		D_GOTO(done, rc);
 	}
 
-	for (rank = 0; rank < grp_priv->gp_size; rank++) {
+	if (!CRT_PMIX_ENABLED()) {
+		D_RWLOCK_RDLOCK(&grp_priv->gp_rwlock);
+		membs = grp_priv_get_membs(grp_priv);
+		locked = true;
+	}
+
+	for (i = 0; i < grp_priv->gp_size; i++) {
 		char *uri;
 
 		uri = NULL;
+
+		if (CRT_PMIX_ENABLED())
+			rank = i;
+		else
+			rank = membs->rl_ranks[i];
 
 		if (CRT_PMIX_ENABLED()) {
 			rc = crt_pmix_uri_lookup(grpid, rank, &uri);
@@ -3160,6 +3174,7 @@ crt_group_config_save(crt_group_t *grp, bool forall)
 		}
 
 		D_ASSERT(uri != NULL);
+
 		rc = fprintf(fp, "%d %s\n", rank, uri);
 
 		if (CRT_PMIX_ENABLED())
@@ -3190,6 +3205,10 @@ done:
 		rc = d_errno2der(errno);
 	}
 out:
+	/* For pmix disabled case. Lock taken above before loop start */
+	if (grp_priv && locked)
+		D_RWLOCK_RDLOCK(&grp_priv->gp_rwlock);
+
 	D_FREE(filename);
 	if (tmp_name != NULL) {
 		if (rc != 0)
