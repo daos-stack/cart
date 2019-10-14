@@ -3207,7 +3207,7 @@ done:
 out:
 	/* For pmix disabled case. Lock taken above before loop start */
 	if (grp_priv && locked)
-		D_RWLOCK_RDUNLOCK(&grp_priv->gp_rwlock);
+		D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
 
 	D_FREE(filename);
 	if (tmp_name != NULL) {
@@ -4076,11 +4076,6 @@ crt_rank_uri_get(crt_group_t *group, d_rank_t rank, int tag, char **uri_str)
 	struct crt_grp_priv	*grp_priv;
 	crt_phy_addr_t		uri;
 	hg_addr_t		hg_addr;
-
-	if (group == NULL) {
-		D_ERROR("Passed group is NULL\n");
-		D_GOTO(out, rc = -DER_INVAL);
-	}
 
 	if (uri_str == NULL) {
 		D_ERROR("Passed uri_str is NULL\n");
