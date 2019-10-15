@@ -55,7 +55,8 @@ enum {
 
 
 #define CRT_ISEQ_RPC_PING	/* input fields */		 \
-	((uint64_t)		(tag)			CRT_VAR)
+	((uint64_t)		(tag)			CRT_VAR) \
+	((d_iov_t)		(test_data)		CRT_VAR)
 
 #define CRT_OSEQ_RPC_PING	/* output fields */		 \
 	((uint64_t)		(field)			CRT_VAR)
