@@ -485,6 +485,7 @@ crt_hg_unpack_header(hg_handle_t handle, struct crt_rpc_priv *rpc_priv,
 		D_GOTO(out, rc = -DER_HG);
 	}
 
+	/* If extra buffer is null, rpc can fit into a regular buffer */
 	if (in_buf == NULL) {
 		hg_ret = HG_Get_input_buf(handle, &in_buf, &in_buf_size);
 		if (hg_ret != HG_SUCCESS) {
