@@ -14,7 +14,7 @@ BuildRequires: scons
 BuildRequires: libfabric-devel
 BuildRequires: pmix-devel
 BuildRequires: openpa-devel
-BuildRequires: mercury-devel
+BuildRequires: mercury-devel >= 1.0.1-15
 BuildRequires: ompi-devel
 BuildRequires: libevent-devel
 BuildRequires: boost-devel
@@ -26,7 +26,7 @@ BuildRequires: libyaml-devel
 Requires: libfabric
 Requires: pmix
 Requires: openpa
-Requires: mercury
+Requires: mercury >= 1.0.1-15
 Requires: ompi
 Requires: libevent
 %if (0%{?rhel} >= 7)
