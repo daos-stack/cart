@@ -3080,7 +3080,7 @@ crt_group_config_save(crt_group_t *grp, bool forall)
 
 	grp_priv = crt_grp_pub2priv(grp);
 	if (!grp_priv->gp_service || !grp_priv->gp_primary) {
-		D_ERROR("can-only save config info for primary service grp.\n");
+		D_ERROR("Can only save config info for primary service grp.\n");
 		D_GOTO(out, rc = -DER_INVAL);
 	}
 	if (grp_priv->gp_local) {
