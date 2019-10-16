@@ -81,7 +81,8 @@ enum {
 
 
 #define CRT_OSEQ_RPC_PING	/* output fields */		 \
-	((uint64_t)		(field)			CRT_VAR)
+	((uint64_t)		(field)			CRT_VAR) \
+	((d_iov_t)		(test_data)		CRT_VAR)
 
 #define CRT_ISEQ_RPC_SET_GRP_INFO /* input fields */		 \
 	((d_iov_t)		(grp_info)		CRT_VAR)
@@ -130,9 +131,12 @@ struct crt_proto_format my_proto_fmt = {
 	.cpf_base = MY_BASE,
 };
 
+#define IOV_OUT_SIZE 4096
 int handler_ping(crt_rpc_t *rpc)
 {
 	struct RPC_PING_in	*input;
+	struct RPC_PING_out	*output;
+	d_iov_t			iov;
 	int			my_tag;
 
 	input = crt_req_get(rpc);
@@ -146,7 +150,17 @@ int handler_ping(crt_rpc_t *rpc)
 		assert(0);
 	}
 
+	output = crt_reply_get(rpc);
+
+	iov.iov_buf = malloc(IOV_OUT_SIZE);
+	iov.iov_buf_len = IOV_OUT_SIZE;
+	iov.iov_len = IOV_OUT_SIZE;
+
+	output->test_data = iov;
 	crt_reply_send(rpc);
+
+
+	free(iov.iov_buf);
 	return 0;
 }
 

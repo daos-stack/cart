@@ -188,10 +188,9 @@ int main(int argc, char **argv)
 	}
 
 
-	int buff_size;
+	int buff_size = 4096;
 	d_iov_t iov;
 
-	for (buff_size = 1024; buff_size <= 4096; buff_size+= 1024) {
 
 		iov.iov_buf = malloc(buff_size);
 		iov.iov_buf_len = buff_size;
@@ -203,11 +202,11 @@ int main(int argc, char **argv)
 		DBG_PRINT("Testing with size %d\n", buff_size);
 
 		/* Cycle through all ranks and 8 tags and send rpc to each */
-		for (i = 0; i < 1; i++) {//rank_list->rl_nr; i++) {
+		for (i = 0; i < rank_list->rl_nr; i++) {
 
 			rank = rank_list->rl_ranks[i];
 
-			for (tag = 0; tag < 1; tag++) { //NUM_SERVER_CTX; tag++) {
+			for (tag = 0; tag < NUM_SERVER_CTX; tag++) {
 				DBG_PRINT("Sending ping to %d:%d\n", rank, tag);
 
 				server_ep.ep_rank = rank;
@@ -234,7 +233,6 @@ int main(int argc, char **argv)
 		}
 
 		free(iov.iov_buf);
-	}
 
 
 	/* Send shutdown RPC to each server */
