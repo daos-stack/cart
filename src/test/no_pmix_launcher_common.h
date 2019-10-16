@@ -42,6 +42,9 @@
 #define MY_VER  0
 
 #define NUM_SERVER_CTX 8
+#define TEST_IOV_SIZE_IN 4096
+#define TEST_IOV_SIZE_OUT 4096
+
 
 #define RPC_DECLARE(name)						\
 	CRT_RPC_DECLARE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)		\
@@ -59,7 +62,8 @@ enum {
 	((d_iov_t)		(test_data)		CRT_VAR)
 
 #define CRT_OSEQ_RPC_PING	/* output fields */		 \
-	((uint64_t)		(field)			CRT_VAR)
+	((uint64_t)		(field)			CRT_VAR) \
+	((d_iov_t)		(test_data)		CRT_VAR)
 
 #define CRT_ISEQ_RPC_SET_GRP_INFO /* input fields */		 \
 	((d_iov_t)		(grp_info)		CRT_VAR)
@@ -111,9 +115,12 @@ struct crt_proto_format my_proto_fmt = {
 int handler_ping(crt_rpc_t *rpc)
 {
 	struct RPC_PING_in	*input;
+	struct RPC_PING_out	*output;
+	d_iov_t			iov;
 	int			my_tag;
 
 	input = crt_req_get(rpc);
+	output = crt_reply_get(rpc);
 
 	crt_context_idx(rpc->cr_ctx, &my_tag);
 
@@ -124,7 +131,17 @@ int handler_ping(crt_rpc_t *rpc)
 		assert(0);
 	}
 
+	D_ALLOC(iov.iov_buf, TEST_IOV_SIZE_OUT);
+	memset(iov.iov_buf, 'b', TEST_IOV_SIZE_OUT);
+	D_ASSERTF(iov.iov_buf != NULL, "Failed to allocate iov buf\n");
+
+	iov.iov_buf_len = TEST_IOV_SIZE_OUT;
+	iov.iov_len = TEST_IOV_SIZE_OUT;
+
+	output->test_data = iov;
 	crt_reply_send(rpc);
+
+	D_FREE(iov.iov_buf);
 	return 0;
 }
 

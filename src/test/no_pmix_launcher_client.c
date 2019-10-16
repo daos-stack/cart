@@ -52,8 +52,6 @@
 #include "no_pmix_launcher_common.h"
 
 
-#define TEST_IOV_SIZE 4096
-
 static void *
 progress_function(void *data)
 {
@@ -184,13 +182,13 @@ int main(int argc, char **argv)
 		assert(0);
 	}
 
-	D_ALLOC(iov.iov_buf, TEST_IOV_SIZE);
+	D_ALLOC(iov.iov_buf, TEST_IOV_SIZE_IN);
 	D_ASSERTF(iov.iov_buf != NULL, "Failed to allocate iov buf\n");
 
-	memset(iov.iov_buf, 'a', TEST_IOV_SIZE);
+	memset(iov.iov_buf, 'a', TEST_IOV_SIZE_IN);
 
-	iov.iov_buf_len = TEST_IOV_SIZE;
-	iov.iov_len = TEST_IOV_SIZE;
+	iov.iov_buf_len = TEST_IOV_SIZE_IN;
+	iov.iov_len = TEST_IOV_SIZE_IN;
 
 	/* Cycle through all ranks and 8 tags and send rpc to each */
 	for (i = 0; i < rank_list->rl_nr; i++) {
