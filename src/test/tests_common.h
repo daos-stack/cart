@@ -377,8 +377,6 @@ tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 			  rc);
 	}
 
-	printf("attach success\n");
-
 	rc = crt_group_size(*grp, &grp_size);
 	D_ASSERTF(rc == 0, "crt_group_size() failed; rc=%d\n", rc);
 

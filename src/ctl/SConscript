@@ -40,7 +40,6 @@
 import os
 
 SRC = ['cart_ctl.c']
-CRT_CTL_NP_SRC = ['cart_ctl_np.c']
 
 def scons():
     """scons function"""
@@ -56,8 +55,5 @@ def scons():
     tenv.Requires(ctl, [cart_lib, gurt_lib])
     tenv.Install(os.path.join("$PREFIX", 'bin'), ctl)
 
-    ctl_np = tenv.Program(CRT_CTL_NP_SRC)
-    tenv.Requires(ctl_np, [cart_lib, gurt_lib])
-    tenv.Install(os.path.join("$PREFIX", 'bin'), ctl_np)
 if __name__ == "SCons.Script":
     scons()
