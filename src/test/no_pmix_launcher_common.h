@@ -43,7 +43,9 @@
 
 #define NUM_SERVER_CTX 8
 #define TEST_IOV_SIZE_IN 4096
-#define TEST_IOV_SIZE_OUT 4096
+
+/* TODO: Revert back to 4096 when CART-789 is resolved */
+#define TEST_IOV_SIZE_OUT 2096
 
 
 #define RPC_DECLARE(name)						\
