@@ -1427,7 +1427,6 @@ crt_common_hdr_init(struct crt_rpc_priv *rpc_priv, crt_opcode_t opc)
 	rpc_priv->crp_req_hdr.cch_xid = xid;
 
 	rpc_priv->crp_reply_hdr.cch_opc = opc;
-	rpc_priv->crp_reply_hdr.cch_rank = rank;
 	rpc_priv->crp_reply_hdr.cch_xid = xid;
 }
 
@@ -1536,16 +1535,16 @@ crt_rpc_common_hdlr(struct crt_rpc_priv *rpc_priv)
 			skip_check = true;
 	}
 
-	if ((self_rank != rpc_priv->crp_req_hdr.cch_rank) ||
-		(crt_ctx->cc_idx != rpc_priv->crp_req_hdr.cch_tag)) {
+	if ((self_rank != rpc_priv->crp_req_hdr.cch_dst_rank) ||
+		(crt_ctx->cc_idx != rpc_priv->crp_req_hdr.cch_dst_tag)) {
 
 		if (!skip_check) {
 			D_DEBUG(DB_TRACE, "Mismatch rpc: %p opc: %x rank:%d "
 			"tag:%d self:%d cc_idx:%d ep_rank:%d ep_tag:%d\n",
 				rpc_priv,
 				rpc_priv->crp_pub.cr_opc,
-				rpc_priv->crp_req_hdr.cch_rank,
-				rpc_priv->crp_req_hdr.cch_tag,
+				rpc_priv->crp_req_hdr.cch_dst_rank,
+				rpc_priv->crp_req_hdr.cch_dst_tag,
 				crt_gdata.cg_grp->gg_srv_pri_grp->gp_self,
 				crt_ctx->cc_idx,
 				rpc_priv->crp_pub.cr_ep.ep_rank,
@@ -1622,3 +1621,79 @@ struct d_binheap_ops crt_timeout_bh_ops = {
 	.hop_exit	= timeout_bp_node_exit,
 	.hop_compare	= timeout_bp_node_cmp
 };
+
+
+int
+crt_req_src_rank_get(crt_rpc_t *rpc, d_rank_t *rank)
+{
+	struct crt_rpc_priv	*rpc_priv = NULL;
+	int			rc = 0;
+
+	if (rpc == NULL) {
+		D_ERROR("NULL rpc passed\n");
+		D_GOTO(out, rc = -DER_INVAL);
+	}
+
+	if (rank == NULL) {
+		D_ERROR("NULL rank passed\n");
+		D_GOTO(out, rc = -DER_INVAL);
+	}
+
+
+	rpc_priv = container_of(rpc, struct crt_rpc_priv, crp_pub);
+
+	*rank = rpc_priv->crp_req_hdr.cch_src_rank;
+
+out:
+	return rc;
+}
+
+int
+crt_req_dst_rank_get(crt_rpc_t *rpc, d_rank_t *rank)
+{
+	struct crt_rpc_priv	*rpc_priv = NULL;
+	int			rc = 0;
+
+	if (rpc == NULL) {
+		D_ERROR("NULL rpc passed\n");
+		D_GOTO(out, rc = -DER_INVAL);
+	}
+
+	if (rank == NULL) {
+		D_ERROR("NULL rank passed\n");
+		D_GOTO(out, rc = -DER_INVAL);
+	}
+
+
+	rpc_priv = container_of(rpc, struct crt_rpc_priv, crp_pub);
+
+	*rank = rpc_priv->crp_req_hdr.cch_dst_rank;
+
+out:
+	return rc;
+}
+
+int
+crt_req_dst_tag_get(crt_rpc_t *rpc, uint32_t *tag)
+{
+	struct crt_rpc_priv	*rpc_priv = NULL;
+	int			rc = 0;
+
+	if (rpc == NULL) {
+		D_ERROR("NULL rpc passed\n");
+		D_GOTO(out, rc = -DER_INVAL);
+	}
+
+	if (tag == NULL) {
+		D_ERROR("NULL tag passed\n");
+		D_GOTO(out, rc = -DER_INVAL);
+	}
+
+
+	rpc_priv = container_of(rpc, struct crt_rpc_priv, crp_pub);
+
+	*tag = rpc_priv->crp_req_hdr.cch_dst_tag;
+
+out:
+	return rc;
+}
