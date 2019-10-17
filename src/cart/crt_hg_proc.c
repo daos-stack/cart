@@ -633,7 +633,8 @@ crt_proc_in_common(crt_proc_t proc, crt_rpc_input_t *data)
 			hdr->cch_dst_tag = rpc_priv->crp_pub.cr_ep.ep_tag;
 
 			if (crt_is_service())
-				hdr->cch_src_rank = crt_grp_priv_get_primary_rank(
+				hdr->cch_src_rank = 
+					crt_grp_priv_get_primary_rank(
 						rpc_priv->crp_grp_priv,
 						rpc_priv->crp_grp_priv->gp_self
 						);
