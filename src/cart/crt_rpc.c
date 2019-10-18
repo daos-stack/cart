@@ -1410,16 +1410,7 @@ crt_rpc_inout_buff_init(struct crt_rpc_priv *rpc_priv)
 static inline void
 crt_common_hdr_init(struct crt_rpc_priv *rpc_priv, crt_opcode_t opc)
 {
-	d_rank_t	rank;
 	uint32_t	xid;
-	int		rc;
-
-	if (crt_is_service()) {
-		rc = crt_group_rank(0, &rank);
-		D_ASSERT(rc == 0);
-	} else {
-		rank = 0; /* Client rank */
-	}
 
 	xid = atomic_fetch_add(&crt_gdata.cg_xid, 1);
 
@@ -1622,7 +1613,6 @@ struct d_binheap_ops crt_timeout_bh_ops = {
 	.hop_compare	= timeout_bp_node_cmp
 };
 
-
 int
 crt_req_src_rank_get(crt_rpc_t *rpc, d_rank_t *rank)
 {
@@ -1638,7 +1628,6 @@ crt_req_src_rank_get(crt_rpc_t *rpc, d_rank_t *rank)
 		D_ERROR("NULL rank passed\n");
 		D_GOTO(out, rc = -DER_INVAL);
 	}
-
 
 	rpc_priv = container_of(rpc, struct crt_rpc_priv, crp_pub);
 
@@ -1663,7 +1652,6 @@ crt_req_dst_rank_get(crt_rpc_t *rpc, d_rank_t *rank)
 		D_ERROR("NULL rank passed\n");
 		D_GOTO(out, rc = -DER_INVAL);
 	}
-
 
 	rpc_priv = container_of(rpc, struct crt_rpc_priv, crp_pub);
 
