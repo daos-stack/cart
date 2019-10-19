@@ -375,6 +375,81 @@ pipeline {
                         }
                     }
                 }
+                stage('Build RPM on Leap 15') {
+                    when {
+                        beforeAgent true
+                        allOf {
+                            not { branch 'weekly-testing' }
+                            expression { env.CHANGE_TARGET != 'weekly-testing' }
+                        }
+                    }
+                    agent {
+                        dockerfile {
+                            filename 'Dockerfile.leap.15'
+                            dir 'utils/rpms/packaging'
+                            label 'docker_runner'
+                            args '--privileged=true'
+                            additionalBuildArgs '--build-arg UID=$(id -u) ' +
+                                                '--build-arg JENKINS_URL=' +
+                                                env.JENKINS_URL +
+                                                " --build-arg CACHEBUST=${currentBuild.startTimeInMillis}"
+                        }
+                    }
+                    steps {
+                         githubNotify credentialsId: 'daos-jenkins-commit-status',
+                                      description: env.STAGE_NAME,
+                                      context: "build" + "/" + env.STAGE_NAME,
+                                      status: "PENDING"
+                        checkoutScm withSubmodules: true
+                        sh label: env.STAGE_NAME,
+                           script: '''rm -rf artifacts/leap15/
+                              mkdir -p artifacts/leap15/
+                              if git show -s --format=%B | grep "^Skip-build: true"; then
+                                  exit 0
+                              fi
+                              make -C utils/rpms chrootbuild'''
+                    }
+                    post {
+                        success {
+                            sh label: "Collect artifacts",
+                               script: '''mockbase=/var/tmp/build-root/home/abuild
+                                          mockroot=$mockbase/rpmbuild
+                                          artdir=$PWD/artifacts/leap15
+                                          (cd $mockroot &&
+                                           cp {RPMS/*,SRPMS}/* $artdir)
+                                          createrepo $artdir/'''
+                            publishToRepository product: 'cart',
+                                                format: 'yum',
+                                                maturity: 'stable',
+                                                tech: 'leap-15',
+                                                repo_dir: 'artifacts/leap15/'
+                            stepResult name: env.STAGE_NAME, context: "build",
+                                       result: "SUCCESS"
+                        }
+                        unsuccessful {
+                            sh label: "Collect artifacts",
+                                   script: """mockbase=/var/tmp/build-root/home/abuild
+                                      mockroot=$mockbase/rpmbuild
+                                      artdir=\$PWD/artifacts/leap15
+                                      (if cd \$mockroot/BUILD; then
+                                           if arts=\$(ls _topdir/BUILD/*/config${arch}.log); then
+                                               ln \$arts \$tdir/
+                                           fi
+                                       fi)"""
+                        }
+                        unstable {
+                            stepResult name: env.STAGE_NAME, context: "build",
+                                       result: "UNSTABLE"
+                        }
+                        failure {
+                            stepResult name: env.STAGE_NAME, context: "build",
+                                       result: "FAILURE"
+                        }
+                        cleanup {
+                            archiveArtifacts artifacts: 'artifacts/leap15/**'
+                        }
+                    }
+                }
                 stage('Build DEB on Ubuntu 18.04') {
                     when {
                         expression { false }
