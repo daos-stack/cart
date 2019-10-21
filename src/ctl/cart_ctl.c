@@ -51,7 +51,8 @@
 /* max number of ranks that can be queried at once */
 #define CRT_CTL_MAX		1024
 #define CRT_CTL_MAX_ARG_STR_LEN (1 << 16)
-#define TEST_CTX_MAX_NUM	(72)
+#undef  DO_ASSERT
+#define DO_ASSERT 1
 
 int crt_ctl_logfac;
 
@@ -120,8 +121,8 @@ struct ctl_g {
 	crt_group_t			*cg_target_group;
 	int				 cg_num_ranks;
 	d_rank_t			 cg_ranks[CRT_CTL_MAX];
-	crt_context_t			 cg_crt_ctx[TEST_CTX_MAX_NUM];
-	pthread_t			 cg_tid[TEST_CTX_MAX_NUM];
+	crt_context_t			 cg_crt_ctx;
+	pthread_t			 cg_tid;
 	int				 cg_complete;
 	int				 cg_save_cfg;
 	char				*cg_cfg_path;
@@ -505,17 +506,23 @@ ctl_init()
 	int		 rc = 0;
 
 	tc_cli_start_basic("crt_ctl", ctl_gdata.cg_group_name, &grp,
-			    &rank_list, &ctl_gdata.cg_crt_ctx[0],
-			    &ctl_gdata.cg_tid[0], 1, ctl_gdata.cg_save_cfg);
+			    &rank_list, &ctl_gdata.cg_crt_ctx,
+			    &ctl_gdata.cg_tid, 1, ctl_gdata.cg_save_cfg);
 
 	rc = sem_init(&ctl_gdata.cg_num_reply, 0, 0);
 	D_ASSERTF(rc == 0, "Could not initialize semaphore. rc %d\n", rc);
 
-	rc = tc_wait_for_ranks(ctl_gdata.cg_crt_ctx[0], grp, rank_list,
+	/* waiting to sync with the following parameters
+	 * 0 - tag 0
+	 * 1 - total ctx
+	 * 5 - ping timeout
+	 * 150 - total timeout
+	 */
+	rc = tc_wait_for_ranks(ctl_gdata.cg_crt_ctx, grp, rank_list,
 			       0, 1, 5, 150);
 	if (rc != 0) {
 		D_ERROR("wait_for_ranks() failed; rc=%d\n", rc);
-		assert(0);
+		D_GOTO(out, rc);
 	}
 
 	ctl_gdata.cg_target_group = grp;
@@ -526,10 +533,11 @@ ctl_init()
 		ep.ep_grp = grp;
 		ep.ep_rank = ctl_gdata.cg_ranks[i];
 		ep.ep_tag = 0;
-		rc = crt_req_create(ctl_gdata.cg_crt_ctx[0], &ep,
+		rc = crt_req_create(ctl_gdata.cg_crt_ctx, &ep,
 				    cmd2opcode(info.cmd), &rpc_req);
 		if (rc != 0) {
 			D_ERROR("crt_req_create() failed. rc %d.\n", rc);
+			D_GOTO(out, rc);
 		}
 
 		switch (info.cmd) {
@@ -554,12 +562,17 @@ ctl_init()
 			D_ERROR("crt_req_send() failed. rpc_req %p rank %d "
 				"tag %d rc %d.\n", rpc_req, ep.ep_rank,
 				 ep.ep_tag, rc);
+			D_GOTO(out, rc);
 		}
-		tc_sem_timedwait(&ctl_gdata.cg_num_reply, 61, __LINE__);
+
+		rc = tc_sem_timedwait(&ctl_gdata.cg_num_reply, 61, __LINE__);
+		if (rc != 0) {
+			D_ERROR("tc_sem_timedwait failed, rc = %d\n", rc);
+			D_GOTO(out, rc);
+		}
 	}
 
-	D_FREE(rank_list->rl_ranks);
-	D_FREE(rank_list);
+	d_rank_list_free(rank_list);
 
 	if (ctl_gdata.cg_save_cfg) {
 		rc = crt_group_detach(grp);
@@ -572,7 +585,7 @@ ctl_init()
 
 	g_shutdown = 1;
 
-	rc = pthread_join(ctl_gdata.cg_tid[0], NULL);
+	rc = pthread_join(ctl_gdata.cg_tid, NULL);
 	D_ASSERTF(rc == 0, "pthread_join failed. rc: %d\n", rc);
 
 	rc = sem_destroy(&ctl_gdata.cg_num_reply);
@@ -583,6 +596,7 @@ ctl_init()
 
 	d_log_fini();
 
+out:
 	return rc;
 }
 

@@ -399,8 +399,6 @@ progress_function(void *data)
 	return NULL;
 }
 
-#define NUM_ATTACH_RETRIES 10
-
 int main(int argc, char **argv)
 {
 	struct iv_key_struct	 iv_key;

@@ -45,6 +45,9 @@
 
 #include "crt_internal.h"
 
+#define NUM_ATTACH_RETRIES 20
+#define DO_ASSERT 0
+
 #define DBG_PRINT(x...)                                                 \
 	do {                                                            \
 		if (opts.is_server)                                     \
@@ -310,30 +313,44 @@ out:
 	return rc;
 }
 
-static inline void
+static inline int
 tc_sem_timedwait(sem_t *sem, int sec, int line_number)
 {
 	struct timespec	deadline;
 	int		rc;
 
 	rc = clock_gettime(CLOCK_REALTIME, &deadline);
-	D_ASSERTF(rc == 0, "clock_gettime() failed at line %d rc: %d\n",
-		  line_number, rc);
+	if (rc != 0) {
+		if (DO_ASSERT)
+			D_ASSERTF(rc == 0, "clock_gettime() failed at "
+				  "line %d rc: %d\n", line_number, rc);
+		D_ERROR("clock_gettime() failed, rc = %d\n", rc);
+		D_GOTO(out, rc);
+	}
 
 	deadline.tv_sec += sec;
 	rc = sem_timedwait(sem, &deadline);
-	D_ASSERTF(rc == 0, "sem_timedwait() failed at line %d rc: %d\n",
-		  line_number, rc);
+	if (rc != 0) {
+		if (DO_ASSERT)
+			D_ASSERTF(rc == 0, "sem_timedwait() failed at "
+				  "line %d rc: %d\n", line_number, rc);
+		D_ERROR("sem_timedwait() failed, rc = %d\n", rc);
+		D_GOTO(out, rc);
+	}
+
+out:
+	return rc;
 }
 
 void
 tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 		   crt_group_t **grp, d_rank_list_t **rank_list,
 		   crt_context_t *crt_ctx, pthread_t *progress_thread,
-		   unsigned int total_srv_ctx, int save_cfg)
+		   unsigned int total_srv_ctx, int use_cfg)
 {
 	char		*grp_cfg_file;
 	uint32_t	 grp_size;
+	int		 attach_retries = NUM_ATTACH_RETRIES;
 	int		 rc = 0;
 
 	rc = d_log_init();
@@ -349,14 +366,13 @@ tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 	rc = pthread_create(progress_thread, NULL, tc_progress_fn, crt_ctx);
 	D_ASSERTF(rc == 0, "pthread_create() failed; rc=%d\n", rc);
 
-	if (save_cfg) {
-		/* try until success to avoid intermittent failuresxi
-		 * under valgrind.
-		 */
-		do {
-			sleep(1);
+	if (use_cfg) {
+		while (attach_retries-- > 0) {
 			rc = crt_group_attach(srv_group_name, grp);
-		} while (rc != 0);
+			if (rc == 0)
+				break;
+			sleep(1);
+		}
 		D_ASSERTF(rc == 0, "crt_group_attach failed, rc: %d\n", rc);
 		D_ASSERTF(*grp != NULL, "NULL attached remote grp\n");
 	} else {

@@ -158,7 +158,6 @@ test_run(void)
 
 int main(int argc, char **argv)
 {
-	char		*env_self_rank;
 	d_rank_t	 my_rank = 0;
 	int		 rc;
 
@@ -166,11 +165,6 @@ int main(int argc, char **argv)
 	if (rc != 0) {
 		fprintf(stderr, "test_parse_args() failed, rc: %d.\n", rc);
 		return rc;
-	}
-
-	if (!test_g.t_save_cfg) {
-		env_self_rank = getenv("CRT_L_RANK");
-		my_rank = atoi(env_self_rank);
 	}
 
 	opts.self_rank = my_rank;
