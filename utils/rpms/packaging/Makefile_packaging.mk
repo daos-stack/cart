@@ -475,12 +475,6 @@ show_calling_makefile:
 show_git_metadata:
 	@echo $(GIT_SHA1):$(GIT_SHORT):$(GIT_NUM_COMMITS)
 
-show_distro:
-	@echo "ID_LIKE = $(ID_LIKE)"
-	@echo "DISTRO_ID = $(DISTRO_ID)"
-	@echo "VERSION_ID = $(VERSION_ID)"
-	@echo "DISTRO_BASE = $(DISTRO_BASE)"
-
 .PHONY: srpm rpms debs deb_detar ls chrootbuild rpmlint FORCE        \
         show_version show_release show_rpms show_source show_sources \
         show_targets check-env show_git_metadata
