@@ -230,19 +230,21 @@ client_cb_common(const struct crt_cb_info *cb_info)
 static void *progress_thread(void *arg)
 {
 	crt_context_t	ctx;
-	pthread_t	current_thread = pthread_self();
-	int		num_cores = sysconf(_SC_NPROCESSORS_ONLN);
-	cpu_set_t	cpuset;
+	//pthread_t	current_thread = pthread_self();
+	//int		num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+	//cpu_set_t	cpuset;
 	int		t_idx;
 	int		rc;
 
 	t_idx = *(int *)arg;
+	/*
 	CPU_ZERO(&cpuset);
 	CPU_SET(t_idx % num_cores, &cpuset);
 	pthread_setaffinity_np(current_thread, sizeof(cpu_set_t), &cpuset);
 
 	fprintf(stderr, "progress thread %d running on core %d...\n",
 		t_idx, sched_getcpu());
+	*/
 
 	ctx = (crt_context_t)test_g.t_crt_ctx[t_idx];
 	/* progress loop */

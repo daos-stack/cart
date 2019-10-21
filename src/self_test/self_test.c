@@ -90,6 +90,8 @@ static int g_shutdown_flag;
 
 static int is_singleton;
 
+static int is_nopmix;
+
 static void *progress_fn(void *arg)
 {
 	int		 ret;
@@ -118,6 +120,9 @@ static int self_test_init(char *dest_name, crt_context_t *crt_ctx,
 	uint32_t	init_flags = 0;
 	int		ret;
 
+	if (is_nopmix)
+		init_flags |= CRT_FLAG_BIT_PMIX_DISABLE |
+			      CRT_FLAG_BIT_LM_DISABLE;
 	if (is_singleton)
 		init_flags |= CRT_FLAG_BIT_SINGLETON;
 	if (listen)
@@ -1634,10 +1639,11 @@ int main(int argc, char *argv[])
 			{"Mbits", no_argument, 0, 'b'},
 			{"singleton", no_argument, 0, 't'},
 			{"path", required_argument, 0, 'p'},
+			{"nopmix", no_argument, 0, 'n'},
 			{0, 0, 0, 0}
 		};
 
-		c = getopt_long(argc, argv, "g:m:e:s:r:i:a:btp:",
+		c = getopt_long(argc, argv, "g:m:e:s:r:i:a:btnp:",
 				long_options, NULL);
 		if (c == -1)
 			break;
@@ -1694,6 +1700,9 @@ int main(int argc, char *argv[])
 		case 'p':
 			is_singleton = 1;
 			attach_info_path = optarg;
+			break;
+		case 'n':
+			is_nopmix = 1;
 			break;
 		case '?':
 		default:
