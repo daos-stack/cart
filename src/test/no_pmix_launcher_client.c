@@ -94,10 +94,8 @@ int main(int argc, char **argv)
 	d_rank_t		rank;
 	int			tag;
 
-	/* Set up for DBG_PRINT */
-	opts.self_rank = 0;
-	opts.mypid = getpid();
-	opts.is_server = 0;
+	/* rank, pid, is_server, num_attach_retries, do_assert */
+	tc_test_init(0, getpid(), 0, 20, 1);
 
 	rc = d_log_init();
 	assert(rc == 0);

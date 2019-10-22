@@ -129,9 +129,8 @@ int main(int argc, char **argv)
 	env_self_rank = getenv("CRT_L_RANK");
 	my_rank = atoi(env_self_rank);
 
-	opts.self_rank = my_rank;
-	opts.mypid = getpid();
-	opts.is_server = 1;
+        /* rank, pid, is_server, num_attach_retries, do_assert */
+        tc_test_init(my_rank, getpid(), 1, 20, 1);
 
 	test_run(my_rank);
 

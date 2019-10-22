@@ -158,7 +158,6 @@ test_run(void)
 
 int main(int argc, char **argv)
 {
-	d_rank_t	 my_rank = 0;
 	int		 rc;
 
 	rc = test_parse_args(argc, argv);
@@ -167,9 +166,8 @@ int main(int argc, char **argv)
 		return rc;
 	}
 
-	opts.self_rank = my_rank;
-	opts.mypid = getpid();
-	opts.is_server = 0;
+        /* rank, pid, is_server, num_attach_retries, do_assert */
+        tc_test_init(0, getpid(), 0, 20, 1);
 
 	test_run();
 

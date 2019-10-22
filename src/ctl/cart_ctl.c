@@ -51,8 +51,6 @@
 /* max number of ranks that can be queried at once */
 #define CRT_CTL_MAX		1024
 #define CRT_CTL_MAX_ARG_STR_LEN (1 << 16)
-#undef  DO_ASSERT
-#define DO_ASSERT 1
 
 int crt_ctl_logfac;
 
@@ -607,6 +605,9 @@ main(int argc, char **argv)
 
 	rc = parse_args(argc, argv);
 	D_ASSERTF(rc == 0, "parse_args() failed. rc %d\n", rc);
+
+	/* rank, pid, is_server, num_attach_retries, do_assert */
+	tc_test_init(0, getpid(), 0, 20, 0);
 
 	rc = ctl_init();
 	D_ASSERTF(rc == 0, "ctl_init() failed, rc %d\n", rc);

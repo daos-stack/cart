@@ -45,9 +45,6 @@
 
 #include "crt_internal.h"
 
-#define NUM_ATTACH_RETRIES 20
-#define DO_ASSERT 0
-
 #define DBG_PRINT(x...)                                                 \
 	do {                                                            \
 		if (opts.is_server)                                     \
@@ -65,11 +62,24 @@ struct test_options {
 	int	self_rank;
 	int	mypid;
 	int	is_server;
+	int	num_attach_retries;
+	int	do_assert;
 };
 
 struct test_options opts;
 
 int g_shutdown;
+
+void
+tc_test_init(int rank, int pid, int is_server, int num_attach_retries,
+	     int do_assert)
+{
+	opts.self_rank		= rank;
+	opts.mypid		= pid;
+	opts.is_server		= is_server;
+	opts.num_attach_retries	= num_attach_retries;
+	opts.do_assert		= do_assert;
+}
 
 static inline int
 tc_drain_queue(crt_context_t ctx)
@@ -321,7 +331,7 @@ tc_sem_timedwait(sem_t *sem, int sec, int line_number)
 
 	rc = clock_gettime(CLOCK_REALTIME, &deadline);
 	if (rc != 0) {
-		if (DO_ASSERT)
+		if (opts.do_assert)
 			D_ASSERTF(rc == 0, "clock_gettime() failed at "
 				  "line %d rc: %d\n", line_number, rc);
 		D_ERROR("clock_gettime() failed, rc = %d\n", rc);
@@ -331,7 +341,7 @@ tc_sem_timedwait(sem_t *sem, int sec, int line_number)
 	deadline.tv_sec += sec;
 	rc = sem_timedwait(sem, &deadline);
 	if (rc != 0) {
-		if (DO_ASSERT)
+		if (opts.do_assert)
 			D_ASSERTF(rc == 0, "sem_timedwait() failed at "
 				  "line %d rc: %d\n", line_number, rc);
 		D_ERROR("sem_timedwait() failed, rc = %d\n", rc);
@@ -350,7 +360,7 @@ tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 {
 	char		*grp_cfg_file;
 	uint32_t	 grp_size;
-	int		 attach_retries = NUM_ATTACH_RETRIES;
+	int		 attach_retries = opts.num_attach_retries;
 	int		 rc = 0;
 
 	rc = d_log_init();
