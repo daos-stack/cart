@@ -2,8 +2,7 @@
 
 Name:          cart
 Version:       1.0.0
-Release:       2%{?relval}%{?dist}
-
+Release:       3%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -137,6 +136,9 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %{carthome}/.build_vars-Linux.sh
 
 %changelog
+* Tue Oct 22 2019 Brian J. Murrell <brian.murrell@intel.com> - 1.0.0-3
+- Update packaging
+
 * Fri Oct 04 2019 Brian J. Murrell <brian.murrell@intel.com> - 1.0.0-2
 - Remove explicit library Requires
 - Add dependent libraries to -devel BR
