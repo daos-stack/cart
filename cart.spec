@@ -2,7 +2,7 @@
 
 Name:          cart
 Version:       1.5.0
-Release:       1%{?relval}%{?dist}
+Release:       2%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -122,6 +122,9 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %{carthome}/.build_vars-Linux.sh
 
 %changelog
+* Tue Oct 22 2019 Alexander Oganezov <alexander.a.oganezov@intel.com>
+- Libcart version 1.5.0-2
+
 * Thu Oct 17 2019 Alexander Oganezov <alexander.a.oganezov@intel.com>
 - Libcart version 1.5.0
 
