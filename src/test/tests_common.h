@@ -59,26 +59,28 @@
 	} while (0)
 
 struct test_options {
-	int	self_rank;
-	int	mypid;
-	int	is_server;
-	int	num_attach_retries;
-	int	do_assert;
+	bool		is_initialized;
+	d_rank_t	self_rank;
+	int		mypid;
+	int		num_attach_retries;
+	bool		is_server;
+	bool		assert_on_error;
 };
 
-struct test_options opts;
+static struct test_options opts = { .is_initialized = false };
 
 int g_shutdown;
 
 void
-tc_test_init(int rank, int pid, int is_server, int num_attach_retries,
-	     int do_assert)
+tc_test_init(d_rank_t rank, int num_attach_retries, bool is_server,
+	     bool assert_on_error)
 {
+	opts.is_initialized	= true;
 	opts.self_rank		= rank;
-	opts.mypid		= pid;
+	opts.mypid		= getpid();
 	opts.is_server		= is_server;
 	opts.num_attach_retries	= num_attach_retries;
-	opts.do_assert		= do_assert;
+	opts.assert_on_error		= assert_on_error;
 }
 
 static inline int
@@ -107,6 +109,8 @@ void *
 tc_progress_fn(void *data)
 {
 	int rc;
+
+	D_ASSERTF(opts.is_initialized == true, "tc_test_init not called.\n");
 
 	crt_context_t *p_ctx = (crt_context_t *)data;
 
@@ -190,6 +194,8 @@ tc_wait_for_ranks(crt_context_t ctx, crt_group_t *grp, d_rank_list_t *rank_list,
 	double				time_s = 0;
 	int				i = 0;
 	int				rc = 0;
+
+	D_ASSERTF(opts.is_initialized == true, "tc_test_init not called.\n");
 
 	/* This is needed until hg cancel is fully working.
 	 * RPCs in wait_for_ranks are expected to fail
@@ -288,6 +294,8 @@ tc_load_group_from_file(const char *grp_cfg_file,
 	char		parsed_addr[255];
 	int		rc = 0;
 
+	D_ASSERTF(opts.is_initialized == true, "tc_test_init not called.\n");
+
 	f = fopen(grp_cfg_file, "r");
 	if (!f) {
 		D_ERROR("Failed to open %s for reading\n", grp_cfg_file);
@@ -331,7 +339,7 @@ tc_sem_timedwait(sem_t *sem, int sec, int line_number)
 
 	rc = clock_gettime(CLOCK_REALTIME, &deadline);
 	if (rc != 0) {
-		if (opts.do_assert)
+		if (opts.assert_on_error)
 			D_ASSERTF(rc == 0, "clock_gettime() failed at "
 				  "line %d rc: %d\n", line_number, rc);
 		D_ERROR("clock_gettime() failed, rc = %d\n", rc);
@@ -341,7 +349,7 @@ tc_sem_timedwait(sem_t *sem, int sec, int line_number)
 	deadline.tv_sec += sec;
 	rc = sem_timedwait(sem, &deadline);
 	if (rc != 0) {
-		if (opts.do_assert)
+		if (opts.assert_on_error)
 			D_ASSERTF(rc == 0, "sem_timedwait() failed at "
 				  "line %d rc: %d\n", line_number, rc);
 		D_ERROR("sem_timedwait() failed, rc = %d\n", rc);
@@ -362,6 +370,8 @@ tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 	uint32_t	 grp_size;
 	int		 attach_retries = opts.num_attach_retries;
 	int		 rc = 0;
+
+	D_ASSERTF(opts.is_initialized == true, "tc_test_init not called.\n");
 
 	rc = d_log_init();
 	D_ASSERTF(rc == 0, "d_log_init failed, rc=%d\n", rc);
@@ -434,6 +444,8 @@ tc_srv_start_basic(char *srv_group_name, crt_context_t *crt_ctx,
 	char		*my_uri;
 	d_rank_t	 my_rank;
 	int		 rc = 0;
+
+	D_ASSERTF(opts.is_initialized == true, "tc_test_init not called.\n");
 
 	env_self_rank = getenv("CRT_L_RANK");
 	my_rank = atoi(env_self_rank);

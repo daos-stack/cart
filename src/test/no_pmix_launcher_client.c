@@ -96,8 +96,8 @@ int main(int argc, char **argv)
 	d_iov_t			iov;
 	int			tag;
 
-	/* rank, pid, is_server, num_attach_retries, do_assert */
-	tc_test_init(0, getpid(), 0, 20, 1);
+	/* rank, num_attach_retries, is_server, assert_on_error */
+	tc_test_init(0, 20, false, true);
 
 	rc = d_log_init();
 	assert(rc == 0);

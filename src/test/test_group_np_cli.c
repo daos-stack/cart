@@ -166,8 +166,8 @@ int main(int argc, char **argv)
 		return rc;
 	}
 
-	/* rank, pid, is_server, num_attach_retries, do_assert */
-	tc_test_init(0, getpid(), 0, 20, 1);
+	/* rank, num_attach_retries, is_server, assert_on_error */
+	tc_test_init(0, 20, false, true);
 
 	test_run();
 

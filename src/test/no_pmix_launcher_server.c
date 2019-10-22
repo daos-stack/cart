@@ -80,8 +80,8 @@ int main(int argc, char **argv)
 	env_self_rank = getenv("CRT_L_RANK");
 	my_rank = atoi(env_self_rank);
 
-	/* rank, pid, is_server, num_attach_retries, do_assert */
-	tc_test_init(my_rank, getpid(), 1, 20, 1);
+	/* rank, num_attach_retries, is_server, assert_on_error */
+	tc_test_init(my_rank, 20, true, true);
 
 	rc = d_log_init();
 	assert(rc == 0);
