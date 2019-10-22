@@ -67,6 +67,7 @@ test_run(d_rank_t my_rank)
 	test_g.t_fault_attr_5000 = d_fault_attr_lookup(5000);
 
 	if (test_g.t_save_cfg && my_rank == 0) {
+		printf("cfg-path = %s\n", test_g.t_cfg_path);
 		rc = crt_group_config_path_set(test_g.t_cfg_path);
 		D_ASSERTF(rc == 0, "crt_group_config_path_set failed %d\n", rc);
 

@@ -44,7 +44,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "crt_internal.h"
+#include "tests_common.h"
 #include "gurt/errno.h"
 
 #define CRT_SELF_TEST_AUTO_BULK_THRESH		(1 << 20)
@@ -116,9 +116,11 @@ static int self_test_init(char *dest_name, crt_context_t *crt_ctx,
 			  crt_group_t **srv_grp, pthread_t *tid,
 			  char *attach_info_path, bool listen)
 {
-	d_rank_t	myrank;
-	uint32_t	init_flags = 0;
-	int		ret;
+	d_rank_t	 myrank;
+	uint32_t	 init_flags = 0;
+	uint32_t	 grp_size;
+	d_rank_list_t	*rank_list = NULL;
+	int		 ret;
 
 	if (is_nopmix)
 		init_flags |= CRT_FLAG_BIT_PMIX_DISABLE |
@@ -136,7 +138,7 @@ static int self_test_init(char *dest_name, crt_context_t *crt_ctx,
 	if (attach_info_path) {
 		ret = crt_group_config_path_set(attach_info_path);
 		D_ASSERTF(ret == 0,
-			  "crt_group_config_path_set failed, rc = %d\n", ret);
+			  "crt_group_config_path_set failed, ret = %d\n", ret);
 	}
 
 	ret = crt_context_create(crt_ctx);
@@ -145,6 +147,7 @@ static int self_test_init(char *dest_name, crt_context_t *crt_ctx,
 		return ret;
 	}
 
+	sleep(1);
 	ret = crt_group_attach(dest_name, srv_grp);
 	if (ret != 0) {
 		D_ERROR("crt_group_attach failed; ret = %d\n", ret);
@@ -167,6 +170,29 @@ static int self_test_init(char *dest_name, crt_context_t *crt_ctx,
 			strerror(errno));
 		return -DER_MISC;
 	}
+
+        ret = crt_group_size(*srv_grp, &grp_size);
+        D_ASSERTF(ret == 0, "crt_group_size() failed; rc=%d\n", ret);
+
+        ret = crt_group_ranks_get(*srv_grp, &rank_list);
+        D_ASSERTF(ret == 0, "crt_group_ranks_get() failed; rc=%d\n", ret);
+
+        if (!rank_list) {
+                D_ERROR("Rank list is NULL\n");
+                assert(0);
+        }
+
+        if (rank_list->rl_nr != grp_size) {
+                D_ERROR("rank_list differs in size. expected %d got %d\n",
+                         grp_size, rank_list->rl_nr);
+                assert(0);
+        }
+
+        ret = crt_group_psr_set(*srv_grp, rank_list->rl_ranks[0]);
+        D_ASSERTF(ret == 0, "crt_group_psr_set() failed; rc=%d\n", ret);
+
+        //ret = tc_wait_for_ranks(*crt_ctx, *srv_grp, rank_list, 0, 1, 5, 150);
+        //D_ASSERTF(ret == 0, "wait_for_ranks() failed; ret=%d\n", ret);
 
 	return 0;
 }
@@ -747,12 +773,14 @@ static int run_self_test(struct st_size_params all_params[],
 	uint32_t		  num_ms_endpts = 0;
 
 	struct st_latency	**latencies = NULL;
-	d_iov_t		 *latencies_iov = NULL;
+	d_iov_t			 *latencies_iov = NULL;
 	d_sg_list_t		 *latencies_sg_list = NULL;
 	crt_bulk_t		 *latencies_bulk_hdl = CRT_BULK_NULL;
 	bool			  listen = false;
 
 	crt_endpoint_t		  self_endpt;
+	//d_rank_list_t   	 *rank_list = NULL;
+	//uint32_t		  grp_size;
 
 	/* Sanity checks that would indicate bugs */
 	D_ASSERT(endpts != NULL && num_endpts > 0);
@@ -769,6 +797,22 @@ static int run_self_test(struct st_size_params all_params[],
 		D_ERROR("self_test_init failed; ret = %d\n", ret);
 		D_GOTO(cleanup_nothread, ret);
 	}
+
+	/*
+	if (is_nopmix) {
+		ret = crt_group_size(srv_grp, &grp_size);
+		D_ASSERTF(ret == 0, "crt_group_size() failed; ret=%d\n", ret);
+
+		ret = crt_group_ranks_get(srv_grp, &rank_list);
+		D_ERROR("crt_group_ranks_get() failed; ret=%d\n", ret);
+		D_GOTO(cleanup_nothread, ret);
+
+        	ret = tc_wait_for_ranks(crt_ctx, srv_grp, rank_list,
+					0, 1, 5, 150);
+        	D_ERROR("wait_for_ranks() failed; ret=%d\n", ret);
+		D_GOTO(cleanup_nothread, ret);
+	}
+	*/
 
 	/* Get the group/rank/tag for this application (self_endpt) */
 	ret = crt_group_rank(NULL, &self_endpt.ep_rank);
