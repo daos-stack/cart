@@ -1,7 +1,7 @@
 %define carthome %{_exec_prefix}/lib/%{name}
 
 Name:          cart
-Version:       1.4.0
+Version:       1.5.0
 Release:       1%{?relval}%{?dist}
 Summary:       CaRT
 
@@ -14,7 +14,7 @@ BuildRequires: scons
 BuildRequires: libfabric-devel
 BuildRequires: pmix-devel
 BuildRequires: openpa-devel
-BuildRequires: mercury-devel
+BuildRequires: mercury-devel >= 1.0.1-16
 BuildRequires: ompi-devel
 BuildRequires: libevent-devel
 BuildRequires: boost-devel
@@ -26,7 +26,7 @@ BuildRequires: libyaml-devel
 Requires: libfabric
 Requires: pmix
 Requires: openpa
-Requires: mercury
+Requires: mercury >= 1.0.1-16
 Requires: ompi
 Requires: libevent
 %if (0%{?rhel} >= 7)
@@ -122,6 +122,12 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %{carthome}/.build_vars-Linux.sh
 
 %changelog
+* Thu Oct 17 2019 Alexander Oganezov <alexander.a.oganezov@intel.com>
+- Libcart version 1.5.0
+
+* Wed Oct 16 2019 Alexander Oganezov <alexander.a.oganezov@intel.com>
+- Libcart version 1.4.0-2
+
 * Mon Oct 07 2019 Ryon Jensen  <ryon.jensen@intel.com>
 - Libcart version 1.4.0
 

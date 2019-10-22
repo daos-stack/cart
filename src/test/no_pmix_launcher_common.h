@@ -42,6 +42,11 @@
 #define MY_VER  0
 
 #define NUM_SERVER_CTX 8
+#define TEST_IOV_SIZE_IN 4096
+
+/* TODO: Revert back to 4096 when CART-789 is fixed */
+#define TEST_IOV_SIZE_OUT 2096
+
 
 #define RPC_DECLARE(name)						\
 	CRT_RPC_DECLARE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)		\
@@ -55,10 +60,12 @@ enum {
 
 
 #define CRT_ISEQ_RPC_PING	/* input fields */		 \
-	((uint64_t)		(tag)			CRT_VAR)
+	((uint64_t)		(tag)			CRT_VAR) \
+	((d_iov_t)		(test_data)		CRT_VAR)
 
 #define CRT_OSEQ_RPC_PING	/* output fields */		 \
-	((uint64_t)		(field)			CRT_VAR)
+	((uint64_t)		(field)			CRT_VAR) \
+	((d_iov_t)		(test_data)		CRT_VAR)
 
 #define CRT_ISEQ_RPC_SET_GRP_INFO /* input fields */		 \
 	((d_iov_t)		(grp_info)		CRT_VAR)
@@ -110,20 +117,50 @@ struct crt_proto_format my_proto_fmt = {
 int handler_ping(crt_rpc_t *rpc)
 {
 	struct RPC_PING_in	*input;
+	struct RPC_PING_out	*output;
+	d_iov_t			iov;
 	int			my_tag;
+	d_rank_t		hdr_dst_rank;
+	uint32_t		hdr_dst_tag;
+	d_rank_t		hdr_src_rank;
+	int			rc;
 
 	input = crt_req_get(rpc);
+	output = crt_reply_get(rpc);
+
+	rc = crt_req_src_rank_get(rpc, &hdr_src_rank);
+	D_ASSERTF(rc == 0, "crt_req_src_rank_get() failed; rc=%d\n", rc);
+
+	rc = crt_req_dst_rank_get(rpc, &hdr_dst_rank);
+	D_ASSERTF(rc == 0, "crt_req_dst_rank_get() failed; rc=%d\n", rc);
+
+	rc = crt_req_dst_tag_get(rpc, &hdr_dst_tag);
+	D_ASSERTF(rc == 0, "crt_req_dst_tag_get() failed; rc=%d\n", rc);
 
 	crt_context_idx(rpc->cr_ctx, &my_tag);
 
-	DBG_PRINT("Ping handler called on tag: %d\n", my_tag);
-	if (my_tag != input->tag) {
-		D_ERROR("Request was sent to wrong tag. Expected %lu got %d\n",
-			input->tag, my_tag);
+	if (my_tag != input->tag || my_tag != hdr_dst_tag) {
+		D_ERROR("Incorrect tag Expected %lu got %d (hdr=%d)\n",
+			input->tag, my_tag, hdr_dst_tag);
 		assert(0);
 	}
 
+	if (hdr_src_rank != CRT_NO_RANK) {
+		D_ERROR("Expected %d got %d\n", CRT_NO_RANK, hdr_src_rank);
+		assert(0);
+	}
+
+	D_ALLOC(iov.iov_buf, TEST_IOV_SIZE_OUT);
+	memset(iov.iov_buf, 'b', TEST_IOV_SIZE_OUT);
+	D_ASSERTF(iov.iov_buf != NULL, "Failed to allocate iov buf\n");
+
+	iov.iov_buf_len = TEST_IOV_SIZE_OUT;
+	iov.iov_len = TEST_IOV_SIZE_OUT;
+
+	output->test_data = iov;
 	crt_reply_send(rpc);
+
+	D_FREE(iov.iov_buf);
 	return 0;
 }
 
