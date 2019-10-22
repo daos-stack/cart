@@ -50,7 +50,6 @@
 #include <mercury_proc_string.h>
 #include <mercury_log.h>
 #include <na.h>
-#include <na_error.h>
 
 /** the shared HG RPC ID used for all CRT opc */
 #define CRT_HG_RPCID		(0xDA036868)
