@@ -43,7 +43,7 @@
 
 #define NUM_SERVER_CTX 8
 #define TEST_IOV_SIZE_IN 4096
-#define TEST_IOV_SIZE_OUT 4096
+#define TEST_IOV_SIZE_OUT 8096
 
 #define RPC_DECLARE(name)						\
 	CRT_RPC_DECLARE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)		\
