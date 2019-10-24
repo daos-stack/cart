@@ -200,9 +200,11 @@ pipeline {
                     post {
                         success {
                             sh label: "Collect artifacts",
-                               script: '''(cd /var/lib/mock/epel-7-x86_64/result/ &&
+                               script: '''mockroot=/var/lib/mock/epel-7-x86_64
+                                          (cd $mockroot/result/ &&
                                            cp -r . $OLDPWD/artifacts/centos7/)
-                                          createrepo artifacts/centos7/'''
+                                          createrepo artifacts/centos7/
+                                          cat $mockroot/result/{root,build}.log'''
                             publishToRepository product: 'cart',
                                                 format: 'yum',
                                                 maturity: 'stable',
@@ -222,7 +224,6 @@ pipeline {
                         unsuccessful {
                             sh label: "Collect artifacts",
                                script: '''mockroot=/var/lib/mock/epel-7-x86_64
-                                          cat $mockroot/result/{root,build}.log
                                           artdir=$PWD/artifacts/centos7
                                           if srpms=$(ls _topdir/SRPMS/*); then
                                               cp -af $srpms $artdir
@@ -276,9 +277,11 @@ pipeline {
                     post {
                         success {
                             sh label: "Collect artifacts",
-                               script: '''(cd /var/lib/mock/suse-12.3-x86_64/result/ &&
+                               script: '''mockroot=/var/lib/mock/suse-12.3-x86_64
+                                          (cd $mockroot/result/ &&
                                            cp -r . $OLDPWD/artifacts/sles12.3/)
-                                          createrepo artifacts/sles12.3/'''
+                                          createrepo artifacts/sles12.3/
+                                          cat $mockroot/result/{root,build}.log'''
                             publishToRepository product: 'cart',
                                                 format: 'yum',
                                                 maturity: 'stable',
@@ -351,9 +354,11 @@ pipeline {
                     post {
                         success {
                             sh label: "Collect artifacts",
-                               script: '''(cd /var/lib/mock/opensuse-leap-42.3-x86_64/result/ &&
+                               script: '''mockroot=/var/lib/mock/opensuse-leap-42.3-x86_64
+                                          (cd $mockroot/result/ &&
                                            cp -r . $OLDPWD/artifacts/leap42.3/)
-                                          createrepo artifacts/leap42.3/'''
+                                          createrepo artifacts/leap42.3/
+                                          cat $mockroot/result/{root,build}.log'''
                             publishToRepository product: 'cart',
                                                 format: 'yum',
                                                 maturity: 'stable',
