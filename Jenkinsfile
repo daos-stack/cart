@@ -394,7 +394,6 @@ pipeline {
                     when {
                         beforeAgent true
                         allOf {
-                            expression { false }
                             not { branch 'weekly-testing' }
                             expression { env.CHANGE_TARGET != 'weekly-testing' }
                         }
