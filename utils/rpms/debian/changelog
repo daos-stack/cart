@@ -2,7 +2,7 @@ cart (1.6.0-2) unstable; urgency=medium
   [ Brian J. Murrell ]
   * NOOP (RPM build updates)
 
- -- Brian J. Murrell <brian.murrell@intel.com>  Mon, 21 Oct 2019 10:28:27 -0400
+ -- Brian J. Murrell <brian.murrell@intel.com>  Thu, 24 Oct 2019 10:28:27 -0400
 
 cart (1.6.0-1) unstable; urgency=medium
 

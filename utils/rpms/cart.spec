@@ -136,7 +136,7 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %{carthome}/.build_vars-Linux.sh
 
 %changelog
-* Mon Oct 21 2019 Brian J. Murrell <brian.murrell@intel.com> - 1.6.0-2
+* Thu Oct 24 2019 Brian J. Murrell <brian.murrell@intel.com> - 1.6.0-2
 - Add BRs to prefer packages that have choices
 - Add BR for scons >= 2.4 and gcc-c++
 - Add some dirs to %files so they are owned by a package
