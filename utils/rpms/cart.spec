@@ -1,7 +1,7 @@
 %define carthome %{_exec_prefix}/lib/%{name}
 
 Name:          cart
-Version:       1.5.0
+Version:       1.6.0
 Release:       2%{?relval}%{?dist}
 Summary:       CaRT
 
@@ -14,7 +14,7 @@ BuildRequires: scons >= 2.4
 BuildRequires: libfabric-devel
 BuildRequires: pmix-devel
 BuildRequires: openpa-devel
-BuildRequires: mercury-devel >= 1.0.1-16
+BuildRequires: mercury-devel >= 1.0.1-19
 BuildRequires: ompi-devel
 BuildRequires: libevent-devel
 BuildRequires: boost-devel
@@ -136,11 +136,14 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %{carthome}/.build_vars-Linux.sh
 
 %changelog
-* Mon Oct 21 2019 Brian J. Murrell <brian.murrell@intel.com> - 1.5.0-2
+* Mon Oct 21 2019 Brian J. Murrell <brian.murrell@intel.com> - 1.6.0-2
 - Add BRs to prefer packages that have choices
 - Add BR for scons >= 2.4 and gcc-c++
 - Add some dirs to %files so they are owned by a package
 - Don't unpack the cart tarball twice
+
+* Wed Oct 23 2019 Alexander Oganezov <alexander.a.oganezov@intel.com>
+- Libcart version 1.6.0
 
 * Thu Oct 17 2019 Alexander Oganezov <alexander.a.oganezov@intel.com>
 - Libcart version 1.5.0
