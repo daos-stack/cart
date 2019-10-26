@@ -196,7 +196,7 @@ static int self_test_init(char *dest_name, crt_context_t *crt_ctx,
 			D_ERROR("rank_list differs in size. expected "
 				"%d got %d\n", grp_size, rank_list->rl_nr);
 			assert(0);
-		} 
+		}
 
 		ret = crt_group_psr_set(*srv_grp, rank_list->rl_ranks[0]);
 		D_ASSERTF(ret == 0, "crt_group_psr_set() failed; rc=%d\n", ret);
