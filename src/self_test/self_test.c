@@ -116,7 +116,6 @@ static int self_test_init(char *dest_name, crt_context_t *crt_ctx,
 			  crt_group_t **srv_grp, pthread_t *tid,
 			  char *attach_info_path, bool listen)
 {
-	d_rank_t	 myrank;
 	uint32_t	 init_flags = 0;
 	uint32_t	 grp_size;
 	d_rank_list_t	*rank_list = NULL;
@@ -124,7 +123,7 @@ static int self_test_init(char *dest_name, crt_context_t *crt_ctx,
 	int		 ret;
 
 	/* rank, num_attach_retries, is_server, assert_on_error */
-	tc_test_init(0, 20, false, false);
+	tc_test_init(0, attach_retries, false, false);
 
 	if (is_nopmix)
 		init_flags |= CRT_FLAG_BIT_PMIX_DISABLE |
@@ -164,12 +163,6 @@ static int self_test_init(char *dest_name, crt_context_t *crt_ctx,
 	D_ASSERTF(*srv_grp != NULL,
 		  "crt_group_attach succeeded but returned group is NULL\n");
 
-	ret = crt_group_rank(NULL, &myrank);
-	if (ret != 0) {
-		D_ERROR("crt_group_rank failed; ret = %d\n", ret);
-		return ret;
-	}
-
 	g_shutdown_flag = 0;
 
 	ret = pthread_create(tid, NULL, progress_fn, crt_ctx);
@@ -187,16 +180,11 @@ static int self_test_init(char *dest_name, crt_context_t *crt_ctx,
 		D_ASSERTF(ret == 0,
 			  "crt_group_ranks_get() failed; rc=%d\n", ret);
 
-		if (!rank_list) {
-			D_ERROR("Rank list is NULL\n");
-			assert(0);
-		}
+		D_ASSERTF(rank_list != NULL, "Rank list is NULL\n");
 
-		if (rank_list->rl_nr != grp_size) {
-			D_ERROR("rank_list differs in size. expected "
-				"%d got %d\n", grp_size, rank_list->rl_nr);
-			assert(0);
-		}
+		D_ASSERTF(rank_list->rl_nr == grp_size,
+			  "rank_list differs in size. expected " "%d got %d\n",
+			  grp_size, rank_list->rl_nr);
 
 		ret = crt_group_psr_set(*srv_grp, rank_list->rl_ranks[0]);
 		D_ASSERTF(ret == 0, "crt_group_psr_set() failed; rc=%d\n", ret);
