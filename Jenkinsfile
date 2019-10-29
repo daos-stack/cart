@@ -1409,7 +1409,7 @@ pipeline {
                     }
                     steps {
                         timeout (time: 30, unit: 'MINUTES') {
-                            provisionNodeS nodELIST: env.NODELIST,
+                            provisionNodes nodELIST: env.NODELIST,
                                            node_count: 5,
                                            snapshot: true,
                                            inst_repos: component_repos,
