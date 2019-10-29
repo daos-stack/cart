@@ -1408,17 +1408,19 @@ pipeline {
                         label 'ci_vm5'
                     }
                     steps {
-                        provisionNodes NODELIST: env.NODELIST,
-                                       node_count: 5,
-                                       snapshot: true,
-                                       inst_repos: component_repos,
-                                       inst_rpms: cart_rpms
-                        runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
-                                           export CART_TEST_MODE=none
-                                           bash -x ./multi-node-test.sh 5 ''' +
-                                           env.NODELIST + ''' five_node''',
-                                junit_files: "install/Linux/TESTING/avocado/job-results/CART_5node/*/*.xml"
+                        timeout (time: 30, unit: 'MINUTES') {
+                            provisionNodeS nodELIST: env.NODELIST,
+                                           node_count: 5,
+                                           snapshot: true,
+                                           inst_repos: component_repos,
+                                           inst_rpms: cart_rpms
+                            runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
+                                    script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
+                                               export CART_TEST_MODE=none
+                                               bash -x ./multi-node-test.sh 5 ''' +
+                                               env.NODELIST + ''' five_node''',
+                                    junit_files: "install/Linux/TESTING/avocado/job-results/CART_5node/*/*.xml"
+                       }
                     }
                     post {
                         always {
