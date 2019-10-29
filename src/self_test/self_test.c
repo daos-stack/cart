@@ -183,7 +183,7 @@ static int self_test_init(char *dest_name, crt_context_t *crt_ctx,
 		D_ASSERTF(rank_list != NULL, "Rank list is NULL\n");
 
 		D_ASSERTF(rank_list->rl_nr == grp_size,
-			  "rank_list differs in size. expected " "%d got %d\n",
+			  "rank_list differs in size. expected %d got %d\n",
 			  grp_size, rank_list->rl_nr);
 
 		ret = crt_group_psr_set(*srv_grp, rank_list->rl_ranks[0]);
