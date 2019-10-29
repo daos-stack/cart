@@ -1408,7 +1408,7 @@ pipeline {
                         label 'ci_vm5'
                     }
                     steps {
-                        provisionNodes nodELIST: env.NODELIST,
+                        provisionNodes NODELIST: env.NODELIST,
                                        node_count: 5,
                                        snapshot: true,
                                        inst_repos: component_repos,
