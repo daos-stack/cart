@@ -1408,12 +1408,12 @@ pipeline {
                         label 'ci_vm5'
                     }
                     steps {
+                        provisionNodes nodELIST: env.NODELIST,
+                                       node_count: 5,
+                                       snapshot: true,
+                                       inst_repos: component_repos,
+                                       inst_rpms: cart_rpms
                         timeout (time: 30, unit: 'MINUTES') {
-                            provisionNodes nodELIST: env.NODELIST,
-                                           node_count: 5,
-                                           snapshot: true,
-                                           inst_repos: component_repos,
-                                           inst_rpms: cart_rpms
                             runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
                                     script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
                                                export CART_TEST_MODE=none
