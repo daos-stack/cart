@@ -1413,14 +1413,12 @@ pipeline {
                                        snapshot: true,
                                        inst_repos: component_repos,
                                        inst_rpms: cart_rpms
-                        timeout (time: 30, unit: 'MINUTES') {
-                            runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
-                                    script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
-                                               export CART_TEST_MODE=none
-                                               bash -x ./multi-node-test.sh 5 ''' +
-                                               env.NODELIST + ''' five_node''',
-                                    junit_files: "install/Linux/TESTING/avocado/job-results/CART_5node/*/*.xml"
-                       }
+                        runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
+                                script: '''export PDSH_SSH_ARGS_APPEND="-i ci_key"
+                                           export CART_TEST_MODE=none
+                                           bash -x ./multi-node-test.sh 5 ''' +
+                                           env.NODELIST + ''' five_node''',
+                                junit_files: "install/Linux/TESTING/avocado/job-results/CART_5node/*/*.xml"
                     }
                     post {
                         always {
