@@ -138,6 +138,7 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %changelog
 * Wed Oct 30 2019 Alexander Oganezov <alexander.a.oganezov@intel.com> - 2.0.0-1
 - Libcart version 2.0.0-1
+- crt_group_primary_modify, crt_group_secondary_modify APIs changed
 
 * Thu Oct 24 2019 Brian J. Murrell <brian.murrell@intel.com> - 1.6.0-2
 - Add BRs to prefer packages that have choices
