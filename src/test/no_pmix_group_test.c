@@ -800,7 +800,8 @@ int main(int argc, char **argv)
 
 	DBG_PRINT("secondary group: Add\n");
 	rc = crt_group_secondary_modify(sec_grp1, mod_sec_ranks,
-					mod_prim_ranks, CRT_GROUP_MOD_OP_ADD, 0x0);
+					mod_prim_ranks, CRT_GROUP_MOD_OP_ADD,
+					0X0);
 	if (rc != 0) {
 		D_ERROR("crt_group_secondary_modify() failed; rc=%d\n", rc);
 		assert(0);
