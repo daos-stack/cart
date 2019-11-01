@@ -94,7 +94,7 @@ def scons():
                                        'pmix', 'boost'])
 
     if not env.GetOption('clean'):
-        run_checks(env)
+       run_checks(env)
 
     opts.Save(opts_file, env)
 
