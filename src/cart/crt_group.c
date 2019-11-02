@@ -4990,8 +4990,9 @@ crt_group_primary_modify(crt_group_t *grp, crt_context_t *ctxs, int num_ctxs,
 	d_rank_list_free(to_add);
 	d_rank_list_free(to_remove);
 	D_FREE(uri_idx);
-unlock:
+
 	grp_priv->gp_membs_ver = version;
+unlock:
 	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
 
 out:
@@ -5096,8 +5097,9 @@ crt_group_secondary_modify(crt_group_t *grp, d_rank_list_t *sec_ranks,
 	d_rank_list_free(to_add);
 	d_rank_list_free(to_remove);
 	D_FREE(prim_idx);
-unlock:
+
 	grp_priv->gp_membs_ver = version;
+unlock:
 	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
 
 out:
