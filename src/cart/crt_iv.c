@@ -1920,10 +1920,14 @@ handle_ivsync_response(const struct crt_cb_info *cb_info)
 		iv_ops->ivo_on_put(iv_sync->isc_ivns_internal, NULL,
 					iv_sync->isc_user_priv);
 		D_FREE(iv_sync->isc_iv_key.iov_buf);
-	}
 
-	if (iv_sync->isc_ivns_internal != NULL)
+		/* If isc_do_callback is false decref is done in
+		 * crt_ivsync_rpc_issue()
+		 */
 		IVNS_DECREF(iv_sync->isc_ivns_internal);
+	} else {
+		D_ASSERT(iv_sync->isc_ivns_internal == NULL);
+	}
 
 	D_FREE(iv_sync);
 }
