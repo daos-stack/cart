@@ -2856,6 +2856,7 @@ crt_iv_update_internal(crt_iv_namespace_t ivns, uint32_t class_id,
 
 		if (rc != 0) {
 			D_ERROR("crt_ivu_rpc_issue() failed; rc=%d\n", rc);
+			IVNS_DECREF(cb_info->uci_ivns_internal);
 			D_FREE_PTR(cb_info);
 			D_GOTO(put, rc);
 		}
