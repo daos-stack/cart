@@ -1752,9 +1752,9 @@ int main(int argc, char *argv[])
 	/******************** Parse message sizes argument ********************/
 
 	/* Assert if rep_count < num_endpts */
-	D_ASSERTF(rep_count >= num_endpts, "rep_count (%d) must be >= num_endpts"
-		  " (%d). Please refer to usage of --repetitions-per-size"
-		  " in help\n", rep_count, num_endpts);
+	D_ASSERTF(rep_count >= num_endpts, "rep_count (%d) must be >= "
+		  "num_endpts (%d). Please refer to usage of "
+		  "--repetitions-per-size in help\n", rep_count, num_endpts);
 
 	/*
 	 * Count the number of tuple tokens (',') in the user-specified string
