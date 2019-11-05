@@ -493,7 +493,7 @@ static void print_results(struct st_latency *latencies,
 		printf("\t\t%u:%u - ", rank, tag);
 
 		/* At least some messages to this endpoint succeeded */
-		if (start_idx + num_failed < last_idx)
+		if (start_idx + num_failed <= last_idx)
 			printf("%ld", latencies[median_idx].val / 1000);
 
 		printf("\n");
@@ -1136,8 +1136,12 @@ static void print_usage(const char *prog_name, const char *msg_sizes_str,
 	       "\n"
 	       "  --repetitions-per-size <N>\n"
 	       "      Short version: -r\n"
-	       "      Number of samples per message size. RPCs for each particular size\n"
-	       "      will be repeated this many times.\n"
+	       "      Number of samples per message size per master endpt. \n"
+	       "      RPCs for each particular size will be repeated this many times. \n"
+	       "      Please note repetitions must be >= num of endpoints.\n"
+	       "      Each repetition goes through each endpt round robin order.\n"
+	       "      For example, 7 repetition with 3 endpts, RPCs are sent to \n"
+	       "      endpt1, endpt2, endpt3, endpt1, endpt2, endpt3, endpt1 \n"
 	       "      Default: %d\n"
 	       "\n"
 	       "  --max-inflight-rpcs <N>\n"
@@ -1746,6 +1750,11 @@ int main(int argc, char *argv[])
 	}
 
 	/******************** Parse message sizes argument ********************/
+
+	/* Assert if rep_count < num_endpts */
+	D_ASSERTF(rep_count >= num_endpts, "rep_count (%d) must be >= num_endpts"
+		  " (%d). Please refer to usage of --repetitions-per-size"
+		  " in help\n", rep_count, num_endpts);
 
 	/*
 	 * Count the number of tuple tokens (',') in the user-specified string
