@@ -4196,6 +4196,21 @@ out:
 	return rc;
 }
 
+static void
+crt_grp_disable_secondaries(struct crt_grp_priv *prim_grp_priv)
+{
+	struct crt_grp_priv	*sec_priv;
+	int			i;
+
+	for (i = 0; i < CRT_MAX_SEC_GRPS; i++) {
+		sec_priv = prim_grp_priv->gp_priv_sec[i];
+		if (sec_priv == NULL)
+			continue;
+
+		sec_priv->gp_disabled = 1;
+	}
+}
+
 static int
 crt_grp_remove_from_secondaries(struct crt_grp_priv *grp_priv,
 				d_rank_t rank)
@@ -4260,12 +4275,15 @@ crt_group_rank_remove(crt_group_t *group, d_rank_t rank)
 		D_GOTO(out, rc);
 
 	/* If it's not a primary group - we are done */
-	if (!grp_priv->gp_primary)
+	if (!grp_priv->gp_primary) {
+		grp_priv->gp_disabled = 0;
 		D_GOTO(out, rc);
+	}
 
 	/* Go through associated secondary groups and remove rank from them */
 	D_RWLOCK_RDLOCK(&grp_priv->gp_rwlock);
 	crt_grp_remove_from_secondaries(grp_priv, rank);
+	crt_grp_disable_secondaries(grp_priv);
 	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
 
 out:
@@ -4739,6 +4757,11 @@ crt_group_secondary_rank_add(crt_group_t *grp, d_rank_t sec_rank,
 	D_RWLOCK_WRLOCK(&grp_priv->gp_rwlock);
 	rc = crt_group_secondary_rank_add_internal(grp_priv,
 					sec_rank, prim_rank);
+	if (rc == 0) {
+		/* Re-enable group when rank is added */
+		grp_priv->gp_disabled = 0;
+	}
+
 	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
 
 out:
@@ -4760,6 +4783,11 @@ int crt_group_primary_rank_add(crt_context_t ctx, crt_group_t *grp,
 	}
 
 	rc = crt_group_primary_add_internal(grp_priv, prim_rank, 0, uri);
+
+	if (rc == 0) {
+		/* Disable all associated secondary groups */
+		crt_grp_disable_secondaries(grp_priv);
+	}
 
 out:
 	return rc;
@@ -4992,6 +5020,11 @@ crt_group_primary_modify(crt_group_t *grp, crt_context_t *ctxs, int num_ctxs,
 	D_FREE(uri_idx);
 
 	grp_priv->gp_membs_ver = version;
+
+	/* Only disable secondaries primary membership changed */
+	if (to_add->rl_nr || to_remove->rl_nr)
+		crt_grp_disable_secondaries(grp_priv);
+
 unlock:
 	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
 
@@ -5099,6 +5132,7 @@ crt_group_secondary_modify(crt_group_t *grp, d_rank_list_t *sec_ranks,
 	D_FREE(prim_idx);
 
 	grp_priv->gp_membs_ver = version;
+	grp_priv->gp_disabled = 0;
 unlock:
 	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
 

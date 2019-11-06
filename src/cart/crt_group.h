@@ -188,7 +188,9 @@ struct crt_grp_priv {
 	/* flag of service group */
 				 gp_service:1,
 	/* flag of finalizing/destroying */
-				 gp_finalizing:1;
+				 gp_finalizing:1,
+	/* flag of group being disabled */
+				 gp_disabled:1;
 	/* group reference count */
 	uint32_t		 gp_refcount;
 

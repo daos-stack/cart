@@ -243,6 +243,11 @@ crt_tree_get_children(struct crt_grp_priv *grp_priv, uint32_t grp_ver,
 				grp_ver, default_grp_priv->gp_membs_ver);
 			D_GOTO(out, rc = -DER_MISMATCH);
 		}
+
+		if (grp_priv->gp_disabled) {
+			D_ERROR("Group is disabled\n");
+			D_GOTO(out, rc = -DER_MISMATCH);
+		}
 	}
 
 	CRT_TREE_PARAMETER_CHECKING(grp_priv, tree_topo, root, self);
