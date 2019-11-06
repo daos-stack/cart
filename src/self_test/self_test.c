@@ -1136,12 +1136,8 @@ static void print_usage(const char *prog_name, const char *msg_sizes_str,
 	       "\n"
 	       "  --repetitions-per-size <N>\n"
 	       "      Short version: -r\n"
-	       "      Number of samples per message size per master endpt.\n"
-	       "      RPCs for each particular size will be repeated this many times.\n"
-	       "      Please note repetitions must be >= num of endpoints.\n"
-	       "      Each repetition goes through each endpt round robin order.\n"
-	       "      For example, 7 repetition with 3 endpts, RPCs are sent to\n"
-	       "      endpt1, endpt2, endpt3, endpt1, endpt2, endpt3, endpt1\n"
+	       "      Number of samples per message size per endpt.\n"
+	       "      RPCs for each particular size will be repeated this many times per endpt.\n"
 	       "      Default: %d\n"
 	       "\n"
 	       "  --max-inflight-rpcs <N>\n"
@@ -1750,6 +1746,9 @@ int main(int argc, char *argv[])
 	}
 
 	/******************** Parse message sizes argument ********************/
+
+	/* repeat rep_count for each endpoint */
+	rep_count = rep_count * num_endpts;
 
 	/* Assert if rep_count < num_endpts */
 	D_ASSERTF(rep_count >= num_endpts, "rep_count (%d) must be >= "
