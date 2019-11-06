@@ -2,7 +2,7 @@
 
 Name:          cart
 Version:       1.6.0
-Release:       2%{?relval}%{?dist}
+Release:       3%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -34,6 +34,7 @@ BuildRequires: gcc-c++
 %if %{defined sha1}
 Provides: %{name}-%{sha1}
 %endif
+Requires: mercury < 1.0.1-20
 
 %description
 Collective and RPC Transport (CaRT)
@@ -136,6 +137,9 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %{carthome}/.build_vars-Linux.sh
 
 %changelog
+* Thu Nov 06 2019 Brian J. Murrell <brian.murrell@intel.com> - 1.6.0-3
+- Pin to mercury < 1.0.1-20 due to incompatibility
+
 * Thu Oct 24 2019 Brian J. Murrell <brian.murrell@intel.com> - 1.6.0-2
 - Add BRs to prefer packages that have choices
 - Add BR for scons >= 2.4 and gcc-c++
