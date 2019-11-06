@@ -136,7 +136,8 @@ struct ivf_key_in_progress {
 struct crt_ivns_internal {
 	/* IV Classes registered with this iv namespace */
 	struct crt_iv_class		*cii_iv_classes;
-	/* Context associated with IV namesapce */
+
+	/* Context associated with IV namespace */
 	crt_context_t			 cii_ctx;
 
 	/* Private group struct associated with IV namespace */
@@ -334,7 +335,7 @@ crt_ivf_key_in_progress_set(struct crt_ivns_internal *ivns,
  * Returns true if entry is destroyed, false otherwise
  */
 static bool
-crt_ivf_key_in_progress_unset(struct crt_ivns_internal * ivns,
+crt_ivf_key_in_progress_unset(struct crt_ivns_internal *ivns,
 			struct ivf_key_in_progress *entry)
 {
 	if (!entry)
@@ -1238,8 +1239,8 @@ exit:
 		if (entry) {
 			if (d_list_empty(&entry->kip_pending_fetch_list)) {
 				/* returns false if entry is not destroyed */
-				if (!crt_ivf_key_in_progress_unset(ivns_internal,
-								entry))
+				if (!crt_ivf_key_in_progress_unset(
+						ivns_internal, entry))
 					D_MUTEX_UNLOCK(&entry->kip_lock);
 			} else {
 				D_MUTEX_UNLOCK(&entry->kip_lock);
@@ -2522,7 +2523,8 @@ bulk_update_transfer_done_aux(const struct crt_bulk_cb_info *info)
 
 		/* If sync was bi-directional - trasnfer value back */
 		if (sync_type->ivs_flags & CRT_IV_SYNC_BIDIRECTIONAL) {
-			rc = transfer_back_to_child(&input->ivu_key, update_cb_info,
+			rc = transfer_back_to_child(&input->ivu_key,
+						update_cb_info,
 						false, update_rc);
 
 			if (rc == 0) {
