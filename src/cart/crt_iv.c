@@ -322,6 +322,8 @@ crt_ivf_key_in_progress_set(struct crt_ivns_internal *ivns,
 	/* TODO: Change to hash table */
 	d_list_add_tail(&entry->kip_link, &ivns->cii_keys_in_progress_list);
 
+	IVNS_ADDREF(ivns);
+
 	D_MUTEX_LOCK(&entry->kip_lock);
 
 	return entry;
@@ -332,7 +334,8 @@ crt_ivf_key_in_progress_set(struct crt_ivns_internal *ivns,
  * Returns true if entry is destroyed, false otherwise
  */
 static bool
-crt_ivf_key_in_progress_unset(struct ivf_key_in_progress *entry)
+crt_ivf_key_in_progress_unset(struct crt_ivns_internal * ivns,
+			struct ivf_key_in_progress *entry)
 {
 	if (!entry)
 		return true;
@@ -341,6 +344,7 @@ crt_ivf_key_in_progress_unset(struct ivf_key_in_progress *entry)
 	D_DEBUG(DB_TRACE, "kip_entry=%p  refcnt=%d\n", entry,
 		entry->kip_refcnt);
 
+	IVNS_DECREF(ivns);
 	if (entry->kip_refcnt == 0) {
 		d_list_del(&entry->kip_link);
 
@@ -371,6 +375,7 @@ crt_ivf_pending_request_add(
 	if (pending_fetch == NULL)
 		return -DER_NOMEM;
 
+	IVNS_ADDREF(iv_info->ifc_ivns_internal);
 	pending_fetch->pf_cb_info = iv_info;
 
 	d_list_add_tail(&pending_fetch->pf_link,
@@ -399,9 +404,6 @@ crt_ivf_finalize(struct iv_fetch_cb_info *iv_info, crt_iv_key_t *iv_key,
 	if (rpc) {
 		/* If there is child to respond to - bulk transfer to it */
 		if (output_rc == 0) {
-			/* decref done in crt_ivf_bulk_transfer_done_cb */
-			IVNS_ADDREF(iv_info->ifc_ivns_internal);
-
 			/* Note: function will increment ref count on 'rpc' */
 			rc = crt_ivf_bulk_transfer(iv_info->ifc_ivns_internal,
 						iv_info->ifc_class_id,
@@ -410,11 +412,9 @@ crt_ivf_finalize(struct iv_fetch_cb_info *iv_info, crt_iv_key_t *iv_key,
 						rpc,
 						iv_info->ifc_user_priv);
 
-			if (rc != 0) {
+			if (rc != 0)
 				D_ERROR("Bulk transfer failed for key=%p\n",
 					iv_key);
-				IVNS_DECREF(iv_info->ifc_ivns_internal);
-			}
 		} else {
 			struct crt_iv_fetch_out *output;
 
@@ -501,6 +501,8 @@ crt_ivf_pending_reqs_process(struct crt_ivns_internal *ivns_internal,
 
 				D_FREE(pending_fetch->pf_cb_info);
 				D_FREE(pending_fetch);
+
+				IVNS_DECREF(ivns_internal);
 				continue;
 			}
 
@@ -519,6 +521,7 @@ crt_ivf_pending_reqs_process(struct crt_ivns_internal *ivns_internal,
 			}
 
 			if (rc == 0) {
+				/* Function will do IVNS_ADDREF if needed */
 				crt_ivf_bulk_transfer(ivns_internal,
 					class_id, &iv_info->ifc_iv_key,
 					&tmp_iv_value,
@@ -544,6 +547,7 @@ crt_ivf_pending_reqs_process(struct crt_ivns_internal *ivns_internal,
 			/* addref done in crt_hdlr_iv_fetch */
 			RPC_PUB_DECREF(iv_info->ifc_child_rpc);
 
+			IVNS_DECREF(ivns_internal);
 		} else {
 			IV_DBG(&iv_info->ifc_iv_key,
 				"pending local fetch for kip=%p\n", kip_entry);
@@ -556,6 +560,8 @@ crt_ivf_pending_reqs_process(struct crt_ivns_internal *ivns_internal,
 
 				D_FREE(pending_fetch->pf_cb_info);
 				D_FREE(pending_fetch);
+
+				IVNS_DECREF(ivns_internal);
 				continue;
 			}
 
@@ -588,6 +594,7 @@ crt_ivf_pending_reqs_process(struct crt_ivns_internal *ivns_internal,
 			if (put_needed)
 				iv_ops->ivo_on_put(ivns_internal, &tmp_iv_value,
 					   iv_info->ifc_user_priv);
+			IVNS_DECREF(ivns_internal);
 		}
 
 		D_FREE(pending_fetch->pf_cb_info);
@@ -609,7 +616,8 @@ crt_ivf_pending_reqs_process(struct crt_ivns_internal *ivns_internal,
 		kip_entry, kip_entry->kip_rpc_in_progress);
 
 	if (kip_entry->kip_rpc_in_progress == false) {
-		if (crt_ivf_key_in_progress_unset(kip_entry) == false)
+		if (crt_ivf_key_in_progress_unset(ivns_internal,
+						kip_entry) == false)
 			D_MUTEX_UNLOCK(&kip_entry->kip_lock);
 	} else {
 		D_MUTEX_UNLOCK(&kip_entry->kip_lock);
@@ -964,6 +972,7 @@ crt_ivf_bulk_transfer_done_cb(const struct crt_bulk_cb_info *info)
 
 	RPC_PUB_DECREF(rpc);
 
+	/* ADDREF done in crt_ivf_bulk_transfer */
 	IVNS_DECREF(cb_info->tci_ivns_internal);
 	D_FREE_PTR(cb_info);
 
@@ -1023,6 +1032,8 @@ crt_ivf_bulk_transfer(struct crt_ivns_internal *ivns_internal,
 		D_GOTO(cleanup, rc = -DER_NOMEM);
 
 	cb_info->tci_ivns_internal = ivns_internal;
+	IVNS_ADDREF(ivns_internal);
+
 	cb_info->tci_class_id = class_id;
 	cb_info->tci_iv_key = *iv_key;
 	cb_info->tci_iv_value = *iv_value;
@@ -1043,6 +1054,8 @@ cleanup:
 
 		crt_bulk_free(bulk_hdl);
 		D_FREE(cb_info);
+
+		IVNS_DECREF(ivns_internal);
 	}
 
 exit:
@@ -1113,7 +1126,7 @@ handle_ivfetch_response(const struct crt_cb_info *cb_info)
 	if (rc == 0)
 		crt_ivf_pending_reqs_process(ivns, class_id, kip_entry, rc);
 
-	/* Addref odne in crt_iv_fetch::crt_ivns_internal_get() */
+	/* ADDREF done by caller of crt_ivf_rpc_issue() */
 	IVNS_DECREF(ivns);
 
 	D_FREE_PTR(iv_info);
@@ -1225,7 +1238,8 @@ exit:
 		if (entry) {
 			if (d_list_empty(&entry->kip_pending_fetch_list)) {
 				/* returns false if entry is not destroyed */
-				if (!crt_ivf_key_in_progress_unset(entry))
+				if (!crt_ivf_key_in_progress_unset(ivns_internal,
+								entry))
 					D_MUTEX_UNLOCK(&entry->kip_lock);
 			} else {
 				D_MUTEX_UNLOCK(&entry->kip_lock);
@@ -1235,9 +1249,6 @@ exit:
 		D_MUTEX_UNLOCK(&ivns_internal->cii_lock);
 		if (local_bulk != CRT_BULK_NULL)
 			crt_bulk_free(local_bulk);
-
-		/* Addref done in crt_iv_fetch::crt_ivns_intenral_get() */
-		IVNS_DECREF(ivns_internal);
 	}
 
 	return rc;
@@ -1289,7 +1300,7 @@ crt_hdlr_iv_fetch_aux(void *arg)
 	struct crt_iv_fetch_in		*input;
 	struct crt_iv_fetch_out		*output;
 	struct crt_ivns_id		*ivns_id;
-	struct crt_ivns_internal	*ivns_internal;
+	struct crt_ivns_internal	*ivns_internal = NULL;
 	struct crt_iv_ops		*iv_ops = NULL;
 	d_sg_list_t			 iv_value = {0};
 	bool				 put_needed = false;
@@ -1303,11 +1314,17 @@ crt_hdlr_iv_fetch_aux(void *arg)
 
 	ivns_id = (struct crt_ivns_id *)input->ifi_nsid.iov_buf;
 
+	/* ADDREF */
 	ivns_internal = crt_ivns_internal_lookup(ivns_id);
 	if (ivns_internal == NULL) {
 		D_ERROR("Failed to lookup ivns internal!\n");
 		D_GOTO(send_error, rc = -DER_NONEXIST);
 	}
+
+	/* This function is called with ivns_internal ref count held. Since
+	 * we grabbed our own ref count in lookup, decrement ref count
+	 */
+	IVNS_DECREF(ivns_internal);
 
 	iv_ops = crt_iv_ops_get(ivns_internal, input->ifi_class_id);
 	if (iv_ops == NULL) {
@@ -1328,7 +1345,7 @@ crt_hdlr_iv_fetch_aux(void *arg)
 	rc = iv_ops->ivo_on_fetch(ivns_internal, &input->ifi_key, 0,
 				0x0, &iv_value, user_priv);
 	if (rc == 0) {
-		/* Note: Function will increment ref count on 'rpc_req' */
+		/* Note: This increments ref count on 'rpc_req' and ivns */
 		rc = crt_ivf_bulk_transfer(ivns_internal,
 					input->ifi_class_id, &input->ifi_key,
 					&iv_value, input->ifi_value_bulk,
@@ -1389,6 +1406,8 @@ crt_hdlr_iv_fetch_aux(void *arg)
 		cb_info->ifc_iv_key = input->ifi_key;
 
 		cb_info->ifc_ivns_internal = ivns_internal;
+		IVNS_ADDREF(ivns_internal);
+
 		cb_info->ifc_class_id = input->ifi_class_id;
 		cb_info->ifc_user_priv = user_priv;
 
@@ -1400,6 +1419,8 @@ crt_hdlr_iv_fetch_aux(void *arg)
 			D_ERROR("Failed to issue fetch rpc; rc = %d\n", rc);
 			D_FREE_PTR(cb_info);
 			RPC_PUB_DECREF(rpc_req);
+
+			IVNS_DECREF(ivns_internal);
 			D_GOTO(send_error, rc);
 		}
 	} else {
@@ -1411,6 +1432,8 @@ crt_hdlr_iv_fetch_aux(void *arg)
 	RPC_PUB_DECREF(rpc_req);
 	IV_DBG(&input->ifi_key, "fetch handler exiting\n");
 
+	/* ADDREF done in lookup above */
+	IVNS_DECREF(ivns_internal);
 	return;
 
 send_error:
@@ -1423,7 +1446,9 @@ send_error:
 			rc, rpc_req->cr_opc);
 	}
 
-	IVNS_DECREF(ivns_internal);
+	/* ADDREF done in lookup above */
+	if (ivns_internal)
+		IVNS_DECREF(ivns_internal);
 
 	/* addref in crt_hdlr_iv_fetch */
 	RPC_PUB_DECREF(rpc_req);
@@ -1437,7 +1462,7 @@ crt_hdlr_iv_fetch(crt_rpc_t *rpc_req)
 	struct crt_iv_fetch_in		*input;
 	struct crt_iv_fetch_out		*output;
 	struct crt_ivns_id		*ivns_id;
-	struct crt_ivns_internal	*ivns_internal;
+	struct crt_ivns_internal	*ivns_internal = NULL;
 	struct crt_iv_ops		*iv_ops;
 	int				 rc;
 
@@ -1446,6 +1471,7 @@ crt_hdlr_iv_fetch(crt_rpc_t *rpc_req)
 
 	ivns_id = (struct crt_ivns_id *)input->ifi_nsid.iov_buf;
 
+	/* ADDREF */
 	ivns_internal = crt_ivns_internal_lookup(ivns_id);
 	if (ivns_internal == NULL) {
 		D_ERROR("Failed to look up ivns_id! ivns_id=%d:%d\n",
@@ -1464,6 +1490,8 @@ crt_hdlr_iv_fetch(crt_rpc_t *rpc_req)
 	 * crt_hdlr_iv_fetch_aux
 	 */
 	RPC_PUB_ADDREF(rpc_req);
+	IVNS_ADDREF(ivns_internal);
+
 	if (iv_ops->ivo_pre_fetch != NULL) {
 		D_DEBUG(DB_TRACE, "Executing ivo_pre_fetch\n");
 		iv_ops->ivo_pre_fetch(ivns_internal,
@@ -1474,6 +1502,8 @@ crt_hdlr_iv_fetch(crt_rpc_t *rpc_req)
 		crt_hdlr_iv_fetch_aux(rpc_req);
 	}
 
+	/* ADDREF done above in lookup */
+	IVNS_DECREF(ivns_internal);
 	return;
 send_error:
 	output->ifo_rc = rc;
@@ -1482,7 +1512,8 @@ send_error:
 		D_ERROR("crt_reply_send failed, rc: %d, opc: %#x.\n",
 			rc, rpc_req->cr_opc);
 
-	IVNS_DECREF(ivns_internal);
+	if (ivns_internal)
+		IVNS_DECREF(ivns_internal);
 }
 
 
@@ -1524,7 +1555,7 @@ crt_iv_fetch(crt_iv_namespace_t ivns, uint32_t class_id,
 	    crt_iv_shortcut_t shortcut,
 	    crt_iv_comp_cb_t fetch_comp_cb, void *cb_arg)
 {
-	struct crt_ivns_internal	*ivns_internal;
+	struct crt_ivns_internal	*ivns_internal = NULL;
 	struct crt_iv_ops		*iv_ops;
 	struct iv_fetch_cb_info		*cb_info = NULL;
 	d_rank_t			 root_rank;
@@ -1541,6 +1572,7 @@ crt_iv_fetch(crt_iv_namespace_t ivns, uint32_t class_id,
 
 	IV_DBG(iv_key, "fetch issued\n");
 
+	/* ADDREF */
 	ivns_internal = crt_ivns_internal_get(ivns);
 
 	if (ivns_internal == NULL) {
@@ -1582,8 +1614,6 @@ crt_iv_fetch(crt_iv_namespace_t ivns, uint32_t class_id,
 		iv_ops->ivo_on_put(ivns_internal, iv_value, user_priv);
 		D_FREE_PTR(iv_value);
 
-		/* addref done in crt_ivns_internal_get() */
-		IVNS_DECREF(ivns_internal);
 		return rc;
 	} else if (rc != -DER_IVCB_FORWARD) {
 		/* We got error, call the callback and exit */
@@ -1594,8 +1624,6 @@ crt_iv_fetch(crt_iv_namespace_t ivns, uint32_t class_id,
 		iv_ops->ivo_on_put(ivns_internal, iv_value, user_priv);
 		D_FREE_PTR(iv_value);
 
-		/* addref done in crt_ivns_internal_get() */
-		IVNS_DECREF(ivns_internal);
 		return rc;
 	}
 
@@ -1634,6 +1662,8 @@ crt_iv_fetch(crt_iv_namespace_t ivns, uint32_t class_id,
 	cb_info->ifc_iv_key = *iv_key;
 
 	cb_info->ifc_ivns_internal = ivns_internal;
+	IVNS_ADDREF(ivns_internal);
+
 	cb_info->ifc_class_id = class_id;
 
 	rc = crt_ivf_rpc_issue(next_node, iv_key, iv_value, root_rank,
@@ -1646,13 +1676,16 @@ exit:
 		if (put_needed)
 			iv_ops->ivo_on_put(ivns, iv_value, user_priv);
 		D_ERROR("Failed to issue IV fetch; rc = %d\n", rc);
-		D_FREE_PTR(cb_info);
 
-		/* addref done above in crt_ivns_internal_get() */
 		IVNS_DECREF(ivns_internal);
+		D_FREE_PTR(cb_info);
 	}
 
 	D_FREE(iv_value);
+
+	/* ADDREF done in lookup above */
+	if (ivns_internal)
+		IVNS_DECREF(ivns_internal);
 
 	return rc;
 }
@@ -2543,10 +2576,12 @@ bulk_update_transfer_done_aux_wrapper(void *info)
 
 	D_DEBUG(DB_TRACE, "Triggering bulk_update_transfer_done_aux()\n");
 	bulk_cb_info = info;
-	bulk_update_transfer_done_aux(bulk_cb_info);
-
 	buc_info = bulk_cb_info->bci_arg;
 	ivns_internal = buc_info->buc_ivns;
+
+	/* Note: buc_info is no longer valid/free-ed after this call */
+	bulk_update_transfer_done_aux(bulk_cb_info);
+
 	IVNS_DECREF(ivns_internal);
 
 	D_FREE_PTR(bulk_cb_info->bci_bulk_desc);
