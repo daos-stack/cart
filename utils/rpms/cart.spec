@@ -34,6 +34,7 @@ BuildRequires: gcc-c++
 %if %{defined sha1}
 Provides: %{name}-%{sha1}
 %endif
+Requires: mercury < 1.0.1-20
 
 %description
 Collective and RPC Transport (CaRT)

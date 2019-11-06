@@ -11,7 +11,7 @@ Build-Depends: debhelper (>= 10),
                libpmix-dev,
                libssl-dev,
                libyaml-dev,
-               libmercury-dev (>= 1.0.1-19),
+               libmercury-dev (= 1.0.1-19),
                scons,
                uuid-dev
 Standards-Version: 4.1.2
@@ -52,7 +52,7 @@ Package: libcart3
 Section: libs
 Architecture: any
 Multi-Arch: same
-Depends: libmercury1, libpmix2, libyaml-0-2, libuuid1,
+Depends: libmercury1 (= 1.0.1-19), libpmix2, libyaml-0-2, libuuid1,
          ${shlibs:Depends}, ${misc:Depends}
 Description: Collective and RPC Transport
  CaRT is an open-source RPC transport layer for Big Data and Exascale
