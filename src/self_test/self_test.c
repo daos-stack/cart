@@ -1750,11 +1750,6 @@ int main(int argc, char *argv[])
 	/* repeat rep_count for each endpoint */
 	rep_count = rep_count * num_endpts;
 
-	/* Assert if rep_count < num_endpts */
-	D_ASSERTF(rep_count >= num_endpts, "rep_count (%d) must be >= "
-		  "num_endpts (%d). Please refer to usage of "
-		  "--repetitions-per-size in help\n", rep_count, num_endpts);
-
 	/*
 	 * Count the number of tuple tokens (',') in the user-specified string
 	 * This gives an upper limit on the number of arguments the user passed
