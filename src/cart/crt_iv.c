@@ -2705,8 +2705,10 @@ crt_hdlr_iv_update(crt_rpc_t *rpc_req)
 					NULL, sync_type,
 					input->ivu_root_node, update_cb_info);
 
-			if (rc != 0)
+			if (rc != 0) {
+				IVNS_DECREF(ivns_internal);
 				D_GOTO(send_error, rc);
+			}
 
 		} else if (rc == 0) {
 			output->rc = rc;
