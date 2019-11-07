@@ -156,75 +156,21 @@
    fun:sysfs_init
    fun:_dl_init
    obj:/usr/lib64/ld-2.17.so
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
 }
 {
-   PSM2 leak 2
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:sysfs_init
-   fun:_dl_init
-   obj:/usr/lib64/ld-2.17.so
-}
-
-{
-   PSM2 leak 3
-   Memcheck:Addr4
-   fun:OPA_cas_int
-   fun:hg_atomic_cas32
-   fun:na_ofi_complete
-   fun:na_ofi_cq_process_event
-   fun:na_ofi_progress
-   fun:NA_Progress
-   fun:hg_core_progress_na_cb
-   fun:hg_poll_wait
-   fun:hg_core_progress_poll
-   fun:HG_Core_progress
-   fun:crt_hg_progress
-   fun:crt_progress
-   fun:progress_thread
-   fun:start_thread
-   fun:clone
-}
-
-{
-   PSM2 leak 4
+   mercury bug/leak 1
    Memcheck:Addr4
    fun:OPA_load_int
    fun:hg_atomic_get32
    fun:na_ofi_cq_process_event
    fun:na_ofi_progress
    fun:NA_Progress
-   fun:hg_core_progress_na_cb
-   fun:hg_poll_wait
-   fun:hg_core_progress_poll
-   fun:HG_Core_progress
-   fun:crt_hg_progress
-   fun:crt_progress
-   fun:progress_thread
-   fun:start_thread
-   fun:clone
 }
-
 {
-   PSM2 leak 5
+   mercury bug/leak 2
    Memcheck:Addr8
    fun:na_ofi_complete
    fun:na_ofi_cq_process_event
    fun:na_ofi_progress
    fun:NA_Progress
-   fun:hg_core_progress_na_cb
-   fun:hg_poll_wait
-   fun:hg_core_progress_poll
-   fun:HG_Core_progress
-   fun:crt_hg_progress
-   fun:crt_progress
-   fun:progress_thread
-   fun:start_thread
-   fun:clone
 }
