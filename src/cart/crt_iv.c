@@ -323,8 +323,6 @@ crt_ivf_key_in_progress_set(struct crt_ivns_internal *ivns,
 	/* TODO: Change to hash table */
 	d_list_add_tail(&entry->kip_link, &ivns->cii_keys_in_progress_list);
 
-	IVNS_ADDREF(ivns);
-
 	D_MUTEX_LOCK(&entry->kip_lock);
 
 	return entry;
@@ -345,7 +343,6 @@ crt_ivf_key_in_progress_unset(struct crt_ivns_internal *ivns,
 	D_DEBUG(DB_TRACE, "kip_entry=%p  refcnt=%d\n", entry,
 		entry->kip_refcnt);
 
-	IVNS_DECREF(ivns);
 	if (entry->kip_refcnt == 0) {
 		d_list_del(&entry->kip_link);
 
@@ -1584,6 +1581,7 @@ crt_iv_fetch(crt_iv_namespace_t ivns, uint32_t class_id,
 	iv_ops = crt_iv_ops_get(ivns_internal, class_id);
 	if (iv_ops == NULL) {
 		D_ERROR("Failed to get iv_ops for class_id = %d\n", class_id);
+		IVNS_DECREF(ivns_internal);
 		return -DER_INVAL;
 	}
 
@@ -1615,6 +1613,7 @@ crt_iv_fetch(crt_iv_namespace_t ivns, uint32_t class_id,
 		iv_ops->ivo_on_put(ivns_internal, iv_value, user_priv);
 		D_FREE_PTR(iv_value);
 
+		IVNS_DECREF(ivns_internal);
 		return rc;
 	} else if (rc != -DER_IVCB_FORWARD) {
 		/* We got error, call the callback and exit */
@@ -1625,6 +1624,7 @@ crt_iv_fetch(crt_iv_namespace_t ivns, uint32_t class_id,
 		iv_ops->ivo_on_put(ivns_internal, iv_value, user_priv);
 		D_FREE_PTR(iv_value);
 
+		IVNS_DECREF(ivns_internal);
 		return rc;
 	}
 
