@@ -23,6 +23,7 @@ BuildRequires: hwloc-devel
 BuildRequires: openssl-devel
 BuildRequires: libcmocka-devel
 BuildRequires: libyaml-devel
+BuildRequires: Lmod
 %if (0%{?suse_version} >= 1315)
 # these are needed to prefer packages that both provide the same requirement
 # prefer over libpsm2-compat
