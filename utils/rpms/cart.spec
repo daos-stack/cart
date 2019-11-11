@@ -2,7 +2,7 @@
 
 Name:          cart
 Version:       1.6.0
-Release:       3%{?relval}%{?dist}
+Release:       4%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -15,7 +15,9 @@ BuildRequires: libfabric-devel
 BuildRequires: pmix-devel
 BuildRequires: openpa-devel
 BuildRequires: mercury-devel >= 1.0.1-19
-BuildRequires: ompi-devel
+# can't do this until we can land ompi@PR-10 and
+# scons_local@bmurrell/ompi-env-module
+# BuildRequires: ompi-devel
 BuildRequires: libevent-devel
 BuildRequires: boost-devel
 BuildRequires: libuuid-devel
@@ -137,6 +139,12 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %{carthome}/.build_vars-Linux.sh
 
 %changelog
+* Mon Nov 11 2019 Brian J. Murrell <brian.murrell@intel.com> - 1.6.0-4
+- Don't R: ompi-devel from cart-devel as it breaks the ior
+  build whic ends up building with ompi instead of mpich
+  - the correct solution here is to environment-module-ize
+    ompi
+
 * Thu Nov 06 2019 Brian J. Murrell <brian.murrell@intel.com> - 1.6.0-3
 - Pin to mercury < 1.0.1-20 due to incompatibility
 
