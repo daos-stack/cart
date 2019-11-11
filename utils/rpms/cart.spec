@@ -80,7 +80,7 @@ CaRT tests
 
 %prep
 %setup -q -a 1
-
+grep -r openmpi3 scons_local/
 
 %build
 # remove rpathing from the build
