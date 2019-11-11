@@ -2,7 +2,7 @@
 
 Name:          cart
 Version:       1.6.0
-Release:       3%{?relval}%{?dist}
+Release:       4%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -137,7 +137,10 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %{carthome}/.build_vars-Linux.sh
 
 %changelog
-* Thu Nov 06 2019 Brian J. Murrell <brian.murrell@intel.com> - 1.6.0-3
+* Mon Nov 11 2019 Brian J. Murrell <brian.murrell@intel.com> - 1.6.0-4
+- Use ompi built with module support
+
+* Thu Nov 07 2019 Brian J. Murrell <brian.murrell@intel.com> - 1.6.0-3
 - Pin to mercury < 1.0.1-20 due to incompatibility
 
 * Thu Oct 24 2019 Brian J. Murrell <brian.murrell@intel.com> - 1.6.0-2
