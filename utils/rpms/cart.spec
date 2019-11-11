@@ -15,9 +15,7 @@ BuildRequires: libfabric-devel
 BuildRequires: pmix-devel
 BuildRequires: openpa-devel
 BuildRequires: mercury-devel >= 1.0.1-19
-# can't do this until we can land ompi@PR-10 and
-# scons_local@bmurrell/ompi-env-module
-# BuildRequires: ompi-devel
+BuildRequires: ompi-devel
 BuildRequires: libevent-devel
 BuildRequires: boost-devel
 BuildRequires: libuuid-devel
@@ -58,7 +56,9 @@ Requires: boost-devel
 Requires: mercury-devel
 Requires: openpa-devel
 Requires: libfabric-devel
-Requires: ompi-devel
+# can't do this until we can land ompi@PR-10 and
+# scons_local@bmurrell/ompi-env-module
+#Requires: ompi-devel
 Requires: pmix-devel
 Requires: hwloc-devel
 %if %{defined sha1}
