@@ -86,7 +86,7 @@ CaRT tests
 # remove rpathing from the build
 find . -name SConscript | xargs sed -i -e '/AppendUnique(RPATH=.*)/d'
 
-module load mpi/openmpi3-x86_64
+#module load mpi/openmpi3-x86_64
 SL_PREFIX=%{_prefix}                      \
 scons %{?_smp_mflags}                     \
       --config=force                      \
@@ -94,7 +94,7 @@ scons %{?_smp_mflags}                     \
       PREFIX=%{?buildroot}%{_prefix}
 
 %install
-module load mpi/openmpi3-x86_64
+#module load mpi/openmpi3-x86_64
 SL_PREFIX=%{_prefix}                      \
 scons %{?_smp_mflags}                     \
       --config=force                      \
