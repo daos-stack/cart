@@ -141,7 +141,7 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %changelog
 * Mon Nov 11 2019 Brian J. Murrell <brian.murrell@intel.com> - 1.6.0-4
 - Don't R: ompi-devel from cart-devel as it breaks the ior
-  build whic ends up building with ompi instead of mpich
+  build which ends up building with ompi instead of mpich
   - the correct solution here is to environment-module-ize
     ompi
 
