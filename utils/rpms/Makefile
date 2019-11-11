@@ -3,6 +3,7 @@ SRC_EXT := gz
 SOURCE   = $(NAME)-$(VERSION).tar.$(SRC_EXT)
 PATCHES  = scons_local-$(VERSION).tar.$(SRC_EXT)
 
+PR_REPOS         := ompi@PR-10:1
 SLES_12_PR_REPOS := scons
 LEAP_42_PR_REPOS := scons
 LEAP_42_REPOS    := https://download.opensuse.org/repositories/science:/HPC/openSUSE_Leap_42.3
