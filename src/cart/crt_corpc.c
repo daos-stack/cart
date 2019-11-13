@@ -977,6 +977,7 @@ forward_done:
 			 * their response before we call completion cb
 			 */
 			co_info->co_rc = rc;
+			rpc_priv->crp_reply_pending = 0;
 			rc = 0;
 		}
 	}
