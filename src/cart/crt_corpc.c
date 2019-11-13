@@ -968,10 +968,17 @@ forward_done:
 		crt_corpc_reply_hdlr(&cb_info);
 	} else {
 		rc = crt_rpc_common_hdlr(rpc_priv);
-		if (rc != 0)
+		if (rc != 0) {
 			RPC_ERROR(rpc_priv,
 				  "crt_rpc_common_hdlr failed, rc: %d\n",
 				  rc);
+			/* Don't return error immediately since we already
+			 * sent rpcs to all children and need to wait for
+			 * their response before we call completion cb
+			 */
+			co_info->co_rc = rc;
+			rc = 0;
+		}
 	}
 
 
