@@ -173,7 +173,7 @@ test_run()
 			  "rc: %d, rpc_req: %p\n", rc, rpc_req);
 		rc = crt_req_send(rpc_req, rpc_cb_common, NULL);
 		D_ASSERTF(rc == 0,
-			  "crt_req_send() failed. rc: %d\n", rc); 
+			  "crt_req_send() failed. rc: %d\n", rc);
 		tc_sem_timedwait(&test.tg_token_to_proceed, 61, __LINE__);
 	}
 
