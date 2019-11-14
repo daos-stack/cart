@@ -27,10 +27,10 @@ tests: !mux
   proto_np:
     name: proto_np
     srv_bin: ../bin/crt_launch
-    srv_arg: "-e tests/test_proto_np_srv --name proto_srv_grp --cfg_path=."
+    srv_arg: "-e tests/test_proto_server --name proto_srv_grp --cfg_path=."
     srv_env: ""
     srv_ppn: "1"
-    cli_bin: tests/test_proto_np_cli
+    cli_bin: tests/test_proto_client
     cli_arg: "--name proto_cli_grp --attach_to proto_srv_grp --cfg_path=."
     cli_env: ""
     cli_ppn: "1"
