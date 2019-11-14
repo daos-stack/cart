@@ -58,7 +58,6 @@ CRT_RPC_TESTS = ['rpc_test_cli.c', 'rpc_test_srv.c', 'rpc_test_srv2.c']
 SWIM_TESTS = ['test_swim.c', 'test_swim_net.c']
 HLC_TESTS = ['test_hlc_net.c']
 TEST_GROUP_NP_TESTS = ['test_group_np_srv.c', 'test_group_np_cli.c']
-TEST_PROTO_NP_TESTS = ['test_proto_np_srv.c', 'test_proto_np_cli.c']
 
 def scons():
     """scons function"""
