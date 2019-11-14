@@ -140,7 +140,7 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %changelog
 * Wed Nov 13 2019 Alexander Oganezov <alexander.a.oganezov@intel.com> - 3.0.0-1
 - Libcart version 3.0.0-1
-- IV namespace APIs changed 
+- IV namespace APIs changed
 
 * Mon Nov 11 2019 Brian J. Murrell <brian.murrell@intel.com> - 2.1.0-2
 - Don't R: ompi-devel from cart-devel as it breaks the ior
