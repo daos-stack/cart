@@ -710,6 +710,14 @@ crt_ivns_internal_create(crt_context_t crt_ctx, struct crt_grp_priv *grp_priv,
 		grp_priv->gp_pub.cg_grpid,
 		CRT_GROUP_ID_MAX_LEN);
 
+	if (internal_ivns_id->ii_group_name == NULL) {
+		D_FREE(ivns_internal->cii_iv_classes);
+		D_MUTEX_DESTROY(&ivns_internal->cii_lock);
+		D_SPIN_DESTROY(&ivns_internal->cii_ref_lock);
+		D_FREE(ivns_internal);
+		D_GOTO(exit, ivns_internal = NULL);
+	}
+
 	memcpy(ivns_internal->cii_iv_classes, iv_classes,
 	       sizeof(*iv_classes) * num_class);
 
