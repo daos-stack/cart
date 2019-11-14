@@ -2643,6 +2643,7 @@ crt_hdlr_iv_update(crt_rpc_t *rpc_req)
 
 	ivns_id.ii_group_name = input->ivu_ivns_group;
 	ivns_id.ii_nsid = input->ivu_ivns_id;
+
 	/* ADDREF */
 	ivns_internal = crt_ivns_internal_lookup(&ivns_id);
 
