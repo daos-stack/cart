@@ -1298,7 +1298,6 @@ crt_hg_reply_error_send(struct crt_rpc_priv *rpc_priv, int error_code)
 	D_ASSERT(error_code != 0);
 
 	hg_out_struct = &rpc_priv->crp_pub.cr_output;
-	rpc_priv->crp_reply_pending = 0;
 	rpc_priv->crp_reply_hdr.cch_rc = error_code;
 	hg_ret = HG_Respond(rpc_priv->crp_hg_hdl, NULL, NULL, hg_out_struct);
 	if (hg_ret != HG_SUCCESS) {
@@ -1306,6 +1305,7 @@ crt_hg_reply_error_send(struct crt_rpc_priv *rpc_priv, int error_code)
 			  "Failed to send CART error code back. HG_Respond failed, hg_ret: %d\n",
 			  hg_ret);
 	} else {
+		rpc_priv->crp_reply_pending = 0;
 		RPC_TRACE(DB_NET, rpc_priv,
 			  "Sent CART level error message back to client. error_code: %d\n",
 			  error_code);
