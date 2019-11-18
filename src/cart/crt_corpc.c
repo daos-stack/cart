@@ -517,6 +517,7 @@ corpc_add_child_rpc(struct crt_rpc_priv *parent_rpc_priv,
 	co_info = parent_rpc_priv->crp_corpc_info;
 
 	RPC_ADDREF(child_rpc_priv);
+	RPC_ADDREF(parent_rpc_priv);
 
 	D_SPIN_LOCK(&parent_rpc_priv->crp_lock);
 	d_list_add_tail(&child_rpc_priv->crp_parent_link,
@@ -536,6 +537,7 @@ corpc_del_child_rpc_locked(struct crt_rpc_priv *parent_rpc_priv,
 	d_list_del_init(&child_rpc_priv->crp_parent_link);
 	/* decref corresponds to the addref in corpc_add_child_rpc */
 	RPC_DECREF(child_rpc_priv);
+	RPC_DECREF(parent_Rpc_priv);
 }
 
 static inline void
@@ -972,13 +974,7 @@ forward_done:
 			RPC_ERROR(rpc_priv,
 				  "crt_rpc_common_hdlr failed, rc: %d\n",
 				  rc);
-			/* Don't return error immediately since we already
-			 * sent rpcs to all children and need to wait for
-			 * their response before we call completion cb
-			 */
-			co_info->co_rc = rc;
-			rpc_priv->crp_reply_pending = 0;
-			rc = 0;
+			crt_corpc_fail_parent_rpc(rpc_priv, rc);
 		}
 	}
 
