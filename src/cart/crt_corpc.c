@@ -537,7 +537,7 @@ corpc_del_child_rpc_locked(struct crt_rpc_priv *parent_rpc_priv,
 	d_list_del_init(&child_rpc_priv->crp_parent_link);
 	/* decref corresponds to the addref in corpc_add_child_rpc */
 	RPC_DECREF(child_rpc_priv);
-	RPC_DECREF(parent_Rpc_priv);
+	RPC_DECREF(parent_rpc_priv);
 }
 
 static inline void
