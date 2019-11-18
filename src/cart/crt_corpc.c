@@ -99,6 +99,7 @@ crt_corpc_info_init(struct crt_rpc_priv *rpc_priv,
 		co_hdr->coh_tree_topo = tree_topo;
 		co_hdr->coh_root = grp_root;
 	}
+
 	co_hdr->coh_bulk_hdl = co_bulk_hdl;
 
 	rpc_priv->crp_corpc_info = co_info;
