@@ -161,6 +161,12 @@ struct swim_context *swim_init(swim_id_t self_id, struct swim_ops *swim_ops,
 void swim_fini(struct swim_context *ctx);
 
 /**
+ * Finalize the SWIM protocol.
+ *
+ */
+void crt_swim_fini(void);
+
+/**
  * Get private data which associated with group members.
  * Originally it's passed to swim_init().
  *

@@ -60,7 +60,7 @@ crt_get_filtered_grp_rank_list(struct crt_grp_priv *grp_priv, uint32_t grp_ver,
 		live_ranks = grp_priv_get_live_ranks(grp_priv);
 		membs = grp_priv_get_membs(grp_priv);
 
-		/* Note: In PMIX case liver_ranks/membs contain primary ranks */
+		/* Note: In PMIX case live_ranks/membs contain primary ranks */
 		root = crt_grp_priv_get_primary_rank(grp_priv, root);
 		self = crt_grp_priv_get_primary_rank(grp_priv, self);
 	} else {
