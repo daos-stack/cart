@@ -972,8 +972,7 @@ forward_done:
 		rc = crt_rpc_common_hdlr(rpc_priv);
 		if (rc != 0) {
 			RPC_ERROR(rpc_priv,
-				  "crt_rpc_common_hdlr failed, rc: %d\n",
-				  rc);
+				  "crt_rpc_common_hdlr failed, rc: %d\n", rc);
 			crt_corpc_fail_parent_rpc(rpc_priv, rc);
 		}
 	}
