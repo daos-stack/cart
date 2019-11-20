@@ -183,6 +183,14 @@ parse_options(int argc, char *argv[])
 	}
 }
 
+int my_func1(crt_context_t ctx, crt_rpc_t *rpc, void (rpc_handler)(void *), void *arg) {
+	printf("Hello from MY FUNC \n");
+return -1;
+//>> -- here you can return -1 to trigger scenario that liwei is describing in the bug
+//rpc_handler(rpc);
+
+//return 0;
+}
 static crt_group_t	*tier2_grp;
 bool			 should_rm_tier1_attach_info;
 
@@ -213,6 +221,9 @@ echo_init(int server, bool tier2)
 
 	rc = crt_context_create(&gecho.crt_ctx);
 	assert(rc == 0);
+	
+//	rc = crt_context_register_rpc_task(gecho.crt_ctx, (crt_rpc_task_t)my_func1, NULL);
+//	D_ASSERTF(rc == 0, "crt_context_register_rpc_task() failed. rc: %d\n", rc);
 
 	if (server != 0 && tier2 == false && gecho.singleton_test) {
 		printf("Saving singleton attach info\n");
@@ -241,6 +252,8 @@ echo_init(int server, bool tier2)
 		for (i = 0; i < ECHO_EXTRA_CONTEXT_NUM; i++) {
 			rc = crt_context_create(&gecho.extra_ctx[i]);
 			assert(rc == 0);
+//			rc = crt_context_register_rpc_task(gecho.extra_ctx[i], (crt_rpc_task_t)my_func1, NULL);
+//			D_ASSERTF(rc == 0, "crt_context_register_rpc_task() failed. rc: %d\n", rc);
 		}
 	}
 

@@ -20,9 +20,9 @@ hosts: !mux
   hosts_1:
     config: one_node
     srv:
-       - boro-A
+       - boro-71
     cli:
-       - boro-A
+       - boro-71
 tests: !mux
   proto:
     name: proto_basic
@@ -40,11 +40,11 @@ tests: !mux
     srv_bin: tests/crt_echo_srv
     srv_arg: ""
     srv_env: ""
-    srv_ppn: "1"
+    srv_ppn: "5"
     cli_bin: tests/crt_echo_cli
     cli_arg: ""
     cli_env: ""
-    cli_ppn: "1"
+    cli_ppn: "5"
   test_group:
     name: test_group_basic
     srv_bin: tests/test_group

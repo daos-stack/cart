@@ -638,6 +638,10 @@ static inline bool
 crt_rpc_cb_customized(struct crt_context *crt_ctx,
 		      crt_rpc_t *rpc_pub)
 {
+	/* Do not use custom cb in case of SWIM. */
+	if (rpc_pub->cr_opc & 0xFE000000U)
+		return false;
+
 	return crt_ctx->cc_rpc_cb != NULL;
 }
 
