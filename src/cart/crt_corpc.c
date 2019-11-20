@@ -979,7 +979,10 @@ forward_done:
 		if (rc != 0) {
 			RPC_ERROR(rpc_priv,
 				  "crt_rpc_common_hdlr failed, rc: %d\n", rc);
-			crt_corpc_fail_parent_rpc(rpc_priv, rc);
+			crt_corpc_fail_child_rpc(rpc_priv, 1, rc);
+
+			/* Aggregation logic will return proper rc */
+			rc = 0;
 		}
 	}
 
