@@ -213,7 +213,6 @@ echo_init(int server, bool tier2)
 
 	rc = crt_context_create(&gecho.crt_ctx);
 	assert(rc == 0);
-	
 
 	if (server != 0 && tier2 == false && gecho.singleton_test) {
 		printf("Saving singleton attach info\n");
