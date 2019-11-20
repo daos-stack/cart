@@ -37,6 +37,7 @@
  *
  * This is a simple example of cart rpc group test based on crt API.
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -323,14 +324,6 @@ static struct crt_proto_format my_proto_fmt_test_group2 = {
 	.cpf_base = TEST_GROUP_BASE,
 };
 
-int my_func(crt_context_t ctx, crt_rpc_t *rpc, void (rpc_handler)(void *), void *arg) {
-	printf("Hello from MY FUNC \n");
-return -1;
-//>> -- here you can return -1 to trigger scenario that liwei is describing in the bug
-//rpc_handler(rpc);
-
-//return 0;
-}
 void
 test_init(void)
 {
@@ -385,9 +378,6 @@ test_init(void)
 		test_g.t_thread_id[i] = i;
 		rc = crt_context_create(&test_g.t_crt_ctx[i]);
 		D_ASSERTF(rc == 0, "crt_context_create() failed. rc: %d\n", rc);
-		rc = crt_context_register_rpc_task(test_g.t_crt_ctx[i], (crt_rpc_task_t)my_func, NULL);
-		D_ASSERTF(rc == 0, "crt_context_register_rpc_task() failed. rc: %d\n", rc);
-
 		rc = pthread_create(&test_g.t_tid[i], NULL, progress_thread,
 				    &test_g.t_thread_id[i]);
 		D_ASSERTF(rc == 0, "pthread_create() failed. rc: %d\n", rc);
