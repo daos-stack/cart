@@ -517,7 +517,6 @@ corpc_add_child_rpc(struct crt_rpc_priv *parent_rpc_priv,
 	co_info = parent_rpc_priv->crp_corpc_info;
 
 	RPC_ADDREF(child_rpc_priv);
-	RPC_ADDREF(parent_rpc_priv);
 
 	D_SPIN_LOCK(&parent_rpc_priv->crp_lock);
 	d_list_add_tail(&child_rpc_priv->crp_parent_link,
@@ -537,7 +536,6 @@ corpc_del_child_rpc_locked(struct crt_rpc_priv *parent_rpc_priv,
 	d_list_del_init(&child_rpc_priv->crp_parent_link);
 	/* decref corresponds to the addref in corpc_add_child_rpc */
 	RPC_DECREF(child_rpc_priv);
-	RPC_DECREF(parent_rpc_priv);
 }
 
 static inline void
@@ -787,6 +785,10 @@ aggregate_done:
 	}
 
 out:
+	if (parent_rpc_priv != child_rpc_priv) {
+		/* Corresponding ADDREF done before crt_req_send() */
+		RPC_DECREF(parent_rpc_priv);
+	}
 	return;
 }
 
@@ -927,15 +929,19 @@ crt_corpc_req_hdlr(struct crt_rpc_priv *rpc_priv)
 
 		child_rpc_priv = container_of(child_rpc, struct crt_rpc_priv,
 					      crp_pub);
+
 		corpc_add_child_rpc(rpc_priv, child_rpc_priv);
 
 		child_rpc_priv->crp_grp_priv = co_info->co_grp_priv;
 
+		RPC_ADDREF(rpc_priv);
 		rc = crt_req_send(child_rpc, crt_corpc_reply_hdlr, rpc_priv);
 		if (rc != 0) {
 			RPC_ERROR(rpc_priv,
 				  "crt_req_send failed, tgt_ep: %d, rc: %d\n",
 				  tgt_ep.ep_rank, rc);
+			RPC_DECREF(rpc_priv);
+
 			/*
 			 * in the case of failure, the crt_corpc_reply_hdlr
 			 * will be called for this child_rpc, so just need
