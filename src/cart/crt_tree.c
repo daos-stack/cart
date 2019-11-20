@@ -241,7 +241,7 @@ crt_tree_get_children(struct crt_grp_priv *grp_priv, uint32_t grp_ver,
 		if (*ver_match == false) {
 			D_ERROR("Version mismatch. Passed: %u current:%u\n",
 				grp_ver, default_grp_priv->gp_membs_ver);
-			D_GOTO(out, rc = -DER_MISMATCH);
+			D_GOTO(out, rc = -DER_GRPVER);
 		}
 	}
 
