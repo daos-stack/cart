@@ -378,9 +378,9 @@ tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 	D_ASSERTF(rc == 0, "d_log_init failed, rc=%d\n", rc);
 
 	if (use_init_opt) {
-                rc = crt_init_opt(local_group_name, CRT_FLAG_BIT_SINGLETON |
-                              CRT_FLAG_BIT_PMIX_DISABLE |
-                              CRT_FLAG_BIT_LM_DISABLE, init_opt);
+		rc = crt_init_opt(local_group_name, CRT_FLAG_BIT_SINGLETON |
+				  CRT_FLAG_BIT_PMIX_DISABLE |
+				  CRT_FLAG_BIT_LM_DISABLE, init_opt);
 	} else {
 		rc = crt_init(local_group_name, CRT_FLAG_BIT_SINGLETON |
 			      CRT_FLAG_BIT_PMIX_DISABLE |
