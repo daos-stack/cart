@@ -172,16 +172,19 @@ test_run()
 		D_ASSERTF(rc == 0, "crt_req_send() failed; rc=%d\n", rc);
 	}
 
-	g_shutdown = 1;
-
-	rc = pthread_join(test.tg_tid, NULL);
-	D_ASSERTF(rc == 0, "pthread_join failed. rc: %d\n", rc);
-	D_DEBUG(DB_TRACE, "joined progress thread.\n");
+	D_FREE(rank_list->rl_ranks);
+	D_FREE(rank_list);
 
 	if (test.tg_save_cfg) {
 		rc = crt_group_detach(grp);
 		D_ASSERTF(rc == 0, "crt_group_detach failed, rc: %d\n", rc);
 	}
+
+	g_shutdown = 1;
+
+	rc = pthread_join(test.tg_tid, NULL);
+	D_ASSERTF(rc == 0, "pthread_join failed. rc: %d\n", rc);
+	D_DEBUG(DB_TRACE, "joined progress thread.\n");
 
 	rc = sem_destroy(&test.tg_token_to_proceed);
 	D_ASSERTF(rc == 0, "sem_destroy() failed.\n");
