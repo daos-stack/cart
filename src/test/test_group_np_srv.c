@@ -53,13 +53,12 @@ void
 test_run(d_rank_t my_rank)
 {
 	crt_group_t		*grp = NULL;
-	crt_init_options_t	 opt = {0};
 	uint32_t		 grp_size;
 	int			 i;
 	int			 rc = 0;
 
 	tc_srv_start_basic(test_g.t_local_group_name, &test_g.t_crt_ctx[0],
-			   &test_g.t_tid[0], grp, &grp_size, &opt, false);
+			   &test_g.t_tid[0], grp, &grp_size, NULL);
 
 	rc = sem_init(&test_g.t_token_to_proceed, 0, 0);
 	D_ASSERTF(rc == 0, "sem_init() failed.\n");

@@ -365,7 +365,7 @@ tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 		   crt_group_t **grp, d_rank_list_t **rank_list,
 		   crt_context_t *crt_ctx, pthread_t *progress_thread,
 		   unsigned int total_srv_ctx, bool use_cfg,
-		   crt_init_options_t *init_opt, bool use_init_opt)
+		   crt_init_options_t *init_opt)
 {
 	char		*grp_cfg_file;
 	uint32_t	 grp_size;
@@ -377,7 +377,7 @@ tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 	rc = d_log_init();
 	D_ASSERTF(rc == 0, "d_log_init failed, rc=%d\n", rc);
 
-	if (use_init_opt) {
+	if (init_opt) {
 		rc = crt_init_opt(local_group_name, CRT_FLAG_BIT_SINGLETON |
 				  CRT_FLAG_BIT_PMIX_DISABLE |
 				  CRT_FLAG_BIT_LM_DISABLE, init_opt);
@@ -445,8 +445,7 @@ tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 void
 tc_srv_start_basic(char *srv_group_name, crt_context_t *crt_ctx,
 		   pthread_t *progress_thread, crt_group_t *grp,
-		   uint32_t *grp_size, crt_init_options_t *init_opt,
-		   bool use_init_opt)
+		   uint32_t *grp_size, crt_init_options_t *init_opt)
 {
 	char		*env_self_rank;
 	char		*grp_cfg_file;
@@ -462,7 +461,7 @@ tc_srv_start_basic(char *srv_group_name, crt_context_t *crt_ctx,
 	rc = d_log_init();
 	D_ASSERT(rc == 0);
 
-	if (use_init_opt) {
+	if (init_opt) {
 		rc = crt_init_opt(srv_group_name, CRT_FLAG_BIT_SERVER |
 				  CRT_FLAG_BIT_PMIX_DISABLE |
 				  CRT_FLAG_BIT_LM_DISABLE, init_opt);

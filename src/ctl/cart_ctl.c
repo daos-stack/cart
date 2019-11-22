@@ -496,7 +496,6 @@ static int
 ctl_init()
 {
 	int			 i;
-	crt_init_options_t	 opt = {0};
 	crt_rpc_t		*rpc_req;
 	crt_endpoint_t		 ep;
 	struct cb_info		 info;
@@ -511,8 +510,7 @@ ctl_init()
 
 	tc_cli_start_basic("crt_ctl", ctl_gdata.cg_group_name, &grp,
 			    &rank_list, &ctl_gdata.cg_crt_ctx,
-			    &ctl_gdata.cg_tid, 1, ctl_gdata.cg_save_cfg,
-			    &opt, false);
+			    &ctl_gdata.cg_tid, 1, ctl_gdata.cg_save_cfg, NULL);
 
 	rc = sem_init(&ctl_gdata.cg_num_reply, 0, 0);
 	D_ASSERTF(rc == 0, "Could not initialize semaphore. rc %d\n", rc);

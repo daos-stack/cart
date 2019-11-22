@@ -58,7 +58,6 @@ test_run(void)
 	int			 tag;
 	crt_endpoint_t		 server_ep = {0};
 	crt_rpc_t		*rpc_req = NULL;
-	crt_init_options_t	 opt = {0};
 	int			 i;
 	int			 rc = 0;
 
@@ -71,7 +70,7 @@ test_run(void)
 			   test_g.t_remote_group_name,
 			   &grp, &rank_list, &test_g.t_crt_ctx[0],
 			   &test_g.t_tid[0], test_g.t_srv_ctx_num,
-			   test_g.t_save_cfg, &opt, false);
+			   test_g.t_save_cfg, NULL);
 
 	rc = sem_init(&test_g.t_token_to_proceed, 0, 0);
 	D_ASSERTF(rc == 0, "sem_init() failed.\n");
