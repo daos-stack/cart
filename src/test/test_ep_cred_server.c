@@ -89,7 +89,7 @@ test_run(d_rank_t my_rank)
 	D_ASSERTF(rc == 0, "crt_finalize() failed. rc: %d\n", rc);
 
 	d_log_fini();
-	D_DEBUG(DB_TRACE, "exiting.\n");
+	DBG_PRINT("exiting.\n");
 }
 
 int
