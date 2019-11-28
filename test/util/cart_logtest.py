@@ -75,6 +75,20 @@ WARN_FUNCTIONS = ['crt_grp_lc_addr_insert',
 # error lines.
 shown_logs = set()
 
+# List of known free locations where there may be a mismatch, this is a
+# dict of functions, each with a unordered list of variables that are
+# freed by the function.
+# Typically this is where memory is allocated in one file, and freed in
+# another.
+mismatch_free_ok = {'crt_plugin_fini': ('timeout_cb_priv',
+                                        'cb_priv',
+                                        'prog_cb_priv',
+                                        'event_cb_priv'),
+                    'crt_finalize': ('crt_gdata.cg_addr'),
+                    'crt_rpc_priv_free': ('rpc_priv'),
+                    'crt_grp_priv_destroy': ('grp_priv->gp_pub.cg_grpid'),
+                    'crt_init_opt': ('crt_gdata.cg_addr')}
+
 def show_line(line, sev, msg):
     """Output a log line in gcc error format"""
 
@@ -113,6 +127,8 @@ class hwm_counter():
 
     def add(self, val):
         """Add a value"""
+        if val < 0:
+            return
         self.__val += val
         if self.__val > self.__hwm:
             self.__hwm = self.__val
@@ -120,6 +136,8 @@ class hwm_counter():
 
     def subtract(self, val):
         """Subtract a value"""
+        if val < 0:
+            return
         self.__val -= val
         self.__fcount += 1
 
@@ -170,19 +188,6 @@ class LogTest():
         memsize = hwm_counter()
 
         error_files = set()
-
-        # List of known free locations where there may be a mismatch, this is a
-        # dict of functions, each with a unordered list of variables that are
-        # freed by the function.
-        # Typically this is where memory is allocated in one file, and freed in
-        # another.
-        mismatch_free_ok = {'crt_plugin_fini': ('timeout_cb_priv',
-                                                'cb_priv',
-                                                'prog_cb_priv',
-                                                'event_cb_priv'),
-                            'crt_finalize': ('crt_gdata.cg_addr'),
-                            'crt_rpc_priv_free': ('rpc_priv'),
-                            'crt_init_opt': ('crt_gdata.cg_addr')}
 
         have_debug = False
 
@@ -257,16 +262,24 @@ class LogTest():
                         # There's something about this particular function
                         # that makes it very slow at logging output.
                         show_line(line, 'error', 'inactive desc')
+                        if line.descriptor in regions:
+                            show_line(regions[line.descriptor], 'error',
+                                      'Used as descriptor without registering')
                         error_files.add(line.filename)
                         err_count += 1
             else:
                 non_trace_lines += 1
                 if line.is_calloc():
                     pointer = line.get_field(-1).rstrip('.')
+                    if pointer in regions:
+                        show_line(regions[pointer], 'error', 'new allocation seen for same pointer')
                     regions[pointer] = line
                     memsize.add(line.calloc_size())
                 elif line.is_free():
                     pointer = line.get_field(-1).rstrip('.')
+                    # If a pointer is freed then automatically remove the descriptor
+                    if pointer in active_desc:
+                        del active_desc[pointer]
                     if pointer in regions:
                         if line.mask != regions[pointer].mask:
                             var = line.get_field(3).strip("'")
@@ -322,9 +335,12 @@ class LogTest():
         # once this is stable.
         lost_memory = False
         for (_, line) in regions.items():
-            if line.function == 'initialize_projection':
-                continue
-            show_line(line, 'error', 'memory not freed')
+            pointer = line.get_field(-1).rstrip('.')
+            if pointer in active_desc:
+                show_line(line, 'error', 'descriptor not freed')
+                del active_desc[pointer]
+            else:
+                show_line(line, 'error', 'memory not freed')
             lost_memory = True
 
         if active_desc:
