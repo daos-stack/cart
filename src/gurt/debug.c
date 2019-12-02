@@ -306,6 +306,9 @@ debug_mask_load(const char *mask_name)
 	struct d_debug_bit	*d;
 	struct d_debug_grp	*g;
 
+	/** Must not use D_ macros internally to avoid caching log mask
+	 *  during mask resync
+	 */
 	mask_str = strndup(mask_name, DBG_ENV_MAX_LEN);
 	if (mask_str == NULL) {
 		D_PRINT_ERR("D_STRNDUP of debug mask failed");
@@ -342,6 +345,9 @@ debug_mask_load(const char *mask_name)
 		}
 		cur = strtok(NULL, DD_SEP);
 	}
+	/** Must not use D_ macros internally to avoid caching log mask
+	 *  during mask resync
+	 */
 	free(mask_str);
 }
 
@@ -567,7 +573,6 @@ out:
 		D_PRINT_ERR("ddebug_init failed, rc: %d.\n", rc);
 		d_log_refcount--;
 	}
-
 	D_MUTEX_UNLOCK(&d_log_lock);
 	return rc;
 }
