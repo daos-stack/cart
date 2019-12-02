@@ -355,6 +355,10 @@ class StateIter():
                 del self.active_desc[line.descriptor]
 
         return line
+
+    def next(self):
+        return self.__next__()
+
 # pylint: disable=too-many-branches
 
 # pylint: disable=too-few-public-methods
