@@ -51,6 +51,7 @@
 #include "tests_common.h"
 
 static int g_do_shutdown;
+static int g_ret_code;
 
 #define MY_BASE 0x010000000
 #define MY_VER  0
@@ -62,18 +63,17 @@ static int g_do_shutdown;
 	CRT_RPC_DEFINE(name, CRT_ISEQ_##name, CRT_OSEQ_##name)
 
 enum {
-	RPC_SET_VERSION = CRT_PROTO_OPC(MY_BASE, MY_VER, 0),
+	RPC_SET_ERR_CODE = CRT_PROTO_OPC(MY_BASE, MY_VER, 0),
 	CORPC_TEST,
 	RPC_SHUTDOWN
 } rpc_id_t;
 
 
-#define CRT_ISEQ_RPC_SET_VERSION	/* input fields */	\
-	((d_string_t)		(grp)		CRT_VAR)	\
-	((uint32_t)		(version)	CRT_VAR)	\
+#define CRT_ISEQ_RPC_SET_ERR_CODE/* input fields */		\
+	((int)			(err_code)	CRT_VAR)	\
 	((uint32_t)		(pad1)		CRT_VAR)
 
-#define CRT_OSEQ_RPC_SET_VERSION	/* output fields */	\
+#define CRT_OSEQ_RPC_SET_ERR_CODE /* output fields */		\
 	((uint64_t)		(field)			CRT_VAR)
 
 #define CRT_ISEQ_RPC_SHUTDOWN	/* input fields */		 \
@@ -89,7 +89,7 @@ enum {
 	((uint64_t)		(field)			CRT_VAR)
 
 
-RPC_DECLARE(RPC_SET_VERSION);
+RPC_DECLARE(RPC_SET_ERR_CODE);
 RPC_DECLARE(RPC_SHUTDOWN);
 RPC_DECLARE(CORPC_TEST);
 
@@ -102,27 +102,12 @@ handler_corpc_test(crt_rpc_t *rpc)
 }
 
 static int
-handler_set_version(crt_rpc_t *rpc)
+handler_set_err_code(crt_rpc_t *rpc)
 {
-	struct RPC_SET_VERSION_in	*input;
-	crt_group_t			*grp;
-	int				rc;
+	struct RPC_SET_ERR_CODE_in	*input;
 
 	input = crt_req_get(rpc);
-
-	grp = crt_group_lookup(input->grp);
-
-	if (grp == NULL) {
-		D_ERROR("Unknown group '%s'\n", input->grp);
-		assert(0);
-	}
-
-	rc = crt_group_version_set(grp, input->version);
-	if (rc != 0) {
-		D_ERROR("Failed to set version %d on group '%s'; rc=%d\n",
-			input->version, input->grp, rc);
-		assert(0);
-	}
+	g_ret_code = input->err_code;
 
 	crt_reply_send(rpc);
 	return 0;
@@ -159,8 +144,8 @@ struct crt_corpc_ops corpc_test_ops = {
 struct crt_proto_rpc_format my_proto_rpc_fmt[] = {
 	{
 		.prf_flags	= 0,
-		.prf_req_fmt	= &CQF_RPC_SET_VERSION,
-		.prf_hdlr	= (void *)handler_set_version,
+		.prf_req_fmt	= &CQF_RPC_SET_ERR_CODE,
+		.prf_hdlr	= (void *)handler_set_err_code,
 		.prf_co_ops	= NULL,
 	}, {
 		.prf_flags	= 0,
@@ -258,11 +243,28 @@ verify_corpc(crt_context_t ctx, crt_group_t *grp, int exp_rc)
 	DBG_PRINT("<<< Test finished successfully\n");
 }
 
-static void
-set_group_version(crt_context_t ctx, crt_group_t *grp,
-		int rank, uint32_t version)
+static int
+rpc_callback(crt_context_t *ctx, crt_rpc_t *rpc,
+	void (*rpc_hdlr)(void *), void *arg)
 {
-	struct RPC_SET_VERSION_in	*input;
+	if (rpc->cr_opc != CORPC_TEST) {
+		rpc_hdlr(rpc);
+		return 0;
+	}
+
+	if (g_ret_code == 0) {
+		rpc_hdlr(rpc);
+		return 0;
+	}
+
+	return g_ret_code;
+}
+
+static void
+set_error(crt_context_t ctx, crt_group_t *grp,
+		int rank, int error_code)
+{
+	struct RPC_SET_ERR_CODE_in	*input;
 	crt_rpc_t			*rpc;
 	crt_endpoint_t			server_ep;
 	struct corpc_wait_info		wait_info;
@@ -278,15 +280,14 @@ set_group_version(crt_context_t ctx, crt_group_t *grp,
 	server_ep.ep_rank = rank;
 	server_ep.ep_tag = 0;
 
-	rc = crt_req_create(ctx, &server_ep, RPC_SET_VERSION, &rpc);
+	rc = crt_req_create(ctx, &server_ep, RPC_SET_ERR_CODE, &rpc);
 	if (rc != 0) {
-		D_ERROR("SET_VERSION rpc failed; rc=%d\n", rc);
+		D_ERROR("SET_ERR_CODE rpc failed; rc=%d\n", rc);
 		assert(0);
 	}
 
 	input = crt_req_get(rpc);
-	input->version = version;
-	input->grp = grp->cg_grpid;
+	input->err_code = error_code;
 
 	rc = crt_req_send(rpc, rpc_handle_reply, &wait_info);
 	if (rc != 0) {
@@ -303,7 +304,7 @@ int main(int argc, char **argv)
 	crt_group_t		*grp;
 	crt_context_t		crt_ctx[NUM_SERVER_CTX];
 	pthread_t		progress_thread[NUM_SERVER_CTX];
-	int			i;
+	int			i, k;
 	char			*my_uri;
 	char			*env_self_rank;
 	d_rank_t		my_rank;
@@ -357,6 +358,13 @@ int main(int argc, char **argv)
 		rc = pthread_create(&progress_thread[i], 0,
 				progress_function, &crt_ctx[i]);
 		assert(rc == 0);
+
+		rc = crt_context_register_rpc_task(crt_ctx[i],
+				rpc_callback, NULL);
+		if (rc != 0) {
+			D_ERROR("register_rpc_task failed; rc=%d\n", rc);
+			assert(0);
+		}
 	}
 
 	grp_cfg_file = getenv("CRT_L_GRP_CFG");
@@ -471,43 +479,16 @@ int main(int argc, char **argv)
 		assert(0);
 	}
 
-	/* TEST1: Set all ranks sec_grp1 and grp to version 0x1 */
-	for (i = 0; i < s_list->rl_nr; i++) {
-		set_group_version(crt_ctx[1], grp,
-				p_list->rl_ranks[i], 0x1);
-		set_group_version(crt_ctx[1], sec_grp1,
-				s_list->rl_ranks[i], 0x1);
+	for (k = 1; k < p_list->rl_nr; k++) {
+		DBG_PRINT("TEST_%d: Setting node %d to return error\n", k,
+			p_list->rl_ranks[k]);
+		for (i = 0; i < p_list->rl_nr; i++)
+			set_error(crt_ctx[1], grp, p_list->rl_ranks[i],
+				DER_SUCCESS);
+
+		set_error(crt_ctx[1], grp, p_list->rl_ranks[k], -2022);
+		verify_corpc(crt_ctx[1], grp, -2022);
 	}
-	verify_corpc(crt_ctx[1], sec_grp1, DER_SUCCESS);
-	verify_corpc(crt_ctx[1], grp, DER_SUCCESS);
-
-	/* TEST2: Set local sec_grp1 to version 0x123 */
-	crt_group_version_set(sec_grp1, 0x123);
-	verify_corpc(crt_ctx[1], sec_grp1, -DER_GRPVER);
-
-	/* TEST3: Verify primary group 'grp' is still matching versions */
-	verify_corpc(crt_ctx[1], grp, DER_SUCCESS);
-
-	/* TEST4: Set 'sec_grp1' versions on all nodes to 0x123 */
-	for (i = 0; i < s_list->rl_nr; i++) {
-		set_group_version(crt_ctx[1], sec_grp1,
-				s_list->rl_ranks[i], 0x123);
-	}
-	verify_corpc(crt_ctx[1], sec_grp1, DER_SUCCESS);
-
-	/* TEST5: Set 'sec_grp1' rank 5 to version 0x124 */
-	set_group_version(crt_ctx[1], sec_grp1,
-			s_list->rl_ranks[5], 0x124);
-	verify_corpc(crt_ctx[1], sec_grp1, -DER_GRPVER);
-
-	/* TEST6: Set all ranks 'grp' to version 0x2; 7th rank to 0x3 */
-	for (i = 0; i < p_list->rl_nr; i++) {
-		set_group_version(crt_ctx[1], grp,
-				p_list->rl_ranks[i], 0x2);
-	}
-	set_group_version(crt_ctx[1], grp, p_list->rl_ranks[7], 0x3);
-	verify_corpc(crt_ctx[1], grp, -DER_GRPVER);
-
 
 	/* Send shutdown RPC to all nodes except for self */
 	DBG_PRINT("Senidng shutdown to all nodes\n");

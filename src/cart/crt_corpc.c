@@ -781,6 +781,10 @@ aggregate_done:
 	}
 
 out:
+	if (parent_rpc_priv != child_rpc_priv) {
+		/* Corresponding ADDREF done before crt_req_send() */
+		RPC_DECREF(parent_rpc_priv);
+	}
 	return;
 }
 
@@ -859,12 +863,11 @@ crt_corpc_req_hdlr(struct crt_rpc_priv *rpc_priv)
 
 	if (!ver_match) {
 		D_INFO("parent version and local version mismatch.\n");
-		rc = -DER_MISMATCH;
+		rc = -DER_GRPVER;
 		co_info->co_child_num = 0;
 		crt_corpc_fail_parent_rpc(rpc_priv, rc);
 		D_GOTO(forward_done, rc);
 	}
-
 
 	/* firstly forward RPC to children if any */
 	for (i = 0; i < co_info->co_child_num; i++) {
@@ -921,15 +924,19 @@ crt_corpc_req_hdlr(struct crt_rpc_priv *rpc_priv)
 
 		child_rpc_priv = container_of(child_rpc, struct crt_rpc_priv,
 					      crp_pub);
+
 		corpc_add_child_rpc(rpc_priv, child_rpc_priv);
 
 		child_rpc_priv->crp_grp_priv = co_info->co_grp_priv;
 
+		RPC_ADDREF(rpc_priv);
 		rc = crt_req_send(child_rpc, crt_corpc_reply_hdlr, rpc_priv);
 		if (rc != 0) {
 			RPC_ERROR(rpc_priv,
 				  "crt_req_send failed, tgt_ep: %d, rc: %d\n",
 				  tgt_ep.ep_rank, rc);
+			RPC_DECREF(rpc_priv);
+
 			/*
 			 * in the case of failure, the crt_corpc_reply_hdlr
 			 * will be called for this child_rpc, so just need
@@ -964,10 +971,24 @@ forward_done:
 		crt_corpc_reply_hdlr(&cb_info);
 	} else {
 		rc = crt_rpc_common_hdlr(rpc_priv);
-		if (rc != 0)
+		if (rc != 0) {
 			RPC_ERROR(rpc_priv,
-				  "crt_rpc_common_hdlr failed, rc: %d\n",
-				  rc);
+				  "crt_rpc_common_hdlr failed, rc: %d\n", rc);
+			crt_corpc_fail_child_rpc(rpc_priv, 1, rc);
+
+			D_SPIN_LOCK(&rpc_priv->crp_lock);
+			co_info->co_local_done = 1;
+			rpc_priv->crp_reply_pending = 0;
+			D_SPIN_UNLOCK(&rpc_priv->crp_lock);
+
+			/* Handle ref count difference between call on root vs
+			 * call on intermediate nodes
+			 */
+			if (co_info->co_root != co_info->co_grp_priv->gp_self)
+				RPC_DECREF(rpc_priv);
+
+			rc = 0;
+		}
 	}
 
 
