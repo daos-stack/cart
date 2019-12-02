@@ -127,19 +127,19 @@ class hwm_counter():
 
     def add(self, val):
         """Add a value"""
+        self.__acount += 1
         if val < 0:
             return
         self.__val += val
         if self.__val > self.__hwm:
             self.__hwm = self.__val
-        self.__acount += 1
 
     def subtract(self, val):
         """Subtract a value"""
+        self.__fcount += 1
         if val < 0:
             return
         self.__val -= val
-        self.__fcount += 1
 
 #pylint: disable=too-many-statements
 #pylint: disable=too-many-locals
