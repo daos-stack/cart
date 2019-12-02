@@ -306,7 +306,7 @@ debug_mask_load(const char *mask_name)
 	struct d_debug_bit	*d;
 	struct d_debug_grp	*g;
 
-	D_STRNDUP(mask_str, mask_name, DBG_ENV_MAX_LEN);
+	mask_str = strndup(mask_name, DBG_ENV_MAX_LEN);
 	if (mask_str == NULL) {
 		D_PRINT_ERR("D_STRNDUP of debug mask failed");
 		return;
@@ -342,7 +342,7 @@ debug_mask_load(const char *mask_name)
 		}
 		cur = strtok(NULL, DD_SEP);
 	}
-	D_FREE(mask_str);
+	free(mask_str);
 }
 
 /**
@@ -567,6 +567,7 @@ out:
 		D_PRINT_ERR("ddebug_init failed, rc: %d.\n", rc);
 		d_log_refcount--;
 	}
+
 	D_MUTEX_UNLOCK(&d_log_lock);
 	return rc;
 }
