@@ -211,6 +211,9 @@ crt_proc_d_string_t(crt_proc_t proc, d_string_t *data)
 
 	proc_op = hg_proc_get_op(proc);
 
+	if (proc_op == HG_FREE)
+		D_DEBUG(DB_MEM, "free '*data' at %p.\n", (*data));
+
 	hg_ret = hg_proc_hg_string_t(proc, data);
 
 	if (proc_op == HG_DECODE)
@@ -228,6 +231,9 @@ crt_proc_d_const_string_t(crt_proc_t proc, d_const_string_t *data)
 	proc_op = hg_proc_get_op(proc);
 
 	char **d2 = (char **)data;
+
+	if (proc_op == HG_FREE)
+		D_DEBUG(DB_MEM, "free '*data' at %p.\n", (*d2));
 
 	hg_ret = hg_proc_hg_const_string_t(proc, data);
 
