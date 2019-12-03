@@ -86,7 +86,8 @@ mismatch_free_ok = {'crt_plugin_fini': ('timeout_cb_priv',
                                         'event_cb_priv'),
                     'crt_finalize': ('crt_gdata.cg_addr'),
                     'crt_rpc_priv_free': ('rpc_priv'),
-                    'crt_grp_priv_destroy': ('grp_priv->gp_pub.cg_grpid'),
+                    'crt_grp_priv_destroy': ('grp_priv->gp_pub.cg_grpid',
+                                             'grp_priv->gp_psr_phy_addr'),
                     'crt_init_opt': ('crt_gdata.cg_addr')}
 
 def show_line(line, sev, msg):
@@ -273,6 +274,7 @@ class LogTest():
                     pointer = line.get_field(-1).rstrip('.')
                     if pointer in regions:
                         show_line(regions[pointer], 'error', 'new allocation seen for same pointer')
+                        err_count += 1
                     regions[pointer] = line
                     memsize.add(line.calloc_size())
                 elif line.is_free():
@@ -291,15 +293,18 @@ class LogTest():
                                           'mask mismatch in alloc/free')
                                 show_line(line, 'warning',
                                           'mask mismatch in alloc/free')
+                                err_count += 1
                         if line.level != regions[pointer].level:
                             show_line(regions[pointer], 'warning',
                                       'level mismatch in alloc/free')
                             show_line(line, 'warning',
                                       'level mismatch in alloc/free')
+                            err_count += 1
                         memsize.subtract(regions[pointer].calloc_size())
                         del regions[pointer]
                     elif pointer != '(nil)':
                         show_line(line, 'error', 'free of unknown memory')
+                        err_count += 1
                 elif line.is_realloc():
                     new_pointer = line.get_field(-3)
                     old_pointer = line.get_field(-1)[:-2].split(':')[-1]
@@ -313,6 +318,7 @@ class LogTest():
                         else:
                             show_line(line, 'error',
                                       'realloc of unknown memory')
+                            err_count += 1
 
         del active_desc['root']
 
