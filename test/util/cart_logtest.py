@@ -88,6 +88,7 @@ mismatch_free_ok = {'crt_plugin_fini': ('timeout_cb_priv',
                     'crt_rpc_priv_free': ('rpc_priv'),
                     'crt_grp_priv_destroy': ('grp_priv->gp_pub.cg_grpid',
                                              'grp_priv->gp_psr_phy_addr'),
+                    'crt_hdlr_uri_lookup': ('tmp_uri'),
                     'crt_init_opt': ('crt_gdata.cg_addr')}
 
 def show_line(line, sev, msg):
