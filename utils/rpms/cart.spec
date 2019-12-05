@@ -1,7 +1,7 @@
 %define carthome %{_exec_prefix}/lib/%{name}
 
 Name:          cart
-Version:       3.1.0
+Version:       3.2.0
 Release:       3%{?relval}%{?dist}
 Summary:       CaRT
 
