@@ -14,7 +14,7 @@ BuildRequires: scons >= 2.4
 BuildRequires: libfabric-devel
 BuildRequires: pmix-devel
 BuildRequires: openpa-devel
-BuildRequires: mercury-devel < 1.0.1-22
+BuildRequires: mercury-devel = 1.0.1-21
 BuildRequires: ompi-devel
 BuildRequires: libevent-devel
 BuildRequires: boost-devel
@@ -52,7 +52,7 @@ Requires: %{name} = %{version}-%{release}
 Requires: libuuid-devel
 Requires: libyaml-devel
 Requires: boost-devel
-Requires: mercury-devel < 1.0.1-22
+Requires: mercury-devel = 1.0.1-21
 Requires: openpa-devel
 Requires: libfabric-devel
 # can't do this until we can land ompi@PR-10 and
@@ -140,7 +140,7 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %changelog
 * Thu Dec 5 2019 Alexander Oganezov <alexander.a.oganezov@intel.com> - 3.2.0-3
 - Libcart version 3.2.0-3
-- Restrict mercury to be < 1.0.1-22
+- Restrict mercury to be = 1.0.1-21
 
 * Tue Dec 3 2019 Alexander Oganezov <alexander.a.oganezov@intel.com> - 3.2.0-2
 - Libcart version 3.2.0-2
