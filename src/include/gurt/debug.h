@@ -138,16 +138,30 @@ extern void (*d_alt_assert)(const int, const char*, const char*, const int);
 		_D_DEBUG(D_NOOP, flag);				\
 		__builtin_expect(DD_FLAG(flag, D_LOGFAC), 0);	\
 	})
-/**
- * New version of D_DEBUG which utilizes the facility cache to optimize
- * both negative and postive debug lookups
+
+/* Log a message conditionally upon resolving the mask
+ *
+ * The mask is combined with D_LOGFAC which the user should define before
+ * including debug headers
+ *
+ * \param mask	The debug bits or priority mask
+ * \param fmt	The format string to print
+ *
+ *  User should define D_LOGFAC for the file
  */
 #define D_DEBUG(flag, fmt, ...)				\
 	_D_DEBUG(_D_LOG_NOCHECK, flag, fmt, ##__VA_ARGS__)
 
-/**
- * New version of D_DEBUG which utilizes the facility cache to optimize
- * both negative and postive debug lookups
+/* Log a pointer value and message conditionally upon resolving the mask
+ *
+ * The mask is combined with D_LOGFAC which the user should define before
+ * including debug headers
+ *
+ * \param mask	The debug bits or priority mask
+ * \param ptr	A pointer value that is put into the message
+ * \param fmt	The format string to print
+ *
+ *  User should define D_LOGFAC for the file
  */
 #define D_TRACE_DEBUG(flag, ptr, fmt, ...)				\
 	_D_DEBUG(_D_TRACE_NOCHECK, flag, ptr, fmt, ##__VA_ARGS__)
