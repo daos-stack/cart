@@ -140,6 +140,7 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %changelog
 * Thu Dec 5 2019 Alexander Oganezov <alexander.a.oganezov@intel.com> - 3.2.0-3
 - Libcart version 3.2.0-3
+- Restrict mercury to be < 1.0.1-22
 
 * Tue Dec 3 2019 Alexander Oganezov <alexander.a.oganezov@intel.com> - 3.2.0-2
 - Libcart version 3.2.0-2
