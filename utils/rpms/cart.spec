@@ -14,7 +14,7 @@ BuildRequires: scons >= 2.4
 BuildRequires: libfabric-devel
 BuildRequires: pmix-devel
 BuildRequires: openpa-devel
-BuildRequires: mercury-devel = 1.0.1-21
+BuildRequires: mercury-devel = 1.0.1-21%{?dist}
 BuildRequires: ompi-devel
 BuildRequires: libevent-devel
 BuildRequires: boost-devel
@@ -52,7 +52,7 @@ Requires: %{name} = %{version}-%{release}
 Requires: libuuid-devel
 Requires: libyaml-devel
 Requires: boost-devel
-Requires: mercury-devel = 1.0.1-21
+Requires: mercury-devel = 1.0.1-21%{?dist}
 Requires: openpa-devel
 Requires: libfabric-devel
 # can't do this until we can land ompi@PR-10 and
