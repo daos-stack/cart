@@ -41,7 +41,7 @@ class CartGroupTiersThreeNodeTest(Test):
     """
     Runs basic CaRT group tier tests
 
-    :avocado: tags=all,group_tiers,three_node
+    #:avocado: tags=all,group_tiers,three_node
     """
     def setUp(self):
         """ Test setup """
@@ -57,7 +57,7 @@ class CartGroupTiersThreeNodeTest(Test):
         """
         Test CaRT group_tier
 
-        :avocado: tags=all,multi_tier,group_tiers,three_node
+        #:avocado: tags=all,multi_tier,group_tiers,three_node
         """
         urifile1 = self.utils.create_uri_file()
 

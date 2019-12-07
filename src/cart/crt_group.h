@@ -319,9 +319,6 @@ struct crt_lookup_item {
 
 /* structure of global group data */
 struct crt_grp_gdata {
-	/* PMIx related global data */
-	struct crt_pmix_gdata	*gg_pmix;
-
 	/* client-side primary group, only meaningful for client */
 	struct crt_grp_priv	*gg_cli_pri_grp;
 	/* server-side primary group */
@@ -336,8 +333,7 @@ struct crt_grp_gdata {
 	/* sub-grp list, only meaningful for server */
 	d_list_t		 gg_sub_grps;
 	/* some flags */
-	uint32_t		 gg_inited:1, /* all initialized */
-				 gg_pmix_inited:1; /* PMIx initialized */
+	uint32_t		 gg_inited:1; /* all initialized */
 	/* rwlock to protect above fields */
 	pthread_rwlock_t	 gg_rwlock;
 };

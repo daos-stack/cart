@@ -83,10 +83,6 @@ extern "C" {
  *                             crt_init().
  *
  * \return                     DER_SUCCESS on success, negative value if error
- *
- * \note crt_init_opt() is a collective call which means every caller process
- *       should make the call collectively, as now it will internally call
- *       PMIx_Fence.
  */
 int
 crt_init_opt(crt_group_id_t grpid, uint32_t flags, crt_init_options_t *opt);
@@ -103,10 +99,6 @@ crt_init_opt(crt_group_id_t grpid, uint32_t flags, crt_init_options_t *opt);
  * \param[in] flags            bit flags, see \ref crt_init_flag_bits.
  *
  * \return                     DER_SUCCESS on success, negative value if error
- *
- * \note crt_init() is a collective call which means every caller process
- *       should make the call collectively, as now it will internally call
- *       PMIx_Fence.
  */
 static inline int
 crt_init(crt_group_id_t grpid, uint32_t flags)
@@ -223,9 +215,6 @@ crt_context_num(int *ctx_num);
  *
  * \return                     DER_SUCCESS on success, negative value if error
  *
- * \note crt_finalize() is a collective call which means every caller process
- *       should make the call collectively, as now it will internally call
- *       PMIx_Fence.
  */
 int
 crt_finalize(void);
@@ -1565,7 +1554,6 @@ typedef void
 
 enum crt_event_source {
 	CRT_EVS_UNKNOWN,
-	CRT_EVS_PMIX,
 	CRT_EVS_SWIM,
 };
 
