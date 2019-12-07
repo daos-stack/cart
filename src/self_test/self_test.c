@@ -156,12 +156,15 @@ static int self_test_init(char *dest_name, crt_context_t *crt_ctx,
 			break;
 		sleep(1);
 	}
+
 	if (ret != 0) {
 		D_ERROR("crt_group_attach failed; ret = %d\n", ret);
 		return ret;
 	}
 	D_ASSERTF(*srv_grp != NULL,
 		  "crt_group_attach succeeded but returned group is NULL\n");
+
+	DBG_PRINT("Attached %s\n", dest_name);
 
 	g_shutdown_flag = 0;
 

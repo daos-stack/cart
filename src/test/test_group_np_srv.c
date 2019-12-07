@@ -66,15 +66,6 @@ test_run(d_rank_t my_rank)
 	test_g.t_fault_attr_1000 = d_fault_attr_lookup(1000);
 	test_g.t_fault_attr_5000 = d_fault_attr_lookup(5000);
 
-	if (test_g.t_save_cfg && my_rank == 0) {
-		rc = crt_group_config_path_set(test_g.t_cfg_path);
-		D_ASSERTF(rc == 0, "crt_group_config_path_set failed %d\n", rc);
-
-		rc = crt_group_config_save(NULL, true);
-		D_ASSERTF(rc == 0,
-			  "crt_group_config_save() failed. rc: %d\n", rc);
-	}
-
 	rc = crt_proto_register(&my_proto_fmt_test_group1);
 	D_ASSERTF(rc == 0, "crt_proto_register() failed. rc: %d\n",
 			rc);
@@ -87,6 +78,16 @@ test_run(d_rank_t my_rank)
 		D_ASSERTF(rc == 0, "pthread_create() failed. rc: %d\n", rc);
 	}
 
+	if (test_g.t_save_cfg && my_rank == 0) {
+		rc = crt_group_config_path_set(test_g.t_cfg_path);
+		D_ASSERTF(rc == 0, "crt_group_config_path_set failed %d\n", rc);
+
+		rc = crt_group_config_save(NULL, true);
+		D_ASSERTF(rc == 0,
+			  "crt_group_config_save() failed. rc: %d\n", rc);
+	}
+
+
 	if (test_g.t_hold)
 		sleep(test_g.t_hold_time);
 
@@ -97,6 +98,7 @@ test_run(d_rank_t my_rank)
 		D_DEBUG(DB_TEST, "joined progress thread.\n");
 	}
 
+	DBG_PRINT("Exiting server\n");
 	rc = sem_destroy(&test_g.t_token_to_proceed);
 	D_ASSERTF(rc == 0, "sem_destroy() failed.\n");
 
@@ -132,6 +134,7 @@ int main(int argc, char **argv)
 	/* rank, num_attach_retries, is_server, assert_on_error */
 	tc_test_init(my_rank, 20, true, true);
 
+	DBG_PRINT("STARTING SERVER!!!\n");
 	test_run(my_rank);
 
 	return rc;
