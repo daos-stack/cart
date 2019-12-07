@@ -181,26 +181,6 @@ struct crt_iv_update_out {
 	uint64_t rc;
 };
 
-struct crt_lm_evict_in {
-	d_rank_t clei_rank;
-	uint32_t clei_ver;
-};
-
-struct crt_lm_evict_out {
-	int32_t cleo_succeeded;
-	int32_t cleo_rc;
-};
-
-struct crt_lm_memb_sample_in {
-	uint32_t msi_ver;
-};
-
-struct crt_lm_memb_sample_out {
-	d_iov_t mso_delta;
-	uint32_t mso_ver;
-	int32_t mso_rc;
-};
-
 struct crt_proto_query_in {
 	d_iov_t pq_ver;
 	int32_t pq_ver_count;

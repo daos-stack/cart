@@ -160,12 +160,6 @@ static struct crt_corpc_ops crt_barrier_corpc_ops = {
 	.co_pre_forward = NULL,
 };
 
-/* for broadcasting RAS notifications on rank failures */
-CRT_RPC_DEFINE(crt_lm_evict, CRT_ISEQ_LM_EVICT, CRT_OSEQ_LM_EVICT)
-
-CRT_RPC_DEFINE(crt_lm_memb_sample,
-		CRT_ISEQ_LM_MEMB_SAMPLE, CRT_OSEQ_LM_MEMB_SAMPLE)
-
 CRT_GEN_PROC_FUNC(crt_grp_cache, CRT_SEQ_GRP_CACHE);
 
 /* !! All of the following 4 RPC definition should have the same input fields !!

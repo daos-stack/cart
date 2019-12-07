@@ -1586,17 +1586,6 @@ crt_proc_d_rank_list_t(crt_proc_t proc, d_rank_list_t **data);
 int
 crt_proc_d_iov_t(crt_proc_t proc, d_iov_t *data);
 
-/**
- * Local operation. Evict rank from the local membership list of grp.
- * \param[in] grp              Must be a primary service group. Can be local or
- *                             remote.  NULL means the local primary group.
- * \param[in] rank             the rank within the \a grp to evict.
- *
- * \return                     DER_SUCCESS success, negative on error
- */
-int
-crt_rank_evict(crt_group_t *grp, d_rank_t rank);
-
 typedef void
 (*crt_progress_cb) (crt_context_t ctx, void *arg);
 
@@ -1621,13 +1610,6 @@ crt_register_timeout_cb(crt_timeout_cb cb, void *arg);
 
 typedef void
 (*crt_eviction_cb) (crt_group_t *grp, d_rank_t rank, void *arg);
-
-/**
- * Register a callback function which will be upon the completion of
- * crt_rank_evict().
- */
-int
-crt_register_eviction_cb(crt_eviction_cb cb, void *arg);
 
 enum crt_event_source {
 	CRT_EVS_UNKNOWN,
@@ -1676,43 +1658,6 @@ crt_register_event_cb(crt_event_cb event_handler, void *arg);
 int
 crt_unregister_event_cb(crt_event_cb event_handler, void *arg);
 
-/**
- * Retrieve the PSR candidate list for \a tgt_grp.  There is guaranteed to be
- * at least one PSR returned in the \a psr_cand list.
- *
- * \param[in] tgt_grp          The remote group
- * \param[out] psr_cand        The PSR candidate list for \a tgt_grp. The first
- *                             entry of psr_cand is the current PSR. The rest
- *                             of the list are backup PSRs. User should call
- *                             crt_rank_list_free() to free the memory after
- *                             using it.
- * \retval                     DER_SUCCESS on success
- * \retval                     -DER_NONEXIST No active PSRs.
- */
-int
-crt_lm_group_psr(crt_group_t *tgt_grp, d_rank_list_t **psr_cand);
-
-/**
- * Initialize a lm_grp_priv struct for the remote group tgt_grp then append the
- * struct to a global list. This function sends RPCs to the default PSR to
- * lookup the URIs of the backup PSRs. This function also enables the resample
- * on timeout feature. This is a non-blocking function. completion_cb will be
- * called when crt_lm_attach() finishes. User needs to call crt_progress() to
- * make progress.
- *
- * \param[in] tgt_grp          the remote group
- * \param[in] completion_cb    callback which will be called when
- *                             crt_lm_attach completes.
- * \param[in] arg              user data pointer which is available in
- *                             completion_cb. See the definition of
- *                             struct crt_lm_attach_cb_info.
- *
- * \return                     DER_SUCCESS on success, negative value on
- *                             failure.
- */
-int
-crt_lm_attach(crt_group_t *tgt_grp, crt_lm_attach_cb_t completion_cb,
-	      void *arg);
 
 /**
  * A protocol is a set of RPCs. A protocol has a base opcode and a version,

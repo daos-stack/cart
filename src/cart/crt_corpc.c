@@ -652,13 +652,6 @@ crt_corpc_reply_hdlr(const struct crt_cb_info *cb_info)
 	D_ASSERT(opc_info != NULL);
 
 	D_SPIN_LOCK(&parent_rpc_priv->crp_lock);
-	if (parent_rpc_priv == child_rpc_priv &&
-	    child_req->cr_opc == CRT_OPC_RANK_EVICT &&
-	    co_info->co_local_done != 1) {
-		D_SPIN_UNLOCK(&parent_rpc_priv->crp_lock);
-		D_GOTO(out, rc);
-	}
-
 
 	wait_num = co_info->co_child_num;
 	/* the extra +1 is for local RPC handler */
@@ -780,7 +773,6 @@ aggregate_done:
 		RPC_DECREF(parent_rpc_priv);
 	}
 
-out:
 	if (parent_rpc_priv != child_rpc_priv) {
 		/* Corresponding ADDREF done before crt_req_send() */
 		RPC_DECREF(parent_rpc_priv);
@@ -807,18 +799,6 @@ crt_corpc_req_hdlr(struct crt_rpc_priv *rpc_priv)
 
 	/* corresponds to decref in crt_corpc_complete */
 	RPC_ADDREF(rpc_priv);
-
-	if (co_info->co_root_excluded == 0 &&
-	    rpc_priv->crp_pub.cr_opc == CRT_OPC_RANK_EVICT) {
-		rc = crt_rpc_common_hdlr(rpc_priv);
-		if (rc != 0) {
-			RPC_ERROR(rpc_priv,
-				  "crt_rpc_common_hdlr failed, rc: %d\n",
-				  rc);
-			crt_corpc_fail_parent_rpc(rpc_priv, rc);
-			D_GOTO(forward_done, rc);
-		}
-	};
 
 	opc_info = rpc_priv->crp_opc_info;
 	co_ops = opc_info->coi_co_ops;
@@ -932,37 +912,24 @@ forward_done:
 		D_GOTO(out, rc);
 
 	/* invoke RPC handler on local node */
-	if (rpc_priv->crp_pub.cr_opc == CRT_OPC_RANK_EVICT) {
-		struct crt_cb_info cb_info = {};
+	rc = crt_rpc_common_hdlr(rpc_priv);
+	if (rc != 0) {
+		RPC_ERROR(rpc_priv,
+			  "crt_rpc_common_hdlr failed, rc: %d\n", rc);
+		crt_corpc_fail_child_rpc(rpc_priv, 1, rc);
 
 		D_SPIN_LOCK(&rpc_priv->crp_lock);
 		co_info->co_local_done = 1;
+		rpc_priv->crp_reply_pending = 0;
 		D_SPIN_UNLOCK(&rpc_priv->crp_lock);
 
-		cb_info.cci_rpc = &rpc_priv->crp_pub;
-		cb_info.cci_arg = rpc_priv;
+		/* Handle ref count difference between call on root vs
+		 * call on intermediate nodes
+		 */
+		if (co_info->co_root != co_info->co_grp_priv->gp_self)
+			RPC_DECREF(rpc_priv);
 
-		crt_corpc_reply_hdlr(&cb_info);
-	} else {
-		rc = crt_rpc_common_hdlr(rpc_priv);
-		if (rc != 0) {
-			RPC_ERROR(rpc_priv,
-				  "crt_rpc_common_hdlr failed, rc: %d\n", rc);
-			crt_corpc_fail_child_rpc(rpc_priv, 1, rc);
-
-			D_SPIN_LOCK(&rpc_priv->crp_lock);
-			co_info->co_local_done = 1;
-			rpc_priv->crp_reply_pending = 0;
-			D_SPIN_UNLOCK(&rpc_priv->crp_lock);
-
-			/* Handle ref count difference between call on root vs
-			 * call on intermediate nodes
-			 */
-			if (co_info->co_root != co_info->co_grp_priv->gp_self)
-				RPC_DECREF(rpc_priv);
-
-			rc = 0;
-		}
+		rc = 0;
 	}
 
 

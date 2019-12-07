@@ -55,7 +55,6 @@
 
 extern struct d_binheap_ops crt_timeout_bh_ops;
 void crt_hdlr_rank_evict(crt_rpc_t *rpc_req);
-extern struct crt_corpc_ops crt_rank_evict_co_ops;
 extern void crt_hdlr_memb_sample(crt_rpc_t *rpc_req);
 
 /* RPC flags, these are sent over the wire as part of the protocol so can
@@ -274,12 +273,6 @@ struct crt_rpc_priv {
 	X(CRT_OPC_BARRIER_EXIT,						\
 		0, &CQF_crt_barrier,					\
 		crt_hdlr_barrier_exit, &crt_barrier_corpc_ops),		\
-	X(CRT_OPC_RANK_EVICT,						\
-		0, &CQF_crt_lm_evict,					\
-		crt_hdlr_rank_evict, &crt_rank_evict_co_ops),		\
-	X(CRT_OPC_MEMB_SAMPLE,						\
-		0, &CQF_crt_lm_memb_sample,				\
-		crt_hdlr_memb_sample, NULL),				\
 	X(CRT_OPC_CTL_GET_URI_CACHE,					\
 		0, &CQF_crt_ctl_get_uri_cache,				\
 		crt_hdlr_ctl_get_uri_cache, NULL),			\
@@ -519,19 +512,6 @@ CRT_RPC_DECLARE(crt_barrier, CRT_ISEQ_BARRIER, CRT_OSEQ_BARRIER)
 #define CRT_OSEQ_LM_EVICT	/* output fields */		 \
 	((int32_t)		(cleo_succeeded)	CRT_VAR) \
 	((int32_t)		(cleo_rc)		CRT_VAR)
-
-CRT_RPC_DECLARE(crt_lm_evict, CRT_ISEQ_LM_EVICT, CRT_OSEQ_LM_EVICT)
-
-#define CRT_ISEQ_LM_MEMB_SAMPLE	/* input fields */		 \
-	((uint32_t)		(msi_ver)		CRT_VAR)
-
-#define CRT_OSEQ_LM_MEMB_SAMPLE	/* output fields */		 \
-	((d_iov_t)		(mso_delta)		CRT_VAR) \
-	((uint32_t)		(mso_ver)		CRT_VAR) \
-	((int32_t)		(mso_rc)		CRT_VAR)
-
-CRT_RPC_DECLARE(crt_lm_memb_sample,
-		CRT_ISEQ_LM_MEMB_SAMPLE, CRT_OSEQ_LM_MEMB_SAMPLE)
 
 #define CRT_ISEQ_CTL		/* input fields */		 \
 	((crt_group_id_t)	(cel_grp_id)		CRT_VAR) \

@@ -175,15 +175,10 @@ crt_plugin_init(void)
 	if (rc != 0)
 		D_GOTO(out_destroy_timeout, rc);
 
-	D_INIT_LIST_HEAD(&crt_plugin_gdata.cpg_eviction_cbs);
-	rc = D_RWLOCK_INIT(&crt_plugin_gdata.cpg_eviction_rwlock, NULL);
-	if (rc != 0)
-		D_GOTO(out_destroy_event, rc);
 
 	crt_plugin_gdata.cpg_inited = 1;
 	D_GOTO(out, rc = 0);
 
-out_destroy_event:
 	D_RWLOCK_DESTROY(&crt_plugin_gdata.cpg_event_rwlock);
 out_destroy_timeout:
 	D_RWLOCK_DESTROY(&crt_plugin_gdata.cpg_timeout_rwlock);
@@ -373,17 +368,11 @@ do_init:
 		D_ASSERT(crt_gdata.cg_opc_map != NULL);
 
 		crt_gdata.cg_inited = 1;
-		if ((flags & CRT_FLAG_BIT_LM_DISABLE) == 0) {
-			rc = crt_lm_init();
-			if (rc)
-				D_GOTO(cleanup, rc);
-		}
 
 		if (crt_is_service()) {
 			rc = crt_swim_init(CRT_DEFAULT_PROGRESS_CTX_IDX);
 			if (rc) {
 				D_ERROR("crt_swim_init() failed rc: %d.\n", rc);
-				crt_lm_finalize();
 				D_GOTO(cleanup, rc);
 			}
 		}
@@ -436,7 +425,6 @@ crt_plugin_fini(void)
 	struct crt_prog_cb_priv		*prog_cb_priv;
 	struct crt_timeout_cb_priv	*timeout_cb_priv;
 	struct crt_event_cb_priv	*event_cb_priv;
-	struct crt_plugin_cb_priv	*cb_priv;
 	int				 i;
 
 	D_ASSERT(crt_plugin_gdata.cpg_inited == 1);
@@ -460,17 +448,11 @@ crt_plugin_fini(void)
 						 cecp_link))) {
 		D_FREE(event_cb_priv);
 	}
-	while ((cb_priv = d_list_pop_entry(&crt_plugin_gdata.cpg_eviction_cbs,
-					   struct crt_plugin_cb_priv,
-					   cp_link))) {
-		D_FREE(cb_priv);
-	}
 
 	for (i = 0; i < CRT_SRV_CONTEXT_NUM; i++)
 		D_RWLOCK_DESTROY(&crt_plugin_gdata.cpg_prog_rwlock[i]);
 	D_RWLOCK_DESTROY(&crt_plugin_gdata.cpg_timeout_rwlock);
 	D_RWLOCK_DESTROY(&crt_plugin_gdata.cpg_event_rwlock);
-	D_RWLOCK_DESTROY(&crt_plugin_gdata.cpg_eviction_rwlock);
 }
 
 int
@@ -486,7 +468,6 @@ crt_finalize(void)
 		D_RWLOCK_UNLOCK(&crt_gdata.cg_rwlock);
 		D_GOTO(direct_out, rc = -DER_UNINIT);
 	}
-	crt_lm_finalize();
 
 	crt_gdata.cg_refcount--;
 	if (crt_gdata.cg_refcount == 0) {

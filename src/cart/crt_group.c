@@ -3036,233 +3036,6 @@ out:
 	return rc;
 }
 
-/*
- * mark rank as evicted in every crt_context's address lookup cache.
- */
-static int
-crt_grp_lc_mark_evicted(struct crt_grp_priv *grp_priv, d_rank_t rank)
-{
-	int				 ctx_idx;
-	d_list_t			*rlink;
-	struct crt_lookup_item		*li;
-	struct d_hash_table		*htable;
-	int				 rc = 0;
-
-	D_ASSERT(grp_priv != NULL);
-	D_ASSERT(rank < grp_priv->gp_size);
-
-	for (ctx_idx = 0; ctx_idx < CRT_SRV_CONTEXT_NUM; ctx_idx++) {
-		htable = &grp_priv->gp_lookup_cache[ctx_idx];
-		D_RWLOCK_RDLOCK(&grp_priv->gp_rwlock);
-		rlink = d_hash_rec_find(htable, &rank, sizeof(rank));
-		if (rlink == NULL) {
-			D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
-			D_ALLOC_PTR(li);
-			if (li == NULL)
-				D_GOTO(out, rc = -DER_NOMEM);
-			D_INIT_LIST_HEAD(&li->li_link);
-			li->li_grp_priv = grp_priv;
-			li->li_rank = rank;
-			li->li_initialized = 1;
-			li->li_evicted = 1;
-			rc = D_MUTEX_INIT(&li->li_mutex, NULL);
-			if (rc != 0) {
-				crt_li_destroy(li);
-				D_GOTO(out, rc);
-			}
-
-			D_RWLOCK_WRLOCK(&grp_priv->gp_rwlock);
-			rc = d_hash_rec_insert(htable, &rank, sizeof(rank),
-					       &li->li_link, true);
-			if (rc == 0) {
-				D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
-				continue;
-			}
-			/* insert failed */
-			crt_li_destroy(li);
-			D_DEBUG(DB_TRACE, "entry already exists, "
-				"group %s, rank %d, context id %d\n",
-				grp_priv->gp_pub.cg_grpid, rank, ctx_idx);
-			rlink = d_hash_rec_find(htable, (void *) &rank,
-						sizeof(rank));
-			D_ASSERT(rlink != NULL);
-		}
-		li = crt_li_link2ptr(rlink);
-		D_ASSERT(li->li_grp_priv == grp_priv);
-		D_ASSERT(li->li_rank == rank);
-		D_MUTEX_LOCK(&li->li_mutex);
-		li->li_evicted = 1;
-		D_MUTEX_UNLOCK(&li->li_mutex);
-		d_hash_rec_decref(htable, rlink);
-		D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
-	}
-
-out:
-	return rc;
-}
-
-/* query if a rank is evicted from a group. grp must be a primary group */
-bool
-crt_rank_evicted(crt_group_t *grp, d_rank_t rank)
-{
-	struct crt_grp_priv	*grp_priv = NULL;
-	bool			 ret = false;
-	d_rank_list_t		*failed_ranks;
-
-
-	D_ASSERT(crt_initialized());
-	grp_priv = crt_grp_pub2priv(grp);
-	D_ASSERT(grp_priv != NULL);
-
-	if (grp_priv->gp_primary == 0) {
-		D_ERROR("grp must be a primary group.\n");
-		D_GOTO(out, ret);
-	}
-
-	if (rank >= grp_priv->gp_size) {
-		D_ERROR("Rank out of range. Attempted rank: %d, "
-			"valid range [0, %d).\n", rank, grp_priv->gp_size);
-		D_GOTO(out, ret);
-	}
-
-	D_RWLOCK_RDLOCK(grp_priv->gp_rwlock_ft);
-	failed_ranks = grp_priv_get_failed_ranks(grp_priv);
-	ret = d_rank_in_rank_list(failed_ranks, rank);
-	D_RWLOCK_UNLOCK(grp_priv->gp_rwlock_ft);
-
-out:
-	return ret;
-}
-
-static void
-crt_exec_eviction_cb(crt_group_t *grp, d_rank_t rank)
-{
-	struct crt_plugin_cb_priv	*cb_priv;
-
-	/* locking is not necessary since new callbacks are only appended to the
-	 * end of the list and there's no function to take items off the list
-	 */
-	d_list_for_each_entry(cb_priv, &crt_plugin_gdata.cpg_eviction_cbs,
-			      cp_link)
-		cb_priv->cp_eviction_cb(grp, rank, cb_priv->cp_args);
-}
-
-int
-crt_rank_evict(crt_group_t *grp, d_rank_t rank)
-{
-	struct crt_grp_priv	*grp_priv = NULL;
-	crt_endpoint_t		 tgt_ep;
-	struct crt_grp_priv	*curr_entry = NULL;
-	d_rank_list_t		 tmp_rank_list;
-	int			 rc = 0;
-	d_rank_list_t		*failed_ranks;
-	d_rank_list_t		*live_ranks;
-	d_rank_list_t		*tmp_live_ranks;
-
-	if (!crt_initialized()) {
-		D_ERROR("CRT not initialized.\n");
-		D_GOTO(out, rc = -DER_UNINIT);
-	}
-	/* local non-service groups can't evict ranks */
-	if (grp == NULL && !crt_is_service()) {
-		D_ERROR("grp must be a service group.\n");
-		D_GOTO(out, rc = -DER_INVAL);
-	}
-
-	grp_priv = crt_grp_pub2priv(grp);
-	D_ASSERT(grp_priv != NULL);
-
-	if (grp_priv->gp_primary == 0) {
-		D_ERROR("grp must be a primary group.\n");
-		D_GOTO(out, rc = -DER_INVAL);
-	}
-
-	if (rank >= grp_priv->gp_size) {
-		D_ERROR("Rank out of range. Attempted rank: %d, "
-			"valid range [0, %d).\n", rank, grp_priv->gp_size);
-		D_GOTO(out, rc = -DER_OOG);
-	}
-
-	D_RWLOCK_WRLOCK(grp_priv->gp_rwlock_ft);
-
-	live_ranks = grp_priv_get_live_ranks(grp_priv);
-	failed_ranks = grp_priv_get_failed_ranks(grp_priv);
-
-	if (d_rank_in_rank_list(failed_ranks, rank)) {
-		D_DEBUG(DB_TRACE, "Rank %d already evicted.\n", rank);
-		D_RWLOCK_UNLOCK(grp_priv->gp_rwlock_ft);
-		D_GOTO(out, rc = -DER_EVICTED);
-	}
-
-	tmp_rank_list.rl_nr = 1;
-	tmp_rank_list.rl_ranks = &rank;
-
-	d_rank_list_filter(&tmp_rank_list, live_ranks,
-			   true /* exlude */);
-
-	rc = d_rank_list_append(failed_ranks, rank);
-	if (rc != 0) {
-		D_ERROR("d_rank_list_append() failed, rc: %d\n", rc);
-		D_RWLOCK_UNLOCK(grp_priv->gp_rwlock_ft);
-		D_GOTO(out_cb, rc);
-	}
-
-	grp_priv->gp_membs_ver++;
-	/* remove rank from sub groups */
-	d_list_for_each_entry(curr_entry, &crt_grp_list, gp_link) {
-		tmp_live_ranks = grp_priv_get_live_ranks(curr_entry);
-
-		d_rank_list_filter(&tmp_rank_list, tmp_live_ranks,
-				   true /* exclude */);
-	}
-
-	D_RWLOCK_UNLOCK(grp_priv->gp_rwlock_ft);
-
-	rc = crt_grp_lc_mark_evicted(grp_priv, rank);
-	if (rc != 0) {
-		D_ERROR("crt_grp_lc_mark_evicted() failed, rc: %d.\n", rc);
-		D_GOTO(out_cb, rc);
-	}
-	D_DEBUG(DB_TRACE, "evicted group %s rank %d.\n",
-		grp_priv->gp_pub.cg_grpid, rank);
-
-out_cb:
-	if (grp_priv->gp_local)
-		crt_barrier_handle_eviction(grp_priv);
-
-	crt_exec_eviction_cb(&grp_priv->gp_pub, rank);
-	tgt_ep.ep_grp = grp;
-	tgt_ep.ep_rank = rank;
-	/* ep_tag is not used in crt_ep_abort() */
-	tgt_ep.ep_tag = 0;
-	rc = crt_ep_abort(&tgt_ep);
-	if (rc != 0)
-		D_ERROR("crt_ep_abort(grp %p, rank %d) failed, rc: %d.\n", grp,
-			rank, rc);
-
-out:
-	return rc;
-}
-
-int
-crt_register_eviction_cb(crt_eviction_cb cb, void *arg)
-{
-	struct crt_plugin_cb_priv	*cb_priv;
-	int				 rc = 0;
-
-	D_ALLOC_PTR(cb_priv);
-	if (cb_priv == NULL)
-		D_GOTO(out, rc = -DER_NOMEM);
-	cb_priv->cp_eviction_cb = cb;
-	cb_priv->cp_args = arg;
-	D_RWLOCK_WRLOCK(&crt_plugin_gdata.cpg_eviction_rwlock);
-	d_list_add_tail(&cb_priv->cp_link, &crt_plugin_gdata.cpg_eviction_cbs);
-	D_RWLOCK_UNLOCK(&crt_plugin_gdata.cpg_eviction_rwlock);
-
-out:
-	return rc;
-}
-
 int
 crt_register_event_cb(crt_event_cb event_handler, void *arg)
 {
@@ -3711,9 +3484,9 @@ crt_group_rank_remove_internal(struct crt_grp_priv *grp_priv, d_rank_t rank)
 	d_rank_list_t		*membs;
 	d_list_t		*rlink;
 	struct crt_rank_mapping *rm;
+	//crt_endpoint_t		*tgt_ep;
 	int			i;
 	int			rc = 0;
-
 	if (grp_priv->gp_primary) {
 		rlink = d_hash_rec_find(&grp_priv->gp_uri_lookup_cache,
 				(void *)&rank, sizeof(rank));
@@ -3765,6 +3538,17 @@ crt_group_rank_remove_internal(struct crt_grp_priv *grp_priv, d_rank_t rank)
 		}
 
 	}
+
+
+#if 0
+	/* TODO: Cancel outstanding rpcs to the target */
+	tgt_ep.ep_grp = grp;
+	tgt_ep.ep_rank = rank;
+	/* ep_tag is not used in crt_ep_abort() */
+	tgt_ep.ep_tag = 0;
+	rc = crt_ep_abort(&tgt_ep);
+#endif
+
 out:
 	return rc;
 }

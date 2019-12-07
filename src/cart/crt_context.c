@@ -650,7 +650,6 @@ crt_req_timeout_reset(struct crt_rpc_priv *rpc_priv)
 	struct crt_opc_info	*opc_info;
 	struct crt_context	*crt_ctx;
 	crt_endpoint_t		*tgt_ep;
-	bool			 is_evicted;
 	int			 rc;
 
 	crt_ctx = rpc_priv->crp_pub.cr_ctx;
@@ -668,14 +667,15 @@ crt_req_timeout_reset(struct crt_rpc_priv *rpc_priv)
 		return false;
 	}
 
-	tgt_ep = &rpc_priv->crp_pub.cr_ep;
-	is_evicted = crt_rank_evicted(tgt_ep->ep_grp, tgt_ep->ep_rank);
-	if (is_evicted) {
+	if (!CRT_RANK_PRESENT(tgt_ep->ep_grp, tgt_ep->ep_rank)) {
 		RPC_TRACE(DB_NET, rpc_priv,
-			  "grp %p, rank %d already evicted.\n",
-			  tgt_ep->ep_grp, tgt_ep->ep_rank);
+			"grp %p, rank %d already evicted.\n",
+			tgt_ep->ep_grp, tgt_ep->ep_rank);
 		return false;
 	}
+
+	tgt_ep = &rpc_priv->crp_pub.cr_ep;
+
 	RPC_TRACE(DB_NET, rpc_priv, "reset_timer enabled.\n");
 
 	crt_set_timeout(rpc_priv);

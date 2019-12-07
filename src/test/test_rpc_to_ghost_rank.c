@@ -48,7 +48,6 @@
 #include <gurt/common.h>
 #include <gurt/fault_inject.h>
 #include <cart/api.h>
-#include "crt_fake_events.h"
 #include "test_group_rpc.h"
 
 #define TEST_CTX_MAX_NUM	 (72)

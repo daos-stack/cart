@@ -378,20 +378,6 @@ typedef void (*crt_cb_t)(const struct crt_cb_info *cb_info);
 
 typedef void (*crt_generic_cb_t)(void *cb_info);
 
-struct crt_lm_attach_cb_info {
-	void			*lac_arg;  /**< user-provided data */
-	int			 lac_rc;   /**< return code */
-};
-
-/**
- * completion callback for crt_group_attach().
- *
- * \param[in] cb_info		pointer to callback info
- *
- */
-typedef void (*crt_lm_attach_cb_t)(const struct crt_lm_attach_cb_info *cb_info);
-
-
 struct crt_barrier_cb_info {
 	void	*bci_arg;  /**< optional argument passed by user */
 	int	 bci_rc;    /**< return code for barrier */

@@ -145,16 +145,10 @@ struct crt_plugin_gdata {
 	d_list_t		cpg_timeout_cbs;
 	/* list of event notification callbacks */
 	d_list_t		cpg_event_cbs;
-	/* list of rank eviction callbacks */
-	d_list_t		cpg_eviction_cbs;
-	uint32_t		cpg_inited:1, /* all initialized */
-				/* pmix handler registered*/
-				cpg_pmix_errhdlr_inited:1;
+	uint32_t		cpg_inited:1;
 	pthread_rwlock_t	cpg_prog_rwlock[CRT_SRV_CONTEXT_NUM];
 	pthread_rwlock_t	cpg_timeout_rwlock;
 	pthread_rwlock_t	cpg_event_rwlock;
-	pthread_rwlock_t	cpg_eviction_rwlock;
-	size_t			cpg_pmix_errhdlr_ref;
 };
 
 extern struct crt_plugin_gdata		crt_plugin_gdata;
