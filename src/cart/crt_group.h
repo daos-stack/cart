@@ -43,7 +43,6 @@
 #define __CRT_GROUP_H__
 
 #include "crt_barrier.h"
-#include "crt_pmix.h"
 #include "crt_swim.h"
 
 enum crt_grp_status {
@@ -219,19 +218,12 @@ struct crt_grp_priv {
 static inline d_rank_list_t*
 grp_priv_get_membs(struct crt_grp_priv *priv)
 {
-	if (CRT_PMIX_ENABLED())
-		return priv->gp_membs.cgm_list;
-
 	return priv->gp_membs.cgm_linear_list;
 }
 
 static inline d_rank_list_t*
 grp_priv_get_live_ranks(struct crt_grp_priv *priv)
 {
-	/* When pmix is disabled, member list == live rank list  */
-	if (CRT_PMIX_ENABLED())
-		return priv->gp_live_ranks;
-
 	return priv->gp_membs.cgm_linear_list;
 }
 
@@ -254,11 +246,6 @@ crt_grp_priv_get_primary_rank(struct crt_grp_priv *priv, d_rank_t rank);
 static inline int
 grp_priv_set_membs(struct crt_grp_priv *priv, d_rank_list_t *list)
 {
-	if (CRT_PMIX_ENABLED())
-		return d_rank_list_dup_sort_uniq(&priv->gp_membs.cgm_list,
-						list);
-
-	/* PMIX disabled case */
 	if (!priv->gp_primary) {
 		/* For secondary groups we populate linear list */
 		return d_rank_list_dup_sort_uniq(
@@ -301,9 +288,6 @@ grp_priv_init_membs(struct crt_grp_priv *priv, int size)
 	if (!priv->gp_membs.cgm_list)
 		return -DER_NOMEM;
 
-	if (CRT_PMIX_ENABLED())
-		return 0;
-
 	D_INIT_LIST_HEAD(&priv->gp_membs.cgm_free_indices);
 	priv->gp_membs.cgm_linear_list = d_rank_list_alloc(0);
 
@@ -332,9 +316,6 @@ grp_priv_fini_membs(struct crt_grp_priv *priv)
 
 	if (priv->gp_membs.cgm_linear_list != NULL)
 		d_rank_list_free(priv->gp_membs.cgm_linear_list);
-
-	if (CRT_PMIX_ENABLED())
-		return;
 
 	/* Secondary groups have no free indices list */
 	if (!priv->gp_primary)
@@ -439,7 +420,6 @@ struct crt_grp_gdata {
 void crt_hdlr_grp_create(crt_rpc_t *rpc_req);
 void crt_hdlr_grp_destroy(crt_rpc_t *rpc_req);
 void crt_hdlr_uri_lookup(crt_rpc_t *rpc_req);
-int crt_grp_attach(crt_group_id_t srv_grpid, crt_group_t **attached_grp);
 int crt_grp_detach(crt_group_t *attached_grp);
 int crt_grp_lc_lookup(struct crt_grp_priv *grp_priv, int ctx_idx,
 		      d_rank_t rank, uint32_t tag, crt_phy_addr_t *base_addr,
@@ -571,11 +551,6 @@ crt_grp_priv_decref(struct crt_grp_priv *grp_priv)
 		D_GOTO(out, rc);
 
 	if (detach) {
-		if (CRT_PMIX_ENABLED()) {
-			D_ASSERT(grp_priv->gp_service == 1 &&
-				 grp_priv->gp_primary == 1);
-		}
-
 		rc = crt_grp_detach(&grp_priv->gp_pub);
 		if (rc == 0 && !crt_is_service() &&
 		    grp_gdata->gg_srv_pri_grp == grp_priv) {

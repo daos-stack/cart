@@ -59,7 +59,6 @@
 #include "crt_ctl.h"
 #include "crt_swim.h"
 
-#include "crt_pmix.h"
 #include "crt_lm.h"
 
 /* A wrapper around D_TRACE_DEBUG that ensures the ptr option is a RPC */

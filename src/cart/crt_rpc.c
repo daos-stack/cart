@@ -324,14 +324,6 @@ static int check_ep(crt_endpoint_t *tgt_ep, struct crt_grp_priv **ret_grp_priv)
 		}
 	}
 
-	if (CRT_PMIX_ENABLED()) {
-		if (tgt_ep->ep_rank >= grp_priv->gp_size) {
-			D_ERROR("invalid parameter, rank %d, group_size: %d.\n",
-				tgt_ep->ep_rank, grp_priv->gp_size);
-			D_GOTO(out, rc = -DER_INVAL);
-		}
-	}
-
 out:
 	if (rc == 0) {
 		*ret_grp_priv = grp_priv;
@@ -955,7 +947,6 @@ crt_req_uri_lookup(struct crt_rpc_priv *rpc_priv)
 	struct crt_grp_priv	*grp_priv;
 	struct crt_grp_priv	*default_grp_priv;
 	char			*uri = NULL;
-	crt_group_id_t		 grp_id;
 	struct crt_context	*crt_ctx;
 	int			 rc = 0;
 
@@ -967,12 +958,10 @@ crt_req_uri_lookup(struct crt_rpc_priv *rpc_priv)
 	default_grp_priv = crt_grp_pub2priv(NULL);
 	D_ASSERT(default_grp_priv != NULL);
 
-
 	/* this is a remote group, contact the PSR */
 	if (grp_priv->gp_local == 0) {
 		/* Note: In case of no-pmix all groups are local */
-		if (CRT_PMIX_ENABLED() ||
-		(!CRT_PMIX_ENABLED() && !crt_is_service())) {
+		if (!crt_is_service()) {
 			/* send an RPC to the PSR */
 			RPC_TRACE(DB_NET, rpc_priv,
 			"Querying PSR to find out target NA Address.\n");
@@ -1002,20 +991,8 @@ crt_req_uri_lookup(struct crt_rpc_priv *rpc_priv)
 			D_GOTO(out, rc);
 		}
 	} else if (tag == 0) {
-		/* If pmix is disabled - return error at this point */
-		if (!CRT_PMIX_ENABLED())
-			D_GOTO(out, rc = -DER_INVAL);
+		D_GOTO(out, rc = -DER_INVAL);
 
-		/* lookup through PMIx */
-		grp_id = default_grp_priv->gp_pub.cg_grpid;
-
-		rc = crt_pmix_uri_lookup(grp_id,
-				crt_grp_priv_get_primary_rank(grp_priv, rank),
-				&uri);
-		if (rc != 0) {
-			D_ERROR("crt_pmix_uri_lookup() failed, rc %d.\n", rc);
-			D_GOTO(out, rc);
-		}
 	} else {
 		RPC_TRACE(DB_NET, rpc_priv,
 			  "Querying rank %d tag 0 for target NA address\n",

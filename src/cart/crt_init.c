@@ -181,15 +181,8 @@ crt_plugin_init(void)
 		D_GOTO(out_destroy_event, rc);
 
 	crt_plugin_gdata.cpg_inited = 1;
-	if (CRT_PMIX_ENABLED() && crt_is_service() && !crt_is_singleton()) {
-		rc = crt_plugin_pmix_init();
-		if (rc != 0)
-			D_GOTO(out_destroy_eviction, rc);
-	}
 	D_GOTO(out, rc = 0);
 
-out_destroy_eviction:
-	D_RWLOCK_DESTROY(&crt_plugin_gdata.cpg_eviction_rwlock);
 out_destroy_event:
 	D_RWLOCK_DESTROY(&crt_plugin_gdata.cpg_event_rwlock);
 out_destroy_timeout:
@@ -271,6 +264,12 @@ crt_init_opt(crt_group_id_t grpid, uint32_t flags, crt_init_options_t *opt)
 			flags |= CRT_FLAG_BIT_LM_DISABLE;
 		}
 	}
+
+	if (crt_gdata.cg_pmix_disabled == 0) {
+		D_ERROR("PMIX is no longer supported\n");
+		D_GOTO(out, rc = -DER_INVAL);
+	}
+
 
 	D_RWLOCK_WRLOCK(&crt_gdata.cg_rwlock);
 	if (crt_gdata.cg_inited == 0) {
@@ -441,9 +440,6 @@ crt_plugin_fini(void)
 	int				 i;
 
 	D_ASSERT(crt_plugin_gdata.cpg_inited == 1);
-
-	if (CRT_PMIX_ENABLED())
-		crt_plugin_pmix_fini();
 
 	for (i = 0; i < CRT_SRV_CONTEXT_NUM; i++) {
 		while ((prog_cb_priv = d_list_pop_entry(

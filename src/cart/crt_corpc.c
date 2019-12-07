@@ -874,33 +874,7 @@ crt_corpc_req_hdlr(struct crt_rpc_priv *rpc_priv)
 		crt_rpc_t	*child_rpc;
 		crt_endpoint_t	 tgt_ep = {0};
 
-		/*
-		 * This is a temporary workaround for PMIX case. For secondary
-		 * groups returned 'children_rank_list' contains primary ranks.
-		 * Convert here to secondary ranks.
-		 */
-		if (CRT_PMIX_ENABLED() && !co_info->co_grp_priv->gp_primary) {
-			uint32_t	idx;
-			d_rank_list_t	*membs;
-
-			membs = grp_priv_get_membs(co_info->co_grp_priv);
-
-			rc = d_idx_in_rank_list(membs,
-				children_rank_list->rl_ranks[i], &idx);
-
-			if (rc != 0) {
-				RPC_ERROR(rpc_priv, "rank %d not found\n",
-					children_rank_list->rl_ranks[i]);
-				crt_corpc_fail_child_rpc(rpc_priv,
-						co_info->co_child_num - i, rc);
-				D_GOTO(forward_done, rc);
-			}
-
-			tgt_ep.ep_rank = idx;
-		} else {
-			tgt_ep.ep_rank = children_rank_list->rl_ranks[i];
-		}
-
+		tgt_ep.ep_rank = children_rank_list->rl_ranks[i];
 		tgt_ep.ep_grp = &co_info->co_grp_priv->gp_pub;
 
 		rc = crt_req_create_internal(rpc_priv->crp_pub.cr_ctx, &tgt_ep,

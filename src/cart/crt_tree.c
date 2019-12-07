@@ -56,17 +56,8 @@ crt_get_filtered_grp_rank_list(struct crt_grp_priv *grp_priv, uint32_t grp_ver,
 	d_rank_list_t		*membs;
 	int			 rc = 0;
 
-	if (CRT_PMIX_ENABLED()) {
-		live_ranks = grp_priv_get_live_ranks(grp_priv);
-		membs = grp_priv_get_membs(grp_priv);
-
-		/* Note: In PMIX case liver_ranks/membs contain primary ranks */
-		root = crt_grp_priv_get_primary_rank(grp_priv, root);
-		self = crt_grp_priv_get_primary_rank(grp_priv, self);
-	} else {
-		membs = grp_priv_get_membs(grp_priv);
-		live_ranks = membs;
-	}
+	membs = grp_priv_get_membs(grp_priv);
+	live_ranks = membs;
 
 	rc = d_rank_list_dup_sort_uniq(&grp_rank_list, live_ranks);
 
@@ -130,9 +121,6 @@ out:
 	do {								\
 									\
 		D_ASSERT(crt_tree_topo_valid(tree_topo));		\
-		if (CRT_PMIX_ENABLED())					\
-			D_ASSERT(root < grp_priv->gp_size &&		\
-				self < grp_priv->gp_size);		\
 		tree_type = crt_tree_type(tree_topo);			\
 		tree_ratio = crt_tree_ratio(tree_topo);			\
 		D_ASSERT(tree_type >= CRT_TREE_MIN &&			\
