@@ -140,8 +140,6 @@ struct crt_grp_priv {
 	 * for primary groups, a subgroup references its parent group's lock
 	 */
 	pthread_rwlock_t	*gp_rwlock_ft;
-	/* the priv pointer user passed in for crt_group_create */
-	void			*gp_priv;
 	/* CaRT context only for sending sub-grp create/destroy RPCs */
 	crt_context_t		 gp_ctx;
 
@@ -201,7 +199,6 @@ struct crt_grp_priv {
 	/* temporary return code for group creation */
 	int			 gp_rc;
 
-	crt_grp_create_cb_t	 gp_create_cb; /* grp create completion cb */
 	crt_grp_destroy_cb_t	 gp_destroy_cb; /* grp destroy completion cb */
 	void			*gp_destroy_cb_arg;
 
@@ -417,8 +414,6 @@ struct crt_grp_gdata {
 	pthread_rwlock_t	 gg_rwlock;
 };
 
-void crt_hdlr_grp_create(crt_rpc_t *rpc_req);
-void crt_hdlr_grp_destroy(crt_rpc_t *rpc_req);
 void crt_hdlr_uri_lookup(crt_rpc_t *rpc_req);
 int crt_grp_detach(crt_group_t *attached_grp);
 int crt_grp_lc_lookup(struct crt_grp_priv *grp_priv, int ctx_idx,
@@ -592,9 +587,5 @@ int crt_grp_lc_uri_insert_all(crt_group_t *grp, d_rank_t rank, int tag,
 			const char *uri);
 int crt_grp_config_psr_load(struct crt_grp_priv *grp_priv, d_rank_t psr_rank);
 int crt_grp_psr_reload(struct crt_grp_priv *grp_priv);
-int crt_grp_create_corpc_aggregate(crt_rpc_t *source, crt_rpc_t *result,
-				   void *priv);
-int crt_grp_destroy_corpc_aggregate(crt_rpc_t *source, crt_rpc_t *result,
-				    void *priv);
 
 #endif /* __CRT_GROUP_H__ */

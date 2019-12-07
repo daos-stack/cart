@@ -1034,19 +1034,6 @@ struct crt_corpc_ops {
 	int (*co_post_reply)(crt_rpc_t *rpc, void *arg);
 };
 
-/**
- * Group create completion callback
- *
- * \param[in] grp              group handle, valid only when the group has been
- *                             created successfully.
- * \param[in] priv             A private pointer associated with the group
- *                             (passed in for crt_group_create).
- * \param[in] status           status code that indicates whether the group has
- *                             been created successfully or not.
- *                             zero for success, negative value otherwise.
- */
-typedef int (*crt_grp_create_cb_t)(crt_group_t *grp, void *priv, int status);
-
 /*
  * Group destroy completion callback
  *
@@ -1059,46 +1046,13 @@ typedef int (*crt_grp_create_cb_t)(crt_group_t *grp, void *priv, int status);
  */
 typedef int (*crt_grp_destroy_cb_t)(void *arg, int status);
 
-/*
- * Create CRT sub-group (a subset of the primary group). Can only be called on
- * the server side.
- *
- * \param[in] grp_id           unique group ID.
- * \param[in] member_ranks     rank list of members for the group.
- *                             Can-only create the group on the node which is
- *                             one member of the group, otherwise -DER_OOG will
- *                             be returned.
- * \param[in] populate_now     True if the group should be populated now;
- *                             otherwise, group population will be later
- *                             piggybacked on the first broadcast over the
- *                             group.
- * \param[in] grp_create_cb    Callback function to notify completion of the
- *                             group creation process,
- *                             See \ref crt_grp_create_cb_t.
- * \param[in] arg              A private pointer associated with the group.
- *
- * \return                     DER_SUCCESS on success, negative value if error
- */
-int
-crt_group_create(crt_group_id_t grp_id, d_rank_list_t *member_ranks,
-		 bool populate_now, crt_grp_create_cb_t grp_create_cb,
-		 void *arg);
-
 /**
  * Lookup the group handle of one group ID (sub-group or primary group).
- *
- * For sub-group, its creation is initiated by one node, after the group being
- * populated (internally performed inside crt_group_create) user can query the
- * group handle (crt_group_t *) on other nodes.
  *
  * The primary group can be queried using the group ID passed to crt_init.
  * Some special cases:
  * 1) If (grp_id == NULL), it means the default local primary group ID, i.e.
  *    the CRT_DEFAULT_CLI_GRPID for client and CRT_DEFAULT_SRV_GRPID for server.
- * 2) To query attached remote service primary group, can pass in its group ID.
- *    For the client-side, if it passed in NULL as crt_init's srv_grpid
- *    parameter, then can use CRT_DEFAULT_SRV_GRPID to lookup the attached
- *    service primary group handle.
  *
  * \note user can cache the returned group handle to avoid the overhead of
  *          frequent lookup.
@@ -1111,9 +1065,7 @@ crt_group_t *
 crt_group_lookup(crt_group_id_t grp_id);
 
 /**
- * Destroy a CRT group. Can either call this function or pass a special flag -
- * CRT_RPC_FLAG_GRP_DESTROY to a broadcast RPC to destroy the subgroup. Can only
- * be called on the server side.
+ * Destroy a CRT group.
  *
  * \param[in] grp              group handle to be destroyed.
  * \param[in] grp_destroy_cb   optional completion callback.

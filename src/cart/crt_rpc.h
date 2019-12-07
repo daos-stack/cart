@@ -216,12 +216,6 @@ struct crt_rpc_priv {
  * OPCODE, flags, FMT, handler, corpc_hdlr,
  */
 #define CRT_INTERNAL_RPCS_LIST						\
-	X(CRT_OPC_GRP_CREATE,						\
-		0, &CQF_crt_grp_create,					\
-		crt_hdlr_grp_create, &crt_grp_create_co_ops),		\
-	X(CRT_OPC_GRP_DESTROY,						\
-		0, &CQF_crt_grp_destroy,				\
-		crt_hdlr_grp_destroy, &crt_grp_destroy_co_ops),		\
 	X(CRT_OPC_URI_LOOKUP,						\
 		0, &CQF_crt_uri_lookup,					\
 		crt_hdlr_uri_lookup, NULL),				\
@@ -312,26 +306,6 @@ enum {
 	((d_string_t)		(gc_uri)		CRT_VAR)
 
 CRT_GEN_STRUCT(crt_grp_cache, CRT_SEQ_GRP_CACHE)
-
-/* CRT internal RPC definitions */
-#define CRT_ISEQ_GRP_CREATE	/* input fields */		 \
-	/* user visible grp id (group name) */			 \
-	((crt_group_id_t)	(gc_grp_id)		CRT_VAR) \
-	/* internal subgrp id */				 \
-	((uint64_t)		(gc_int_grpid)		CRT_VAR) \
-	((d_rank_list_t)	(gc_membs)		CRT_PTR) \
-	/* the rank initiated the group create */		 \
-	((d_rank_t)		(gc_initiate_rank)	CRT_VAR)
-
-#define CRT_OSEQ_GRP_CREATE	/* output fields */		 \
-	/* failed rank list, can be used to aggregate the reply from child */ \
-	((d_rank_list_t)	(gc_failed_ranks)	CRT_PTR) \
-	/* the rank sent out the reply */			 \
-	((d_rank_t)		(gc_rank)		CRT_VAR) \
-	/* return code, if failed the gc_rank should be in gc_failed_ranks */ \
-	((int32_t)		(gc_rc)			CRT_VAR)
-
-CRT_RPC_DECLARE(crt_grp_create, CRT_ISEQ_GRP_CREATE, CRT_OSEQ_GRP_CREATE)
 
 #define CRT_ISEQ_GRP_DESTROY	/* input fields */		 \
 	((crt_group_id_t)	(gd_grp_id)		CRT_VAR) \

@@ -113,19 +113,6 @@ struct crt_ctl_get_uri_cache_out {
 	int32_t cguc_rc;
 };
 
-struct crt_grp_create_in {
-	crt_group_id_t gc_grp_id;
-	uint64_t gc_int_grpid;
-	d_rank_list_t *gc_membs;
-	d_rank_t gc_initiate_rank;
-};
-
-struct crt_grp_create_out {
-	d_rank_list_t *gc_failed_ranks;
-	d_rank_t gc_rank;
-	int32_t gc_rc;
-};
-
 struct crt_grp_destroy_in {
 	crt_group_id_t gd_grp_id;
 	d_rank_t gd_initiate_rank;

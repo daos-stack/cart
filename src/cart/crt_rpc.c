@@ -91,23 +91,6 @@ crt_hdlr_ctl_fi_attr_set(crt_rpc_t *rpc_req)
 
 
 /* CRT internal RPC format definitions */
-
-/* group create */
-CRT_RPC_DEFINE(crt_grp_create, CRT_ISEQ_GRP_CREATE, CRT_OSEQ_GRP_CREATE)
-
-static struct crt_corpc_ops crt_grp_create_co_ops = {
-	.co_aggregate = crt_grp_create_corpc_aggregate,
-	.co_pre_forward = NULL,
-};
-
-/* group destroy */
-CRT_RPC_DEFINE(crt_grp_destroy, CRT_ISEQ_GRP_DESTROY, CRT_OSEQ_GRP_DESTROY)
-
-static struct crt_corpc_ops crt_grp_destroy_co_ops = {
-	.co_aggregate = crt_grp_destroy_corpc_aggregate,
-	.co_pre_forward = NULL,
-};
-
 /* uri lookup */
 CRT_RPC_DEFINE(crt_uri_lookup, CRT_ISEQ_URI_LOOKUP, CRT_OSEQ_URI_LOOKUP)
 
