@@ -107,7 +107,6 @@ crt_barrier_update_master(struct crt_grp_priv *grp_priv)
 	d_rank_t			 rank;
 	bool				 new_master = false;
 	int				 i;
-	d_rank_list_t			*live_ranks;
 	d_rank_list_t			*membs;
 
 	info = &grp_priv->gp_barrier_info;
@@ -118,7 +117,6 @@ crt_barrier_update_master(struct crt_grp_priv *grp_priv)
 
 	D_RWLOCK_RDLOCK(primary_grp->gp_rwlock_ft);
 
-	live_ranks = grp_priv_get_live_ranks(grp_priv);
 	membs = grp_priv_get_membs(grp_priv);
 
 	if (!CRT_PMIX_ENABLED() && membs->rl_nr == 0) {
@@ -126,7 +124,7 @@ crt_barrier_update_master(struct crt_grp_priv *grp_priv)
 		D_GOTO(out, new_master = false);
 	}
 
-	if (!d_rank_in_rank_list(live_ranks,
+	if (!d_rank_in_rank_list(membs,
 				 info->bi_master_pri_rank)) {
 		rank = -1;
 		/* Master has failed */
@@ -136,7 +134,7 @@ crt_barrier_update_master(struct crt_grp_priv *grp_priv)
 
 			rank = crt_grp_priv_get_primary_rank(grp_priv,
 							membs->rl_ranks[i]);
-			if (d_rank_in_rank_list(live_ranks, rank))
+			if (d_rank_in_rank_list(membs, rank))
 				break;
 		}
 

@@ -117,8 +117,8 @@ struct crt_grp_priv {
 	 */
 	struct crt_grp_membs	gp_membs;
 	/*
-	 * the version number of membership list gp_membs, also the version
-	 * number of the failed rank list gp_pri_srv->ps_failed_ranks
+	 * the version number of the group. Set my crt_group_version_set or
+	 * crt_group_mod APIs.
 	 */
 	uint32_t		 gp_membs_ver;
 	/*
@@ -128,16 +128,7 @@ struct crt_grp_priv {
 	 */
 	struct crt_swim_membs	 gp_membs_swim;
 	/*
-	 * member ranks that are still alive, should be unique and sorted, each
-	 * member is the rank number within the primary group. Only valid for
-	 * the local primary service group.
-	 */
-	d_rank_list_t		*gp_live_ranks;
-	/* failed ranks. a subgroup's list points to its parent's list */
-	d_rank_list_t		*gp_failed_ranks;
-	/*
-	 * protects gp_membs_ver, gp_live_ranks, gp_failed_ranks. Only allocated
-	 * for primary groups, a subgroup references its parent group's lock
+	 * protects group modifications
 	 */
 	pthread_rwlock_t	*gp_rwlock_ft;
 	/* CaRT context only for sending sub-grp create/destroy RPCs */
@@ -189,18 +180,8 @@ struct crt_grp_priv {
 	/* group reference count */
 	uint32_t		 gp_refcount;
 
-	/* rank map array, only needed for local primary group */
-	struct crt_rank_map	*gp_pmix_rank_map;
-	/* pmix errhdlr ref, used for PMIx_Deregister_event_handler */
-	size_t			 gp_errhdlr_ref;
 	/* Barrier information.  Only used in local service groups */
 	struct crt_barrier_info	 gp_barrier_info;
-
-	/* temporary return code for group creation */
-	int			 gp_rc;
-
-	crt_grp_destroy_cb_t	 gp_destroy_cb; /* grp destroy completion cb */
-	void			*gp_destroy_cb_arg;
 
 	pthread_rwlock_t	 gp_rwlock; /* protect all fields above */
 };
@@ -216,18 +197,6 @@ static inline d_rank_list_t*
 grp_priv_get_membs(struct crt_grp_priv *priv)
 {
 	return priv->gp_membs.cgm_linear_list;
-}
-
-static inline d_rank_list_t*
-grp_priv_get_live_ranks(struct crt_grp_priv *priv)
-{
-	return priv->gp_membs.cgm_linear_list;
-}
-
-static inline d_rank_list_t*
-grp_priv_get_failed_ranks(struct crt_grp_priv *priv)
-{
-	return priv->gp_failed_ranks;
 }
 
 d_rank_t
@@ -258,26 +227,6 @@ grp_priv_set_membs(struct crt_grp_priv *priv, d_rank_list_t *list)
 }
 
 static inline int
-grp_priv_copy_live_ranks(struct crt_grp_priv *priv, d_rank_list_t *list)
-{
-	return d_rank_list_dup(&priv->gp_live_ranks, list);
-}
-
-static inline int
-grp_priv_init_failed_ranks(struct crt_grp_priv *priv)
-{
-	int rc = 0;
-
-	priv->gp_failed_ranks = d_rank_list_alloc(0);
-	if (priv->gp_failed_ranks == NULL) {
-		D_ERROR("d_rank_list_alloc failed.\n");
-		rc = -DER_NOMEM;
-	}
-
-	return rc;
-}
-
-static inline int
 grp_priv_init_membs(struct crt_grp_priv *priv, int size)
 {
 	priv->gp_membs.cgm_list = d_rank_list_alloc(size);
@@ -289,18 +238,6 @@ grp_priv_init_membs(struct crt_grp_priv *priv, int size)
 	priv->gp_membs.cgm_linear_list = d_rank_list_alloc(0);
 
 	return 0;
-}
-
-static inline void
-grp_priv_fini_live_ranks(struct crt_grp_priv *priv)
-{
-	d_rank_list_free(priv->gp_live_ranks);
-}
-
-static inline void
-grp_priv_fini_failed_ranks(struct crt_grp_priv *priv)
-{
-	d_rank_list_free(priv->gp_failed_ranks);
 }
 
 static inline void
@@ -324,15 +261,6 @@ grp_priv_fini_membs(struct crt_grp_priv *priv)
 		D_FREE(index);
 	}
 }
-
-static inline void
-grp_priv_set_default_failed_ranks(struct crt_grp_priv *priv,
-				struct crt_grp_priv *def)
-{
-	priv->gp_failed_ranks = def->gp_failed_ranks;
-}
-
-
 
 struct crt_rank_mapping {
 	d_list_t	rm_link;
@@ -430,7 +358,6 @@ struct crt_grp_priv *crt_grp_lookup_grpid(crt_group_id_t grp_id);
 int crt_validate_grpid(const crt_group_id_t grpid);
 int crt_grp_init(crt_group_id_t grpid);
 int crt_grp_fini(void);
-int crt_grp_failed_ranks_dup(crt_group_t *grp, d_rank_list_t **failed_ranks);
 void crt_grp_priv_destroy(struct crt_grp_priv *grp_priv);
 
 int crt_grp_config_load(struct crt_grp_priv *grp_priv);

@@ -307,21 +307,6 @@ enum {
 
 CRT_GEN_STRUCT(crt_grp_cache, CRT_SEQ_GRP_CACHE)
 
-#define CRT_ISEQ_GRP_DESTROY	/* input fields */		 \
-	((crt_group_id_t)	(gd_grp_id)		CRT_VAR) \
-	/* the rank initiated the group destroy */		 \
-	((d_rank_t)		(gd_initiate_rank)	CRT_VAR)
-
-#define CRT_OSEQ_GRP_DESTROY	/* output fields */		 \
-	/* failed rank list, can be used to aggregate the reply from child */ \
-	((d_rank_list_t)	(gd_failed_ranks)	CRT_PTR) \
-	/* the rank sent out the reply */			 \
-	((d_rank_t)		(gd_rank)		CRT_VAR) \
-	/* return code, if failed the gc_rank should be in gc_failed_ranks */ \
-	((int32_t)		(gd_rc)			CRT_VAR)
-
-CRT_RPC_DECLARE(crt_grp_destroy, CRT_ISEQ_GRP_DESTROY, CRT_OSEQ_GRP_DESTROY)
-
 #define CRT_ISEQ_URI_LOOKUP	/* input fields */		 \
 	((crt_group_id_t)	(ul_grp_id)		CRT_VAR) \
 	((d_rank_t)		(ul_rank)		CRT_VAR) \

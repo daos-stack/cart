@@ -52,15 +52,12 @@ crt_get_filtered_grp_rank_list(struct crt_grp_priv *grp_priv, uint32_t grp_ver,
 			       bool *allocated)
 {
 	d_rank_list_t		*grp_rank_list = NULL;
-	d_rank_list_t		*live_ranks;
 	d_rank_list_t		*membs;
 	int			 rc = 0;
 
 	membs = grp_priv_get_membs(grp_priv);
-	live_ranks = membs;
 
-	rc = d_rank_list_dup_sort_uniq(&grp_rank_list, live_ranks);
-
+	rc = d_rank_list_dup_sort_uniq(&grp_rank_list, membs);
 	if (rc != 0) {
 		D_ERROR("d_rank_list_dup failed, rc: %d.\n", rc);
 		D_GOTO(out, rc);
@@ -133,7 +130,7 @@ out:
 /*
  * query number of children.
  *
- * rank number of grp_priv->gp_membs, grp_priv->gp_live_ranks and exclude_ranks
+ * rank number of grp_priv->gp_membs and exclude_ranks
  * are primary rank.  grp_root and grp_self are logical rank number within the
  * group.
  */
@@ -197,7 +194,7 @@ out:
 /*
  * query children rank list (rank number in primary group).
  *
- * rank number of grp_priv->gp_membs, grp_priv->gp_live_ranks and filter_ranks
+ * rank number of grp_priv->gp_membs, and filter_ranks
  * are primary rank.  grp_root and grp_self are logical rank number within the
  * group.
  */

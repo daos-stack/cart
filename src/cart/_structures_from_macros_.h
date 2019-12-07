@@ -113,17 +113,6 @@ struct crt_ctl_get_uri_cache_out {
 	int32_t cguc_rc;
 };
 
-struct crt_grp_destroy_in {
-	crt_group_id_t gd_grp_id;
-	d_rank_t gd_initiate_rank;
-};
-
-struct crt_grp_destroy_out {
-	d_rank_list_t *gd_failed_ranks;
-	d_rank_t gd_rank;
-	int32_t gd_rc;
-};
-
 struct crt_iv_fetch_in {
 	uint32_t ifi_ivns_id;
 	uint32_t pad1;

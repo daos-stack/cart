@@ -1293,13 +1293,9 @@ crt_grp_ras_fini(struct crt_grp_priv *grp_priv)
 {
 	D_ASSERT(grp_priv->gp_service);
 	if (grp_priv->gp_primary) {
-		grp_priv_fini_failed_ranks(grp_priv);
-
 		D_RWLOCK_DESTROY(grp_priv->gp_rwlock_ft);
 		D_FREE(grp_priv->gp_rwlock_ft);
 	}
-
-	grp_priv_fini_live_ranks(grp_priv);
 }
 
 
@@ -1598,10 +1594,8 @@ out:
 			grp_priv->gp_self);
 	} else {
 		D_ERROR("crt_primary_grp_init failed, rc: %d.\n", rc);
-		if (grp_priv != NULL) {
-			D_FREE(grp_priv->gp_pmix_rank_map);
+		if (grp_priv != NULL)
 			crt_grp_priv_decref(grp_priv);
-		}
 	}
 
 	return rc;
@@ -1620,7 +1614,6 @@ crt_primary_grp_fini(void)
 	/* destroy the rank map */
 	grp_priv = crt_is_service() ? grp_gdata->gg_srv_pri_grp :
 				      grp_gdata->gg_cli_pri_grp;
-	D_FREE(grp_priv->gp_pmix_rank_map);
 
 	if (crt_is_service()) {
 		crt_grp_ras_fini(grp_priv);
@@ -2582,35 +2575,6 @@ crt_unregister_event_cb(crt_event_cb event_handler, void *arg)
 		}
 	}
 	D_RWLOCK_UNLOCK(&crt_plugin_gdata.cpg_event_rwlock);
-	return rc;
-}
-
-int
-crt_grp_failed_ranks_dup(crt_group_t *grp, d_rank_list_t **failed_ranks)
-{
-	struct crt_grp_priv	*grp_priv;
-	d_rank_list_t		*grp_failed_ranks;
-	int			 rc = 0;
-
-	D_ASSERT(crt_initialized());
-	D_ASSERT(failed_ranks != NULL);
-
-	grp_priv = crt_grp_pub2priv(grp);
-	D_ASSERT(grp_priv != NULL);
-	if (grp_priv->gp_primary == 0) {
-		D_ERROR("grp should be a primary group.\n");
-		D_GOTO(out, rc = -DER_NO_PERM);
-	}
-	D_RWLOCK_RDLOCK(grp_priv->gp_rwlock_ft);
-
-	grp_failed_ranks = grp_priv_get_failed_ranks(grp_priv);
-	rc = d_rank_list_dup(failed_ranks, grp_failed_ranks);
-	D_RWLOCK_UNLOCK(grp_priv->gp_rwlock_ft);
-	if (rc != 0)
-		D_ERROR("d_rank_list_dup() failed, group: %s, rc: %d\n",
-			grp_priv->gp_pub.cg_grpid, rc);
-
-out:
 	return rc;
 }
 
