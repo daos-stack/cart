@@ -50,7 +50,7 @@
 #include <gurt/list.h>
 #include <cart/api.h>
 #include <cart/types.h>
-#include "utest_cmocka.h"
+#include "wrap_cmocka.h"
 
 using namespace std;
 
