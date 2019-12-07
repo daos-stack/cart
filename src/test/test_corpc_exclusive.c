@@ -175,7 +175,12 @@ int main(void)
 	rc = crt_context_create(&g_main_ctx);
 	assert(rc == 0);
 
-	rc = pthread_create(&progress_thread, 0, progress_function, &g_main_ctx);
+	rc = pthread_create(&progress_thread, 0,
+			progress_function, &g_main_ctx);
+	if (rc != 0) {
+		D_ERROR("pthread_create() failed; rc=%d\n", rc);
+		assert(0);
+	}
 
 	grp_cfg_file = getenv("CRT_L_GRP_CFG");
 
@@ -226,7 +231,7 @@ int main(void)
 	rank_list = NULL;
 
 	if (my_rank == 0) {
-		DBG_PRINT( "Rank 0 sending CORPC call\n");
+		DBG_PRINT("Rank 0 sending CORPC call\n");
 		rc = crt_corpc_req_create(g_main_ctx, NULL, &membs,
 			CRT_PROTO_OPC(TEST_CORPC_PREFWD_BASE,
 				TEST_CORPC_PREFWD_VER, 0), NULL, 0,

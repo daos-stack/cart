@@ -198,8 +198,12 @@ int main(void)
 	rc = crt_context_create(&g_main_ctx);
 	assert(rc == 0);
 
-	rc = pthread_create(&progress_thread, 0, progress_function, &g_main_ctx);
-
+	rc = pthread_create(&progress_thread, 0,
+				progress_function, &g_main_ctx);
+	if (rc != 0) {
+		D_ERROR("pthread_create() failed; rc=%d\n", rc);
+		assert(0);
+	}
 
 	grp_cfg_file = getenv("CRT_L_GRP_CFG");
 
