@@ -57,6 +57,7 @@ test_run(d_rank_t my_rank)
 	tc_srv_start_basic(test.tg_local_group_name, &test.tg_crt_ctx,
 			   &test.tg_tid, &grp, &grp_size, &opt);
 
+	DBG_PRINT("Server started, grp_size = %d\n", grp_size);
 	rc = sem_init(&test.tg_token_to_proceed, 0, 0);
 	D_ASSERTF(rc == 0, "sem_init() failed.\n");
 
@@ -71,6 +72,7 @@ test_run(d_rank_t my_rank)
 		rc = crt_group_config_save(NULL, true);
 		D_ASSERTF(rc == 0,
 			  "crt_group_config_save() failed. rc: %d\n", rc);
+		DBG_PRINT("Group config saved\n");
 	}
 
 	rc = pthread_join(test.tg_tid, NULL);

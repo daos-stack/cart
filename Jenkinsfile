@@ -1300,6 +1300,7 @@ pipeline {
                         */
                     }
                 }
+/*
                 stage('Three-node') {
                     agent {
                         label 'ci_vm3'
@@ -1336,6 +1337,8 @@ pipeline {
                             junit env.STAGE_NAME + '/*/results.xml'
                             archiveArtifacts artifacts: env.STAGE_NAME + '/**'
                         }
+
+*/
                         /* temporarily moved into runTest->stepResult due to JENKINS-39203
                         success {
                             githubNotify credentialsId: 'daos-jenkins-commit-status',
@@ -1356,8 +1359,10 @@ pipeline {
                                          status: 'ERROR'
                         }
                         */
+/*
                     }
                 }
+*/
                 stage('Five-node') {
                     agent {
                         label 'ci_vm5'

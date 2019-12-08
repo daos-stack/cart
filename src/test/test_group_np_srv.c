@@ -60,6 +60,7 @@ test_run(d_rank_t my_rank)
 	tc_srv_start_basic(test_g.t_local_group_name, &test_g.t_crt_ctx[0],
 			   &test_g.t_tid[0], &grp, &grp_size, NULL);
 
+	DBG_PRINT("Basic server started, group_size=%d\n", grp_size);
 	rc = sem_init(&test_g.t_token_to_proceed, 0, 0);
 	D_ASSERTF(rc == 0, "sem_init() failed.\n");
 
@@ -134,7 +135,7 @@ int main(int argc, char **argv)
 	/* rank, num_attach_retries, is_server, assert_on_error */
 	tc_test_init(my_rank, 20, true, true);
 
-	DBG_PRINT("STARTING SERVER!!!\n");
+	DBG_PRINT("STARTING SERVER\n");
 	test_run(my_rank);
 
 	return rc;
