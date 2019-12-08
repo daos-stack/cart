@@ -60,6 +60,10 @@ test_run(d_rank_t my_rank)
 	rc = sem_init(&test.tg_token_to_proceed, 0, 0);
 	D_ASSERTF(rc == 0, "sem_init() failed.\n");
 
+	rc = crt_proto_register(&my_proto_fmt_0);
+	D_ASSERT(rc == 0);
+
+
 	if (test.tg_save_cfg && my_rank == 0) {
 		rc = crt_group_config_path_set(test.tg_cfg_path);
 		D_ASSERTF(rc == 0, "crt_group_config_path_set failed %d\n", rc);
@@ -68,9 +72,6 @@ test_run(d_rank_t my_rank)
 		D_ASSERTF(rc == 0,
 			  "crt_group_config_save() failed. rc: %d\n", rc);
 	}
-
-	rc = crt_proto_register(&my_proto_fmt_0);
-	D_ASSERT(rc == 0);
 
 	rc = pthread_join(test.tg_tid, NULL);
 	D_ASSERTF(rc == 0, "pthread_join failed. rc: %d\n", rc);
