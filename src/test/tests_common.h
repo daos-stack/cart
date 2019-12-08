@@ -444,7 +444,7 @@ tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 
 void
 tc_srv_start_basic(char *srv_group_name, crt_context_t *crt_ctx,
-		   pthread_t *progress_thread, crt_group_t *grp,
+		pthread_t *progress_thread, crt_group_t **grp,
 		   uint32_t *grp_size, crt_init_options_t *init_opt)
 {
 	char		*env_self_rank;
@@ -472,8 +472,8 @@ tc_srv_start_basic(char *srv_group_name, crt_context_t *crt_ctx,
 	}
 	D_ASSERTF(rc == 0, "crt_init() failed, rc: %d\n", rc);
 
-	grp = crt_group_lookup(NULL);
-	if (!grp) {
+	*grp = crt_group_lookup(NULL);
+	if (!(*grp)) {
 		D_ERROR("Failed to lookup group\n");
 		assert(0);
 	}
@@ -490,11 +490,11 @@ tc_srv_start_basic(char *srv_group_name, crt_context_t *crt_ctx,
 
 	grp_cfg_file = getenv("CRT_L_GRP_CFG");
 
-	rc = crt_rank_uri_get(grp, my_rank, 0, &my_uri);
+	rc = crt_rank_uri_get(*grp, my_rank, 0, &my_uri);
 	D_ASSERTF(rc == 0, "crt_rank_uri_get() failed; rc=%d\n", rc);
 
 	/* load group info from a config file and delete file upon return */
-	rc = tc_load_group_from_file(grp_cfg_file, crt_ctx[0], grp, my_rank,
+	rc = tc_load_group_from_file(grp_cfg_file, crt_ctx[0], *grp, my_rank,
 					true);
 	D_ASSERTF(rc == 0, "tc_load_group_from_file() failed; rc=%d\n", rc);
 

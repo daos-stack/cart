@@ -3106,11 +3106,6 @@ crt_group_ranks_get(crt_group_t *group, d_rank_list_t **list)
 	struct crt_grp_priv	*grp_priv;
 	int			rc = 0;
 
-	if (group == NULL) {
-		D_ERROR("Passed group is NULL\n");
-		D_GOTO(out, rc = -DER_INVAL);
-	}
-
 	grp_priv = crt_grp_pub2priv(group);
 
 	D_RWLOCK_WRLOCK(&grp_priv->gp_rwlock);
@@ -3118,7 +3113,6 @@ crt_group_ranks_get(crt_group_t *group, d_rank_list_t **list)
 	rc = d_rank_list_dup(list, membs);
 	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
 
-out:
 	return rc;
 }
 
