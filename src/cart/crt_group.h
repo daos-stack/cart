@@ -498,14 +498,35 @@ crt_grp_psr_set(struct crt_grp_priv *grp_priv, d_rank_t psr_rank,
 		grp_priv->gp_pub.cg_grpid, psr_rank, psr_addr);
 }
 
-/*TODO: Implement Check if rank from group is still present */
-#define CRT_RANK_PRESENT(grp, rank) 1
+struct crt_grp_priv *crt_grp_pub2priv(crt_group_t *grp);
+
+static inline bool
+crt_rank_present(crt_group_t *grp, d_rank_t rank)
+{
+	struct crt_grp_priv	*priv = NULL;
+	d_rank_list_t		*membs;
+	bool			ret = false;
+
+	priv = crt_grp_pub2priv(grp);
+
+	D_ASSERTF(priv != NULL, "group priv is NULL\n");
+
+	D_RWLOCK_RDLOCK(priv->gp_rwlock_ft);
+	membs = grp_priv_get_membs(priv);
+	if (membs)
+		ret = d_rank_in_rank_list(membs, rank);
+	D_RWLOCK_UNLOCK(priv->gp_rwlock_ft);
+
+	return ret;
+}
+
+#define CRT_RANK_PRESENT(grp, rank) \
+	crt_rank_present(grp, rank)
 
 
 bool
 crt_grp_id_identical(crt_group_id_t grp_id_1, crt_group_id_t grp_id_2);
 bool crt_grp_is_local(crt_group_t *grp);
-struct crt_grp_priv *crt_grp_pub2priv(crt_group_t *grp);
 int crt_grp_lc_uri_insert_all(crt_group_t *grp, d_rank_t rank, int tag,
 			const char *uri);
 int crt_grp_config_psr_load(struct crt_grp_priv *grp_priv, d_rank_t psr_rank);

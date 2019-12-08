@@ -667,6 +667,7 @@ crt_req_timeout_reset(struct crt_rpc_priv *rpc_priv)
 		return false;
 	}
 
+	tgt_ep = &rpc_priv->crp_pub.cr_ep;
 	if (!CRT_RANK_PRESENT(tgt_ep->ep_grp, tgt_ep->ep_rank)) {
 		RPC_TRACE(DB_NET, rpc_priv,
 			"grp %p, rank %d already evicted.\n",
