@@ -3000,9 +3000,6 @@ crt_group_view_create(crt_group_id_t srv_grpid,
 
 	*ret_grp = &grp_priv->gp_pub;
 
-	/* decref done in crt_group_view_destroy() */
-	crt_grp_priv_addref(grp_priv);
-
 	D_RWLOCK_WRLOCK(&grp_gdata->gg_rwlock);
 	d_list_add_tail(&grp_priv->gp_link, &crt_grp_list);
 	D_RWLOCK_UNLOCK(&grp_gdata->gg_rwlock);
