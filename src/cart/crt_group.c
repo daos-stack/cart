@@ -796,6 +796,10 @@ crt_grp_ctx_invalid(struct crt_context *ctx, bool locked)
 
 	d_list_for_each_entry(grp_priv, &crt_grp_list,
 			      gp_link) {
+
+		if (grp_priv->gp_primary == 0)
+			continue;
+
 		rc = crt_grp_lc_ctx_invalid(grp_priv, ctx);
 		if (rc != 0) {
 			D_ERROR("crt_grp_lc_ctx_invalid failed, group %s, "
@@ -1242,6 +1246,11 @@ crt_group_lookup(crt_group_id_t grp_id)
 
 	if (crt_validate_grpid(grp_id) != 0) {
 		D_ERROR("grp_id contains invalid characters or is too long\n");
+		goto out;
+	}
+
+	if (crt_grp_id_identical(grp_priv->gp_pub.cg_grpid, grp_id)) {
+		grp_priv = grp_gdata->gg_primary_grp;
 		goto out;
 	}
 
