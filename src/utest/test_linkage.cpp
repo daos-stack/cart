@@ -98,7 +98,7 @@ test_crt_api_linkage(void **state)
 
 	setenv("OFI_INTERFACE", "lo", 1);
 
-	rc = crt_init(bogus_client_group, CRT_FLAG_BIT_PMIX_DISABLE);
+	rc = crt_init(bogus_client_group, 0x0);
 	assert_int_equal(rc, 0);
 
 	/* test RPC register */

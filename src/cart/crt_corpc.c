@@ -134,7 +134,7 @@ crt_corpc_initiate(struct crt_rpc_priv *rpc_priv)
 
 	co_hdr = &rpc_priv->crp_coreq_hdr;
 	if (rpc_priv->crp_flags & CRT_RPC_FLAG_PRIMARY_GRP) {
-		grp_priv = grp_gdata->gg_srv_pri_grp;
+		grp_priv = grp_gdata->gg_primary_grp;
 		D_ASSERT(grp_priv != NULL);
 	} else {
 		grp_priv = crt_grp_lookup_grpid(co_hdr->coh_grpid);
@@ -385,15 +385,8 @@ crt_corpc_req_create(crt_context_t crt_ctx, crt_group_t *grp,
 
 	grp_gdata = crt_gdata.cg_grp;
 	D_ASSERT(grp_gdata != NULL);
-	if (grp == NULL) {
-		grp_priv = grp_gdata->gg_srv_pri_grp;
-	} else {
-		grp_priv = container_of(grp, struct crt_grp_priv, gp_pub);
-		if (grp_priv->gp_primary && !grp_priv->gp_local) {
-			D_ERROR("cannot create corpc for attached group.\n");
-			D_GOTO(out, rc = -DER_INVAL);
-		}
-	}
+
+	grp_priv = crt_grp_pub2priv(grp);
 
 	rc = crt_rpc_priv_alloc(opc, &rpc_priv, false /* forward */);
 	if (rc != 0) {

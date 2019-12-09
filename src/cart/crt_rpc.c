@@ -266,7 +266,7 @@ crt_rpc_priv_set_ep(struct crt_rpc_priv *rpc_priv, crt_endpoint_t *tgt_ep)
 {
 	if (tgt_ep->ep_grp == NULL) {
 		rpc_priv->crp_pub.cr_ep.ep_grp  =
-			&crt_gdata.cg_grp->gg_srv_pri_grp->gp_pub;
+			&crt_gdata.cg_grp->gg_primary_grp->gp_pub;
 	} else {
 		rpc_priv->crp_pub.cr_ep.ep_grp = tgt_ep->ep_grp;
 	}
@@ -281,30 +281,13 @@ static int check_ep(crt_endpoint_t *tgt_ep, struct crt_grp_priv **ret_grp_priv)
 	struct crt_grp_priv	*grp_priv;
 	int rc = 0;
 
-	if (tgt_ep->ep_grp == NULL) {
-		grp_priv = crt_gdata.cg_grp->gg_srv_pri_grp;
-		if (grp_priv == NULL) {
-			D_ERROR("service group not attached yet.\n");
-			D_GOTO(out, rc = -DER_NOTATTACH);
-		}
-
-	} else {
-		grp_priv = container_of(tgt_ep->ep_grp, struct crt_grp_priv,
-					gp_pub);
-
-		if (grp_priv->gp_service == 0) {
-			D_ERROR("bad parameter tgt_ep->ep_grp: %p (gp_primary: "
-				"%d, gp_service: %d, gp_local: %d.\n",
-				tgt_ep->ep_grp, grp_priv->gp_primary,
-				grp_priv->gp_service, grp_priv->gp_local);
-			D_GOTO(out, rc = -DER_INVAL);
-		}
-	}
+	grp_priv = crt_grp_pub2priv(tgt_ep->ep_grp);
+	if (grp_priv == NULL)
+		D_GOTO(out, rc = -DER_BAD_TARGET);
 
 out:
-	if (rc == 0) {
+	if (rc == 0)
 		*ret_grp_priv = grp_priv;
-	}
 
 	return rc;
 }
@@ -856,7 +839,7 @@ crt_req_ep_lc_lookup(struct crt_rpc_priv *rpc_priv, bool *uri_exists)
 	 * Did it in crt_grp_attach(), in the case that this context created
 	 * later can insert it here.
 	 */
-	if (base_addr == NULL && !grp_priv->gp_local) {
+	if (base_addr == NULL) {
 		D_RWLOCK_RDLOCK(&grp_priv->gp_rwlock);
 		if (tgt_ep->ep_rank == grp_priv->gp_psr_rank &&
 		    tgt_ep->ep_tag == 0) {
@@ -935,23 +918,20 @@ crt_req_uri_lookup(struct crt_rpc_priv *rpc_priv)
 	default_grp_priv = crt_grp_pub2priv(NULL);
 	D_ASSERT(default_grp_priv != NULL);
 
-	/* this is a remote group, contact the PSR */
-	if (grp_priv->gp_local == 0) {
-		/* Note: In case of no-pmix all groups are local */
-		if (!crt_is_service()) {
-			/* send an RPC to the PSR */
-			RPC_TRACE(DB_NET, rpc_priv,
+	/* For clients - contact PSR */
+	if (!crt_is_service()) {
+		/* send an RPC to the PSR */
+		RPC_TRACE(DB_NET, rpc_priv,
 			"Querying PSR to find out target NA Address.\n");
-			rc = crt_req_uri_lookup_psr(rpc_priv,
-					crt_req_uri_lookup_by_rpc_cb,
-					rpc_priv);
-			if (rc != 0) {
-				rpc_priv->crp_state = RPC_STATE_INITED;
-				D_ERROR("psr uri lookup failed, rc %d.\n",
-					rc);
-			}
-			D_GOTO(out, rc);
+		rc = crt_req_uri_lookup_psr(rpc_priv,
+				crt_req_uri_lookup_by_rpc_cb,
+				rpc_priv);
+		if (rc != 0) {
+			rpc_priv->crp_state = RPC_STATE_INITED;
+			D_ERROR("psr uri lookup failed, rc %d.\n",
+				rc);
 		}
+		D_GOTO(out, rc);
 	}
 
 	/* this is a local group */
@@ -1452,11 +1432,10 @@ crt_rpc_common_hdlr(struct crt_rpc_priv *rpc_priv)
 	bool			skip_check = false;
 	d_rank_t		self_rank;
 
-
 	D_ASSERT(rpc_priv != NULL);
 	crt_ctx = rpc_priv->crp_pub.cr_ctx;
 
-	self_rank = crt_gdata.cg_grp->gg_srv_pri_grp->gp_self;
+	self_rank = crt_gdata.cg_grp->gg_primary_grp->gp_self;
 
 	if (self_rank == CRT_NO_RANK)
 		skip_check = true;
@@ -1483,7 +1462,7 @@ crt_rpc_common_hdlr(struct crt_rpc_priv *rpc_priv)
 				rpc_priv->crp_pub.cr_opc,
 				rpc_priv->crp_req_hdr.cch_dst_rank,
 				rpc_priv->crp_req_hdr.cch_dst_tag,
-				crt_gdata.cg_grp->gg_srv_pri_grp->gp_self,
+				self_rank,
 				crt_ctx->cc_idx,
 				rpc_priv->crp_pub.cr_ep.ep_rank,
 				rpc_priv->crp_pub.cr_ep.ep_tag);

@@ -1063,6 +1063,19 @@ crt_context_req_untrack(struct crt_rpc_priv *rpc_priv)
 }
 
 crt_context_t
+crt_context_lookup_locked(int ctx_idx)
+{
+	struct crt_context	*ctx;
+
+	d_list_for_each_entry(ctx, &crt_gdata.cg_ctx_list, cc_link) {
+		if (ctx->cc_idx == ctx_idx)
+			return ctx;
+	}
+
+	return NULL;
+}
+
+crt_context_t
 crt_context_lookup(int ctx_idx)
 {
 	struct crt_context	*ctx;

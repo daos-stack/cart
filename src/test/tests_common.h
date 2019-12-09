@@ -377,15 +377,10 @@ tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 	rc = d_log_init();
 	D_ASSERTF(rc == 0, "d_log_init failed, rc=%d\n", rc);
 
-	if (init_opt) {
-		rc = crt_init_opt(local_group_name, CRT_FLAG_BIT_SINGLETON |
-				  CRT_FLAG_BIT_PMIX_DISABLE |
-				  CRT_FLAG_BIT_LM_DISABLE, init_opt);
-	} else {
-		rc = crt_init(local_group_name, CRT_FLAG_BIT_SINGLETON |
-			      CRT_FLAG_BIT_PMIX_DISABLE |
-			      CRT_FLAG_BIT_LM_DISABLE);
-	}
+	if (init_opt)
+		rc = crt_init_opt(local_group_name, 0, init_opt);
+	else
+		rc = crt_init(local_group_name, 0);
 	D_ASSERTF(rc == 0, "crt_init() failed; rc=%d\n", rc);
 
 	rc = crt_context_create(crt_ctx);
@@ -462,13 +457,10 @@ tc_srv_start_basic(char *srv_group_name, crt_context_t *crt_ctx,
 	D_ASSERT(rc == 0);
 
 	if (init_opt) {
-		rc = crt_init_opt(srv_group_name, CRT_FLAG_BIT_SERVER |
-				  CRT_FLAG_BIT_PMIX_DISABLE |
-				  CRT_FLAG_BIT_LM_DISABLE, init_opt);
+		rc = crt_init_opt(srv_group_name, CRT_FLAG_BIT_SERVER,
+				  init_opt);
 	} else {
-		rc = crt_init(srv_group_name, CRT_FLAG_BIT_SERVER |
-				CRT_FLAG_BIT_PMIX_DISABLE |
-				CRT_FLAG_BIT_LM_DISABLE);
+		rc = crt_init(srv_group_name, CRT_FLAG_BIT_SERVER);
 	}
 	D_ASSERTF(rc == 0, "crt_init() failed, rc: %d\n", rc);
 

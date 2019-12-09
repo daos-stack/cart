@@ -119,7 +119,7 @@ crt_barrier_update_master(struct crt_grp_priv *grp_priv)
 
 	membs = grp_priv_get_membs(grp_priv);
 
-	if (!CRT_PMIX_ENABLED() && membs->rl_nr == 0) {
+	if (membs->rl_nr == 0) {
 		D_DEBUG(DB_TRACE, "Nothing to update\n");
 		D_GOTO(out, new_master = false);
 	}
@@ -545,11 +545,6 @@ crt_barrier(crt_group_t *grp, crt_barrier_cb_t complete_cb, void *cb_arg)
 
 	if (grp_priv->gp_primary != 1) {
 		D_ERROR("Barrier not supported on secondary groups.\n");
-		return -DER_OOG;
-	}
-
-	if (grp_priv->gp_local == 0) {
-		D_ERROR("Barrier not supported on remote group.\n");
 		return -DER_OOG;
 	}
 

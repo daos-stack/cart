@@ -74,9 +74,8 @@ extern "C" {
  * multiple times. Each call must be paired with a corresponding crt_finalize().
  *
  * \param[in] grpid            primary group ID, user can provide a NULL value
- *                             in that case will use the default group ID,
- *                             CRT_DEFAULT_CLI_GRPID for client and
- *                             CRT_DEFAULT_SRV_GRPID for server.
+ *                             in that case will use the default group ID
+ *                             CRT_DEFAULT_GRPID.
  * \param[in] flags            bit flags, see \ref crt_init_flag_bits.
  * \param[in] opt              additional init time options. If a NULL value
  *                             is provided, this call becomes identical to
@@ -93,9 +92,8 @@ crt_init_opt(crt_group_id_t grpid, uint32_t flags, crt_init_options_t *opt);
  * multiple times. Each call must be paired with a corresponding crt_finalize().
  *
  * \param[in] grpid            primary group ID, user can provide a NULL value
- *                             in that case will use the default group ID,
- *                             CRT_DEFAULT_CLI_GRPID for client and
- *                             CRT_DEFAULT_SRV_GRPID for server.
+ *                             in that case will use the default group ID
+ *                             CRT_DEFAULT_GRPID.
  * \param[in] flags            bit flags, see \ref crt_init_flag_bits.
  *
  * \return                     DER_SUCCESS on success, negative value if error
@@ -1040,8 +1038,8 @@ typedef int (*crt_grp_destroy_cb_t)(void *arg, int status);
  *
  * The primary group can be queried using the group ID passed to crt_init.
  * Some special cases:
- * 1) If (grp_id == NULL), it means the default local primary group ID, i.e.
- *    the CRT_DEFAULT_CLI_GRPID for client and CRT_DEFAULT_SRV_GRPID for server.
+ * 1) If (grp_id == NULL), it means the default primary group ID
+ *     CRT_DEFAULT_GRPID.
  *
  * \note user can cache the returned group handle to avoid the overhead of
  *          frequent lookup.
@@ -1711,8 +1709,7 @@ crt_proto_query(crt_endpoint_t *tgt_ep, crt_opcode_t base_opc,
 
 
 /**
- * Set self rank. This API is only available when PMIX is disabled. See \a
- * CRT_FLAG_BIT_PMIX_DISABLE for more details.
+ * Set self rank.
  *
  * \param[in] rank              Rank to set on self.
  *
@@ -1759,8 +1756,8 @@ crt_rank_state_get(crt_group_t *grp, d_rank_t rank,
  * \param[in] group             Group identifier
  * \param[in] rank              Rank to remove
  *
- * \note This API is only available when PMIX is disabled. See
- * CRT_FLAG_BIT_PMIX_DISABLE for more details.
+ * \return                      DER_SUCCESS on success, negative value on
+ *                              failure.
  */
 int
 crt_group_rank_remove(crt_group_t *group, d_rank_t rank);

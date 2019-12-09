@@ -45,19 +45,12 @@
 #include "crt_barrier.h"
 #include "crt_swim.h"
 
-enum crt_grp_status {
-	CRT_GRP_CREATING = 0x66,
-	CRT_GRP_NORMAL,
-	CRT_GRP_DESTROYING,
-};
-
 enum crt_rank_status {
 	CRT_RANK_NOENT = 0x87, /* rank non-existed for this primary group */
 	CRT_RANK_ALIVE, /* rank alive */
 	CRT_RANK_DEAD, /* rank dead */
 };
 
-/* the index of crt_rank_map[] is the PMIx global rank */
 struct crt_rank_map {
 	d_rank_t		rm_rank; /* rank in primary group */
 	enum crt_rank_status	rm_status; /* health status */
@@ -168,15 +161,9 @@ struct crt_grp_priv {
 	/* Secondary to primary rank mapping table */
 	struct d_hash_table	 gp_s2p_table;
 
-	enum crt_grp_status	 gp_status; /* group status */
 	/* set of variables only valid in primary service groups */
-	uint32_t		 gp_primary:1, /* flag of primary group */
-	/* flag of local group, false means attached remote group */
-				 gp_local:1,
-	/* flag of service group */
-				 gp_service:1,
-	/* flag of finalizing/destroying */
-				 gp_finalizing:1;
+	uint32_t		 gp_primary:1; /* flag of primary group */
+
 	/* group reference count */
 	uint32_t		 gp_refcount;
 
@@ -187,12 +174,6 @@ struct crt_grp_priv {
 };
 
 
-#define CRT_PMIX_ENABLED() \
-	(crt_gdata.cg_pmix_disabled == 0)
-
-/* TODO: Once secondary group support is implemented we will converge on
- * using a single structure for membership lists
- */
 static inline d_rank_list_t*
 grp_priv_get_membs(struct crt_grp_priv *priv)
 {
@@ -204,10 +185,6 @@ crt_grp_priv_get_primary_rank(struct crt_grp_priv *priv, d_rank_t rank);
 
 /*
  * This call is currently called only when group is created.
- * For PMIX enabled case, a list of members is provided and needs
- * to be copied over to the membership list.
- *
- * For PMIX disabled case, the list should be NULL.
  */
 static inline int
 grp_priv_set_membs(struct crt_grp_priv *priv, d_rank_list_t *list)
@@ -319,17 +296,9 @@ struct crt_lookup_item {
 
 /* structure of global group data */
 struct crt_grp_gdata {
-	/* client-side primary group, only meaningful for client */
-	struct crt_grp_priv	*gg_cli_pri_grp;
-	/* server-side primary group */
-	struct crt_grp_priv	*gg_srv_pri_grp;
+	struct crt_grp_priv	*gg_primary_grp;
+	d_list_t		 gg_secondary_grps;
 
-	/* client side group list attached by, only meaningful for server */
-	d_list_t		 gg_cli_grps_attached;
-	/* server side group list attached to */
-	d_list_t		 gg_srv_grps_attached;
-
-	/* TODO: move crt_grp_list here */
 	/* sub-grp list, only meaningful for server */
 	d_list_t		 gg_sub_grps;
 	/* some flags */
@@ -400,9 +369,8 @@ crt_get_subgrp_id()
 
 	D_ASSERT(crt_initialized());
 	D_ASSERT(crt_is_service());
-	grp_priv = crt_gdata.cg_grp->gg_srv_pri_grp;
+	grp_priv = crt_gdata.cg_grp->gg_primary_grp;
 	D_ASSERT(grp_priv != NULL);
-	D_ASSERT(grp_priv->gp_primary && grp_priv->gp_local);
 
 	D_RWLOCK_WRLOCK(&grp_priv->gp_rwlock);
 	subgrp_id = grp_priv->gp_int_grpid + grp_priv->gp_subgrp_idx;
@@ -437,12 +405,9 @@ crt_grp_priv_addref(struct crt_grp_priv *grp_priv)
 static inline int
 crt_grp_priv_decref(struct crt_grp_priv *grp_priv)
 {
-	struct crt_grp_gdata	*grp_gdata;
-	bool			 detach = false;
-	int			 rc = 0;
+	bool	destroy = false;
+	int	rc = 0;
 
-	grp_gdata = crt_gdata.cg_grp;
-	D_ASSERT(grp_gdata != NULL);
 	D_ASSERT(grp_priv != NULL);
 
 	D_RWLOCK_WRLOCK(&grp_priv->gp_rwlock);
@@ -453,33 +418,17 @@ crt_grp_priv_decref(struct crt_grp_priv *grp_priv)
 		D_GOTO(out, rc = -DER_ALREADY);
 	} else {
 		grp_priv->gp_refcount--;
-		D_DEBUG(DB_TRACE, "service group (%s), refcount decreased to "
+		D_DEBUG(DB_TRACE, "group (%s), refcount decreased to "
 			"%d.\n", grp_priv->gp_pub.cg_grpid,
 			grp_priv->gp_refcount);
-		if (grp_priv->gp_refcount == 0)
-			grp_priv->gp_finalizing = 1;
-		if (grp_priv->gp_local == 0 && grp_priv->gp_refcount == 1) {
-			detach = true;
-			grp_priv->gp_finalizing = 1;
+		if (grp_priv->gp_refcount == 0) {
+			destroy = true;
 		}
 	}
 	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
 
-	if (grp_priv->gp_finalizing == 0)
-		D_GOTO(out, rc);
-
-	if (detach) {
-		rc = crt_grp_detach(&grp_priv->gp_pub);
-		if (rc == 0 && !crt_is_service() &&
-		    grp_gdata->gg_srv_pri_grp == grp_priv) {
-			grp_gdata->gg_srv_pri_grp = NULL;
-			D_DEBUG(DB_TRACE, "reset grp_gdata->gg_srv_pri_grp "
-				"as NULL.\n");
-		}
-	} else {
+	if (destroy)
 		crt_grp_priv_destroy(grp_priv);
-	}
-
 out:
 	return rc;
 }
@@ -526,7 +475,6 @@ crt_rank_present(crt_group_t *grp, d_rank_t rank)
 
 bool
 crt_grp_id_identical(crt_group_id_t grp_id_1, crt_group_id_t grp_id_2);
-bool crt_grp_is_local(crt_group_t *grp);
 int crt_grp_lc_uri_insert_all(crt_group_t *grp, d_rank_t rank, int tag,
 			const char *uri);
 int crt_grp_config_psr_load(struct crt_grp_priv *grp_priv, d_rank_t psr_rank);

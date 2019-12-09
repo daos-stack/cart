@@ -110,8 +110,7 @@ typedef d_string_t	crt_group_id_t;
 #define CRT_ADDR_STR_MAX_LEN		(128)
 
 /** default group ID */
-#define CRT_DEFAULT_SRV_GRPID	"crt_default_srv_group"
-#define CRT_DEFAULT_CLI_GRPID	"crt_default_cli_group"
+#define CRT_DEFAULT_GRPID	"crt_default_group"
 
 typedef struct crt_group {
 	/** the group ID of this group */
@@ -418,31 +417,6 @@ enum crt_init_flag_bits {
 	 * for incoming requests. Clients should not set this flag
 	 */
 	CRT_FLAG_BIT_SERVER	= 1U << 0,
-
-	/**
-	 * false means it will use PMIx to wireup, true means it's independent
-	 * process and won't use PMIx to wireup even when launched by orterun.
-	 * If this bit is set for a multi-ranks client program, it means each
-	 * rank is independent with each other, crt_group_rank() will get
-	 * rank 0 and crt_group_size() will get size 1 for each rank.
-	 * If this bit is set for a multi-ranks server, then undefined result
-	 * is expected (as server group rank and size cannot be queried
-	 * from PMIx, but they are needed for RPC communication).
-	 */
-	CRT_FLAG_BIT_SINGLETON	= 1U << 1,
-
-	/**
-	 * When it is true, will not enable the LM module which internally
-	 * broadcast RAS failure event to all ranks to evict the failed ranks.
-	 */
-	CRT_FLAG_BIT_LM_DISABLE	= 1U << 2,
-
-	/**
-	 * When set, disables PMIX support internally. Ranks and associated
-	 * URIs are not discovered. Instead those have to be added manually
-	 * via \a crt_group_node_add() API call.
-	 */
-	CRT_FLAG_BIT_PMIX_DISABLE = 1U << 3,
 };
 
 /**

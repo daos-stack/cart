@@ -225,18 +225,11 @@ crt_init_opt(crt_group_id_t grpid, uint32_t flags, crt_init_options_t *opt)
 				"or is too long\n");
 			D_GOTO(out, rc = -DER_INVAL);
 		}
-		if (!server) {
-			if (strcmp(grpid, CRT_DEFAULT_SRV_GRPID) == 0) {
-				D_ERROR("invalid client grpid (same as "
-					"CRT_DEFAULT_SRV_GRPID).\n");
-				D_GOTO(out, rc = -DER_INVAL);
-			}
-		} else {
-			if (strcmp(grpid, CRT_DEFAULT_CLI_GRPID) == 0) {
-				D_ERROR("invalid server grpid (same as "
-					"CRT_DEFAULT_CLI_GRPID).\n");
-				D_GOTO(out, rc = -DER_INVAL);
-			}
+
+		if (strcmp(grpid, CRT_DEFAULT_GRPID) == 0) {
+			D_ERROR("invalid client grpid (same as "
+				"CRT_DEFAULT_GRPID).\n");
+			D_GOTO(out, rc = -DER_INVAL);
 		}
 	}
 
@@ -250,22 +243,6 @@ crt_init_opt(crt_group_id_t grpid, uint32_t flags, crt_init_options_t *opt)
 	}
 	D_ASSERT(gdata_init_flag == 1);
 
-	if ((flags & CRT_FLAG_BIT_PMIX_DISABLE) != 0) {
-		crt_gdata.cg_pmix_disabled = 1;
-
-		/* Liveness map only valid with PMIX enabled */
-		if (!(flags & CRT_FLAG_BIT_LM_DISABLE)) {
-			D_WARN("PMIX disabled. Disabling LM automatically\n");
-			flags |= CRT_FLAG_BIT_LM_DISABLE;
-		}
-	}
-
-	if (crt_gdata.cg_pmix_disabled == 0) {
-		D_ERROR("PMIX is no longer supported\n");
-		D_GOTO(out, rc = -DER_INVAL);
-	}
-
-
 	D_RWLOCK_WRLOCK(&crt_gdata.cg_rwlock);
 	if (crt_gdata.cg_inited == 0) {
 		/* feed a seed for pseudo-random number generator */
@@ -276,9 +253,6 @@ crt_init_opt(crt_group_id_t grpid, uint32_t flags, crt_init_options_t *opt)
 		crt_gdata.cg_server = server;
 
 		D_DEBUG(DB_ALL, "Server bit set to %d\n", server);
-
-		if ((flags & CRT_FLAG_BIT_SINGLETON) != 0)
-			crt_gdata.cg_singleton = true;
 
 		path = getenv("CRT_ATTACH_INFO_PATH");
 		if (path != NULL && strlen(path) > 0) {
