@@ -43,6 +43,9 @@
 #include "crt_internal.h"
 #include <sys/stat.h>
 
+static void
+crt_grp_lock_fini(struct crt_grp_priv *grp_priv);
+
 static int crt_group_primary_add_internal(struct crt_grp_priv *grp_priv,
 					d_rank_t rank, int tag,
 					char *uri);
@@ -1142,8 +1145,30 @@ crt_grp_lock_init(struct crt_grp_priv *grp_priv)
 void
 crt_grp_priv_destroy(struct crt_grp_priv *grp_priv)
 {
+	struct crt_context	*ctx;
+	int 			i;
+	int			rc = 0;
+
 	if (grp_priv == NULL)
 		return;
+
+	if (grp_priv->gp_primary) {
+		for (i = 0; i < CRT_SRV_CONTEXT_NUM; i++) {
+			ctx = crt_context_lookup_locked(i);
+			if (ctx == NULL)
+				continue;
+
+			rc = crt_grp_ctx_invalid(ctx, true);
+			if (rc != 0) {
+				D_ERROR("crt_grp_ctx_invalid failed, rc: %d.\n",
+					rc);
+			}
+		}
+	}
+
+	crt_grp_lc_destroy(grp_priv);
+	crt_grp_lock_fini(grp_priv);
+	d_list_del_init(&grp_priv->gp_link);
 
 	/* remove from group list */
 	D_RWLOCK_WRLOCK(&crt_grp_list_rwlock);
@@ -1165,8 +1190,6 @@ crt_grp_priv_destroy(struct crt_grp_priv *grp_priv)
 		 * crt_group_secondary_create.
 		 */
 		if (grp_priv_prim != NULL) {
-			int i;
-
 			for (i = 0; i < CRT_MAX_SEC_GRPS; i++) {
 				if (grp_priv_prim->gp_priv_sec[i] == grp_priv)
 					break;
@@ -1267,7 +1290,7 @@ out:
 }
 
 static void
-crt_grp_ras_fini(struct crt_grp_priv *grp_priv)
+crt_grp_lock_fini(struct crt_grp_priv *grp_priv)
 {
 	if (grp_priv->gp_primary) {
 		D_RWLOCK_DESTROY(grp_priv->gp_rwlock_ft);
@@ -1553,44 +1576,14 @@ crt_primary_grp_fini(void)
 {
 	struct crt_grp_priv	*grp_priv;
 	struct crt_grp_gdata	*grp_gdata;
-	struct crt_context	*ctx;
-	int			 i;
-	int			 rc = 0;
 
 	grp_gdata = crt_gdata.cg_grp;
 	D_ASSERT(grp_gdata != NULL);
 
 	grp_priv = grp_gdata->gg_primary_grp;
-
-	if (grp_priv->gp_primary) {
-		for (i = 0; i < CRT_SRV_CONTEXT_NUM; i++) {
-			ctx = crt_context_lookup_locked(i);
-			if (ctx == NULL)
-				continue;
-
-			rc = crt_grp_ctx_invalid(ctx, true);
-			if (rc != 0) {
-				D_ERROR("crt_grp_ctx_invalid failed, rc: %d.\n",
-					rc);
-				D_GOTO(out, rc);
-			}
-		}
-	}
-
-	rc = crt_grp_lc_destroy(grp_priv);
-	if (rc != 0)
-		D_GOTO(out, rc);
-
-	crt_grp_ras_fini(grp_priv);
-
-	d_list_del_init(&grp_priv->gp_link);
 	crt_grp_priv_decref(grp_priv);
 
-
-out:
-	if (rc != 0)
-		D_ERROR("crt_primary_grp_fini failed, rc: %d.\n", rc);
-	return rc;
+	return 0;
 }
 
 static void
