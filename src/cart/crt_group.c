@@ -1146,7 +1146,7 @@ void
 crt_grp_priv_destroy(struct crt_grp_priv *grp_priv)
 {
 	struct crt_context	*ctx;
-	int 			i;
+	int			i;
 	int			rc = 0;
 
 	if (grp_priv == NULL)
