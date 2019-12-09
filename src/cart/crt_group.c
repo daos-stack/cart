@@ -1249,7 +1249,8 @@ crt_group_lookup(crt_group_id_t grp_id)
 		goto out;
 	}
 
-	if (crt_grp_id_identical(grp_gdata->gg_primary_grp->gp_pub.cg_grpid, grp_id)) {
+	if (crt_grp_id_identical(grp_gdata->gg_primary_grp->gp_pub.cg_grpid,
+				grp_id)) {
 		grp_priv = grp_gdata->gg_primary_grp;
 		goto out;
 	}
