@@ -2831,6 +2831,7 @@ crt_group_rank_remove_internal(struct crt_grp_priv *grp_priv, d_rank_t rank)
 #if 0
 	/* CART-829: Remove in progress and pending rpcs to the rank  */
 	crt_endpoint_t	tgt_ep;
+
 	tgt_ep.ep_grp = grp;
 	tgt_ep.ep_rank = rank;
 	/* ep_tag is not used in crt_ep_abort() */
