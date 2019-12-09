@@ -71,13 +71,18 @@ test_run(d_rank_t my_rank)
 	D_ASSERTF(rc == 0, "crt_proto_register() failed. rc: %d\n",
 			rc);
 
+	DBG_PRINT("Protocol registered\n");
 	for (i = 1; i < test_g.t_srv_ctx_num; i++) {
 		rc = crt_context_create(&test_g.t_crt_ctx[i]);
 		D_ASSERTF(rc == 0, "crt_context_create() failed. rc: %d\n", rc);
+		DBG_PRINT("Context %d created\n", i);
+
 		rc = pthread_create(&test_g.t_tid[i], NULL, tc_progress_fn,
 				    &test_g.t_crt_ctx[i]);
 		D_ASSERTF(rc == 0, "pthread_create() failed. rc: %d\n", rc);
+		DBG_PRINT("Progress thread %d started\n", i);
 	}
+	DBG_PRINT("Contexts created %d\n", test_g.t_srv_ctx_num);
 
 	if (test_g.t_save_cfg && my_rank == 0) {
 		rc = crt_group_config_path_set(test_g.t_cfg_path);
@@ -86,6 +91,7 @@ test_run(d_rank_t my_rank)
 		rc = crt_group_config_save(NULL, true);
 		D_ASSERTF(rc == 0,
 			  "crt_group_config_save() failed. rc: %d\n", rc);
+		DBG_PRINT("Group config file saved\n");
 	}
 
 
