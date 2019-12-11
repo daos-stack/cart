@@ -454,7 +454,10 @@ crt_get_info_string(char **string)
 	} else {
 		/* OFI_PORT is only for context 0 to use */
 		port = crt_na_ofi_conf.noc_port;
-		crt_na_ofi_conf.noc_port++;
+		if (crt_gdata.cg_na_plugin == CRT_NA_OFI_PSM2)
+			crt_na_ofi_conf.noc_port++;
+		else
+			crt_na_ofi_conf.noc_port = -1;
 
 		D_ASPRINTF(*string, "%s://%s/%s:%d", plugin_str,
 			crt_na_ofi_conf.noc_domain,

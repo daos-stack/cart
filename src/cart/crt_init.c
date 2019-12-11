@@ -570,7 +570,7 @@ static inline na_bool_t is_integer_str(char *str)
 }
 
 static inline int
-crt_get_port(int *port)
+crt_get_port_psm2(int *port)
 {
 	int		rc = 0;
 	uint16_t	pid;
@@ -675,11 +675,13 @@ int crt_na_ofi_config_init(void)
 				port_str);
 		} else {
 			port = atoi(port_str);
+			if (crt_gdata.cg_na_plugin == CRT_NA_OFI_PSM2)
+				port = (uint16_t) port << 8;
 			D_DEBUG(DB_ALL, "OFI_PORT %d, using it as service "
-				"port.\n", port);
+					"port.\n", port);
 		}
-	} else {
-		rc = crt_get_port(&port);
+	} else if (crt_gdata.cg_na_plugin == CRT_NA_OFI_PSM2) {
+		rc = crt_get_port_psm2(&port);
 		if (rc != 0) {
 			D_ERROR("crt_get_port failed, rc: %d.\n", rc);
 			D_GOTO(out, rc);
