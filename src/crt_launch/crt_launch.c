@@ -85,6 +85,7 @@ struct host {
 };
 
 static int	my_rank;
+volatile static int	myflag = 0;
 
 struct options_t {
 	int	is_client;
@@ -153,6 +154,8 @@ get_self_uri(struct host *h)
 	char		*p;
 	int		len;
 	int		rc;
+	while (myflag)
+		sched_yield();
 
 	rc = crt_init(0, CRT_FLAG_BIT_SERVER | CRT_FLAG_BIT_PMIX_DISABLE |
 			CRT_FLAG_BIT_LM_DISABLE);

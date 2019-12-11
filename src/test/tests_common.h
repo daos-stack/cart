@@ -44,6 +44,7 @@
 #include <cart/api.h>
 
 #include "crt_internal.h"
+volatile int	 myflag = 0;
 
 #define DBG_PRINT(x...)                                                 \
 	do {                                                            \
@@ -372,6 +373,9 @@ tc_cli_start_basic(char *local_group_name, char *srv_group_name,
 	int		 attach_retries = opts.num_attach_retries;
 	int		 rc = 0;
 
+	while (myflag)
+		sched_yield();
+
 	D_ASSERTF(opts.is_initialized == true, "tc_test_init not called.\n");
 
 	rc = d_log_init();
@@ -461,6 +465,8 @@ tc_srv_start_basic(char *srv_group_name, crt_context_t *crt_ctx,
 	rc = d_log_init();
 	D_ASSERT(rc == 0);
 
+	while (myflag)
+		sched_yield();
 	if (init_opt) {
 		rc = crt_init_opt(srv_group_name, CRT_FLAG_BIT_SERVER |
 				  CRT_FLAG_BIT_PMIX_DISABLE |
