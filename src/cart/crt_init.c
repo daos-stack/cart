@@ -331,6 +331,11 @@ do_init:
 			       "for verbs provider, ignore it.\n");
 			crt_gdata.cg_share_na = false;
 		}
+
+		if (crt_gdata.cg_na_plugin == CRT_NA_OFI_PSM2) {
+			setenv("FI_PSM2_NAME_SERVER", "1", true);
+			D_DEBUG(DB_ALL, "Setting FI_PSM2_NAME_SERVER to 1\n");
+		}
 		if (crt_na_type_is_ofi(crt_gdata.cg_na_plugin)) {
 			rc = crt_na_ofi_config_init();
 			if (rc != 0) {
@@ -576,7 +581,7 @@ crt_get_port_psm2(int *port)
 	uint16_t	pid;
 
 	pid = getpid();
-	*port = (pid << 8)
+	*port = (pid << 8);
 	D_DEBUG(DB_ALL, "got a port: %d.\n", *port);
 
 	return rc;
