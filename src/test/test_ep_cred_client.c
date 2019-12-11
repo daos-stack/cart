@@ -69,6 +69,7 @@ rpc_handle_ping_front_q(const struct crt_cb_info *info)
 static void
 test_run()
 {
+	myflag = 0;
 	crt_group_t		*grp = NULL;
 	d_rank_list_t		*rank_list = NULL;
 	crt_rpc_t		*rpc = NULL;
@@ -92,10 +93,11 @@ test_run()
 	DBG_PRINT("Number of credits: %d Number of burst: %d\n",
 		   test.tg_credits, test.tg_burst_count);
 
+	sleep(2);
 	tc_cli_start_basic(test.tg_local_group_name,
 			   test.tg_remote_group_name,
 			   &grp, &rank_list, &test.tg_crt_ctx,
-			   &test.tg_tid, true, test.tg_save_cfg, &opt);
+			   &test.tg_tid, 1, test.tg_save_cfg, &opt);
 
 	rc = sem_init(&test.tg_token_to_proceed, 0, 0);
 	D_ASSERTF(rc == 0, "sem_init() failed.\n");

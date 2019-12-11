@@ -5,8 +5,11 @@ defaultENV:
   #!filter-only : /run/env_CRT_CTX_SHARE_ADDR/sep
   #!filter-only : /run/tests/rpc_error
   D_LOG_MASK: "DEBUG,MEM=ERR"
-  CRT_PHY_ADDR_STR: "ofi+sockets"
-  OFI_INTERFACE: "eth0"
+  D_LOG_FILE_APPEND_PID: "1"
+  CRT_PHY_ADDR_STR: "ofi+psm2"
+  OFI_INTERFACE: "ib0"
+  OFI_PORT: "22222"
+  FI_PSM2_NAME_SERVER: "1"
   srv_CRT_CTX_NUM: "16"
   cli_CRT_CTX_NUM: "16"
 env_CRT_CTX_SHARE_ADDR: !mux
@@ -49,11 +52,11 @@ tests: !mux
     name: test_group_basic
     srv_bin: ../bin/crt_launch
     srv_arg: "-e tests/test_group_np_srv --name tg_srv_grp --cfg_path=."
-    srv_env: "-x D_FI_CONFIG=../etc/fault-inject-cart.yaml"
+    srv_env: "-x FI_PSM2_NAME_SERVER=1 -x D_LOG_FILE_APPEND_PID=1 -x OFI_PORT=44444 -x D_FI_CONFIG=../etc/fault-inject-cart.yaml"
     srv_ppn: "1"
     cli_bin: tests/test_group_np_cli
     cli_arg: "--name client_group --attach_to tg_srv_grp --cfg_path=."
-    cli_env: "-x D_FI_CONFIG=../etc/fault-inject-cart.yaml"
+    cli_env: "-x D_LOG_FILE_APPEND_PID=1 -x OFI_PORT=33333 -x D_FI_CONFIG=../etc/fault-inject-cart.yaml"
     cli_ppn: "1"
   ep_credits_1:
     name: ep_credits_1

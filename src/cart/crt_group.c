@@ -2399,6 +2399,8 @@ crt_hdlr_uri_lookup(crt_rpc_t *rpc_req)
 		D_ERROR("crt_hdlr_uri_lookup invalid on client.\n");
 		rc = -DER_PROTO;
 	}
+	D_DEBUG(DB_TRACE, "serving uri_lookup rank %d tag %d\n", ul_in->ul_rank,
+			ul_in->ul_tag);
 	default_grp_priv = crt_gdata.cg_grp->gg_srv_pri_grp;
 	if (strncmp(ul_in->ul_grp_id, default_grp_priv->gp_pub.cg_grpid,
 		    CRT_GROUP_ID_MAX_LEN) == 0) {
@@ -2462,6 +2464,7 @@ crt_hdlr_uri_lookup(crt_rpc_t *rpc_req)
 			D_ERROR("crt_self_uri_get(tag: %d) failed, "
 				"rc %d\n", ul_in->ul_tag, rc);
 		ul_out->ul_uri = tmp_uri;
+		D_DEBUG(DB_TRACE, "serving my uri: %s\n", tmp_uri);
 		D_GOTO(out, rc);
 	}
 
@@ -4128,8 +4131,12 @@ crt_rank_uri_get(crt_group_t *group, d_rank_t rank, int tag, char **uri_str)
 		D_GOTO(out, rc = -DER_INVAL);
 	}
 
-	if (rank == grp_priv->gp_self)
+	D_DEBUG(DB_TRACE, "rank %d tag %d\n", rank, tag);
+	if (rank == grp_priv->gp_self && crt_is_service()
+			&& grp_priv == crt_gdata.cg_grp->gg_srv_pri_grp) {
+		D_DEBUG(DB_TRACE, "rank %d tag %d\n", rank, tag);
 		return crt_self_uri_get(tag, uri_str);
+	}
 
 	rc = crt_grp_lc_lookup(grp_priv, 0, rank, tag, &uri, &hg_addr);
 	if (rc != 0) {

@@ -85,6 +85,7 @@ struct host {
 };
 
 static int	my_rank;
+volatile static int	myflag = 0;
 
 struct options_t {
 	int	is_client;
@@ -153,6 +154,8 @@ get_self_uri(struct host *h)
 	char		*p;
 	int		len;
 	int		rc;
+	while (myflag)
+		sched_yield();
 
 	rc = crt_init(0, CRT_FLAG_BIT_SERVER | CRT_FLAG_BIT_PMIX_DISABLE |
 			CRT_FLAG_BIT_LM_DISABLE);
@@ -191,6 +194,7 @@ get_self_uri(struct host *h)
 
 	p++;
 	h->ofi_port = atoi(p);
+	fprintf(stderr, "xxxxxx port number %d\n", h->ofi_port);
 
 	D_FREE(uri);
 
@@ -337,6 +341,7 @@ exit:
 	/* Set CRT_L_RANK and OFI_PORT */
 	setenv("CRT_L_RANK", str_rank, true);
 	setenv("OFI_PORT", str_port, true);
+	fprintf(stderr, "setting OFI_PORT to %s\n", str_port);
 
 	if (rc == 0) {
 		/* Exec passed application with rest of arguments */

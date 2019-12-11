@@ -545,8 +545,8 @@ crt_finalize(void)
 		crt_gdata.cg_inited = 0;
 		gdata_init_flag = 0;
 
-		if (crt_gdata.cg_na_plugin == CRT_NA_OFI_SOCKETS)
-			crt_na_ofi_config_fini();
+//		if (crt_gdata.cg_na_plugin == CRT_NA_OFI_SOCKETS)
+		crt_na_ofi_config_fini();
 	} else {
 		D_RWLOCK_UNLOCK(&crt_gdata.cg_rwlock);
 	}
@@ -587,6 +587,17 @@ static inline na_bool_t is_integer_str(char *str)
 	}
 
 	return NA_TRUE;
+}
+
+static inline int
+crt_get_port(int *port)
+{
+	int			rc = 0;
+
+	*port = ((int) getpid() % 100000) * 10000;
+	D_DEBUG(DB_ALL, "got a port: %d.\n", *port);
+
+	return rc;
 }
 
 int crt_na_ofi_config_init(void)
@@ -678,12 +689,20 @@ int crt_na_ofi_config_init(void)
 	port_str = getenv("OFI_PORT");
 	if (crt_is_service() && port_str != NULL && strlen(port_str) > 0) {
 		if (!is_integer_str(port_str)) {
-			D_DEBUG(DB_ALL, "ignore invalid OFI_PORT %s.",
+			D_DEBUG(DB_ALL, "ignoring invalid OFI_PORT %s.",
 				port_str);
 		} else {
+			D_DEBUG(DB_ALL, "port_str %s\n", port_str);
+//			port = atoi(port_str) * 10000;
 			port = atoi(port_str);
-			D_DEBUG(DB_ALL, "OFI_PORT %d, use it as service "
+			D_DEBUG(DB_ALL, "OFI_PORT %d, using it as service "
 				"port.\n", port);
+		}
+	} else {
+		rc = crt_get_port(&port);
+		if (rc != 0) {
+			D_ERROR("crt_get_port failed, rc: %d.\n", rc);
+			D_GOTO(out, rc);
 		}
 	}
 	crt_na_ofi_conf.noc_port = port;
