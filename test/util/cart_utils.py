@@ -27,6 +27,8 @@ import time
 import os
 import random
 import json
+# MPI environment module needs this
+import re
 import shlex
 import subprocess
 import logging
@@ -206,6 +208,10 @@ class CartUtils():
 
         orterun_bin = "orterun"
 
+        if not self.init_mpi("openmpi"):
+            orterun_bin = "orterun_not_installed"
+
+
         tst_bin = cartobj.params.get("{}_bin".format(host),
                                            "/run/tests/*/")
         tst_arg = cartobj.params.get("{}_arg".format(host),
@@ -304,7 +310,6 @@ class CartUtils():
         if not self.module_init:
             exec(open(init_file).read())
             self.module_init = True
-            return False
 
         self.print("\nChecking for already loaded mpi\n")
         for to_load in load:
@@ -328,9 +333,6 @@ class CartUtils():
 
         self.print("\nCMD : %s\n" % cmd)
 
-        if not self.init_mpi("openmpi"):
-            return -1
-
         cmd = shlex.split(cmd)
         rtn = subprocess.call(cmd)
 
@@ -349,9 +351,6 @@ class CartUtils():
         """ launches the given cmd in background """
 
         self.print("\nCMD : %s\n" % cmd)
-
-        if not self.init_mpi("openmpi"):
-            return -1
 
         cmd = shlex.split(cmd)
         rtn = subprocess.Popen(cmd)
