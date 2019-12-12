@@ -322,11 +322,13 @@ class CartUtils():
             if module('is-loaded', to_load):
                 return True
 
+        self.print("\nNone found, checking for and unloading unwanted MPI\n")
         for to_unload in unload:
             if module('is-loaded', to_unload):
                 module('unload', to_unload)
 
         for to_load in load:
+            self.print("\nChecking for %s\n" % to_load)
             if module('load', to_load):
                 self.print("%s is loaded" % to_load)
                 return True
