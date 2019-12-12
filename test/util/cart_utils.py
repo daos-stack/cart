@@ -81,6 +81,8 @@ class CartUtils():
 
     def check_process(self, proc):
         """ check if a process is still running"""
+        if isinstance(proc, int):
+            return False
         proc.poll()
         procrtn = proc.returncode
         if procrtn is None:
@@ -89,6 +91,8 @@ class CartUtils():
 
     def wait_process(self, proc, wait_time):
         """ wait for process to terminate """
+        if isinstance(proc, int):
+            return -1
         i = wait_time
         procrtn = None
         while i:
@@ -104,6 +108,8 @@ class CartUtils():
 
     def stop_process(self, proc):
         """ wait for process to terminate """
+        if isinstance(proc, int):
+            return 0
         i = 60
         procrtn = None
         while i:
