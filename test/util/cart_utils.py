@@ -284,19 +284,25 @@ class CartUtils():
         self.print("\nLoading OpenMPI\n")
         # This probably needs some refining but trying to get it working for
         # current CI systems
-        cmd = "module load mpi/openmpi3-x86_64"
-        rtn = subprocess.call(cmd)
+        if not os.path.exists('/usr/share/Modules/init/python.py'):
+            self.print("Modules python file doesn't exist")
+            return False
 
-        return rtn
+        exec(open('/usr/share/Modules/init/python.py').read())
+        if module('load', 'mpi/openmpi3-x86_64'):
+            return True
+        if module('load', 'mpi/openmpi-x86_64'):
+            return True
+
+        return False
 
     def launch_test(self, cartobj, cmd, srv1=None, srv2=None):
         """ launches test """
 
         self.print("\nCMD : %s\n" % cmd)
 
-        rtn = self.init_mpi()
-        if rtn:
-            return rtn
+        if not self.init_mpi()
+            return -1
 
         cmd = shlex.split(cmd)
         rtn = subprocess.call(cmd)
@@ -317,9 +323,8 @@ class CartUtils():
 
         self.print("\nCMD : %s\n" % cmd)
 
-        rtn = self.init_mpi()
-        if rtn:
-            return rtn
+        if not self.init_mpi()
+            return -1
 
         cmd = shlex.split(cmd)
         rtn = subprocess.Popen(cmd)
