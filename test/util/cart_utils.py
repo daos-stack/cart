@@ -299,10 +299,8 @@ class CartUtils():
 
         if mpi == "mpich":
             load = mpich
-            unload = openmpi
         else:
             load = openmpi
-            unload = mpich
 
         #initialize Modules
         if not os.path.exists(init_file):
@@ -323,9 +321,9 @@ class CartUtils():
                 return True
 
         self.print("\nNone found, checking for and unloading unwanted MPI\n")
-        for to_unload in unload:
-            if module('is-loaded', to_unload):
-                module('unload', to_unload)
+        # heavy hammer.   We could use is-loaded here but our CI systems don't
+        # have a new enough version of environment-modules so revert to purge
+        module('purge')
 
         for to_load in load:
             self.print("\nChecking for %s\n" % to_load)
