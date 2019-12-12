@@ -315,13 +315,7 @@ class CartUtils():
             exec(open(init_file).read())
             self.module_init = True
 
-        self.print("\nChecking for already loaded mpi\n")
-        for to_load in load:
-            if module('is-loaded', to_load):
-                return True
-
-        self.print("\nNone found, checking for and unloading unwanted MPI\n")
-        # heavy hammer.   We could use is-loaded here but our CI systems don't
+        # Heavy hammer.   We could use is-loaded here but our CI systems don't
         # have a new enough version of environment-modules so revert to purge
         module('purge')
 
