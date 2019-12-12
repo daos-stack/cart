@@ -289,6 +289,13 @@ class CartUtils():
 
         return 0
 
+    #pylint: disable=undefined-variable
+    def init_mpi_old(self, mpi):
+        """load mpi with older environment-modules"""
+        self.print("Loading old %s" % mpi)
+        module('purge')
+        module('load', mpi)
+
     def init_mpi(self, mpi):
         """load mpi"""
 
@@ -299,8 +306,10 @@ class CartUtils():
 
         if mpi == "mpich":
             load = mpich
+            unload = openmpi
         else:
             load = openmpi
+            unload = mpich
 
         #initialize Modules
         if not os.path.exists(init_file):
@@ -310,25 +319,36 @@ class CartUtils():
             return False
 
         #pylint: disable=exec-used
-        #pylint: disable=undefined-variable
         if not self.module_init:
             exec(open(init_file).read())
             self.module_init = True
+        #pylint: enable=exec-used
 
-        # Heavy hammer.   We could use is-loaded here but our CI systems don't
-        # have a new enough version of environment-modules so revert to purge
-        module('purge')
+        try:
+            subprocess.check_call(['sh', '-l', '-c', 'module -V'])
+        except subprocess.CalledProcessError:
+            # older version of module return -1
+            return self.init_mpi_old(load[0])
+
+        self.print("Checking for loaded modules")
+        for to_load in load:
+            if module('is-loaded', to_load):
+                self.print("%s is already loaded" % to_load)
+                return True
+
+        for to_unload in unload:
+            if module('is-loaded', to_unload):
+                module('unload', to_unload)
+                self.print("Unloading %s" % to_unload)
 
         for to_load in load:
-            self.print("\nChecking for %s\n" % to_load)
             if module('load', to_load):
-                self.print("%s is loaded" % to_load)
+                self.print("Loaded %s" % to_load)
                 return True
-        #pylint: enable=exec-used
-        #pylint: enable=undefined-variable
 
-        self.print("No MPI could be found")
+        self.print("No MPI found on system")
         return False
+    #pylint: enable=undefined-variable
 
     def launch_test(self, cartobj, cmd, srv1=None, srv2=None):
         """ launches test """
