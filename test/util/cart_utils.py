@@ -210,7 +210,7 @@ class CartUtils():
         with open('.build_vars.json') as build_file:
             build_paths = json.load(build_file)
 
-        orterun_bin = os.path.join(build_paths["OMPI_PREFIX"], "bin", "orterun")
+        orterun_bin = "orterun"
 
         tst_bin = cartobj.params.get("{}_bin".format(host),
                                            "/run/tests/*/")
