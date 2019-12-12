@@ -40,6 +40,7 @@ class CartUtils():
         """ CartUtils init """
         self.stdout = logging.getLogger('avocado.test.stdout')
         self.progress_log = logging.getLogger("progress")
+        self.module_init = False
 
     def write_host_file(self, hostlist, slots=1):
         """ write out a hostfile suitable for orterun """
@@ -278,22 +279,48 @@ class CartUtils():
 
         return 0
 
-    def init_mpi(self):
+    def init_mpi(self, mpi):
         """load mpi"""
 
-        self.print("\nLoading OpenMPI\n")
-        # This probably needs some refining but trying to get it working for
-        # current CI systems
-        if not os.path.exists('/usr/share/Modules/init/python.py'):
-            self.print("Modules python file doesn't exist")
+        mpich = ['mpi/mpich-x86_64']
+        openmpi = ['mpi/openmpi3-x86_64', 'mpi/openmpi-x86_64']
+
+        init_file = '/usr/share/Modules/init/python.py'
+
+        if mpi == "mpich":
+            load = mpich
+            unload = openmpi
+        else:
+            load = openmpi
+            unload = mpich
+
+        #initialize Modules
+        if not os.path.exists(init_file):
+            if not self.module_init:
+                self.print("Modules (environment-modules) is not installed")
+            self.module_init = True
             return False
 
-        exec(open('/usr/share/Modules/init/python.py').read())
-        if module('load', 'mpi/openmpi3-x86_64'):
-            return True
-        if module('load', 'mpi/openmpi-x86_64'):
-            return True
+        if not self.module_init:
+            exec(open(init_file).read())
+            self.module_init = True
+            return False
 
+        self.print("\nChecking for already loaded mpi\n")
+        for to_load in load:
+            if module('is-loaded', to_load):
+                return True
+
+        for to_unload in unload:
+            if module('is-loaded', to_unload):
+                module('unload', to_unload)
+
+        for to_load in load:
+            if module('load', to_load):
+                self.print("%s is loaded" % to_load)
+                return True
+
+        self.print("No MPI could be found")
         return False
 
     def launch_test(self, cartobj, cmd, srv1=None, srv2=None):
@@ -301,7 +328,7 @@ class CartUtils():
 
         self.print("\nCMD : %s\n" % cmd)
 
-        if not self.init_mpi():
+        if not self.init_mpi("openmpi"):
             return -1
 
         cmd = shlex.split(cmd)
@@ -323,7 +350,7 @@ class CartUtils():
 
         self.print("\nCMD : %s\n" % cmd)
 
-        if not self.init_mpi():
+        if not self.init_mpi("openmpi"):
             return -1
 
         cmd = shlex.split(cmd)
