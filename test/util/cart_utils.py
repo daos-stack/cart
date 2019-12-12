@@ -278,10 +278,25 @@ class CartUtils():
 
         return 0
 
+    def init_mpi(self):
+        """load mpi"""
+
+        self.print("\nLoading OpenMPI\n")
+        # This probably needs some refining but trying to get it working for
+        # current CI systems
+        cmd = "module load mpi/openmpi3-x86_64"
+        rtn = subprocess.call(cmd)
+
+        return rtn
+
     def launch_test(self, cartobj, cmd, srv1=None, srv2=None):
         """ launches test """
 
         self.print("\nCMD : %s\n" % cmd)
+
+        rtn = self.init_mpi()
+        if rtn:
+            return rtn
 
         cmd = shlex.split(cmd)
         rtn = subprocess.call(cmd)
@@ -301,6 +316,10 @@ class CartUtils():
         """ launches the given cmd in background """
 
         self.print("\nCMD : %s\n" % cmd)
+
+        rtn = self.init_mpi()
+        if rtn:
+            return rtn
 
         cmd = shlex.split(cmd)
         rtn = subprocess.Popen(cmd)
