@@ -301,7 +301,7 @@ class CartUtils():
 
         self.print("\nCMD : %s\n" % cmd)
 
-        if not self.init_mpi()
+        if not self.init_mpi():
             return -1
 
         cmd = shlex.split(cmd)
@@ -323,7 +323,7 @@ class CartUtils():
 
         self.print("\nCMD : %s\n" % cmd)
 
-        if not self.init_mpi()
+        if not self.init_mpi():
             return -1
 
         cmd = shlex.split(cmd)
