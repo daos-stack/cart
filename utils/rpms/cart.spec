@@ -15,6 +15,7 @@ BuildRequires: libfabric-devel
 BuildRequires: openpa-devel
 BuildRequires: mercury-devel = 1.0.1-21%{?dist}
 BuildRequires: openmpi3-devel
+BuildRequires: libpsm2-devel
 BuildRequires: libevent-devel
 BuildRequires: boost-devel
 BuildRequires: libuuid-devel
@@ -140,6 +141,7 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 * Wed Dec 11 2019 Jeff Olivier <jeffrey.v.olivier@intel.com> - 4.1.0-1
 - Libcart version 4.1.0-1
 - OpenMPI build modified to use installed packages
+- Add BR: libpsm2-devel since we don't get that with ompi-devel now
 
 * Mon Dec 9 2019 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.0.0-1
 - Libcart version 4.0.0-1
