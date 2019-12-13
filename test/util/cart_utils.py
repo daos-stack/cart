@@ -295,6 +295,7 @@ class CartUtils():
         self.print("Loading old %s" % mpi)
         module('purge')
         module('load', mpi)
+        return True
 
     def init_mpi(self, mpi):
         """load mpi"""
