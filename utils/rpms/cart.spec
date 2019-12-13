@@ -29,6 +29,7 @@ BuildRequires: libyaml-devel
 BuildRequires: libpsm_infinipath1
 # prefer over libcurl4-mini
 BuildRequires: libcurl4
+BuildRequires: Modules
 %endif
 BuildRequires: gcc-c++
 %if %{defined sha1}
