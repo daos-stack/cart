@@ -1123,8 +1123,9 @@ crt_grp_priv_destroy(struct crt_grp_priv *grp_priv)
 			struct crt_grp_priv_sec *entry;
 			bool found = false;
 
-			d_list_for_each_entry(entry, &grp_priv_prim->gp_sec_list,
-						gps_link) {
+			d_list_for_each_entry(entry,
+					&grp_priv_prim->gp_sec_list,
+					gps_link) {
 				if (entry->gps_priv == grp_priv) {
 					found = true;
 					break;
