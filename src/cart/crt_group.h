@@ -75,6 +75,11 @@ struct crt_grp_membs {
 	d_rank_list_t	*cgm_linear_list;
 };
 
+struct crt_grp_priv_sec {
+	struct crt_grp_priv	*gps_priv;
+	d_list_t		gps_link;
+};
+
 struct crt_grp_priv;
 
 struct crt_grp_priv {
@@ -85,7 +90,7 @@ struct crt_grp_priv {
 	struct crt_grp_priv	*gp_priv_prim;
 
 	/* List of secondary groups associated with this group */
-	struct crt_grp_priv	*gp_priv_sec[CRT_MAX_SEC_GRPS];
+	d_list_t		gp_sec_list;
 
 	/*
 	 * member ranks, should be unique and sorted, each member is the rank

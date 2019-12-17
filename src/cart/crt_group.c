@@ -1026,6 +1026,7 @@ crt_grp_priv_create(struct crt_grp_priv **grp_priv_created,
 	if (rc != 0)
 		D_GOTO(out_grp_priv, rc);
 
+	D_INIT_LIST_HEAD(&grp_priv->gp_sec_list);
 	D_INIT_LIST_HEAD(&grp_priv->gp_link);
 	grp_priv->gp_primary = primary_grp;
 	D_STRNDUP(grp_priv->gp_pub.cg_grpid, grp_id, CRT_GROUP_ID_MAX_LEN + 1);
@@ -1119,12 +1120,21 @@ crt_grp_priv_destroy(struct crt_grp_priv *grp_priv)
 		 * crt_group_secondary_create.
 		 */
 		if (grp_priv_prim != NULL) {
-			for (i = 0; i < CRT_MAX_SEC_GRPS; i++) {
-				if (grp_priv_prim->gp_priv_sec[i] == grp_priv)
+			struct crt_grp_priv_sec *entry;
+			bool found = false;
+
+			d_list_for_each_entry(entry, &grp_priv_prim->gp_sec_list,
+						gps_link) {
+				if (entry->gps_priv == grp_priv) {
+					found = true;
 					break;
+				}
 			}
-			D_ASSERT(i < CRT_MAX_SEC_GRPS); /* must be found */
-			grp_priv->gp_priv_prim->gp_priv_sec[i] = NULL;
+
+			if (found) {
+				d_list_del(&entry->gps_link);
+				D_FREE(entry);
+			}
 		}
 		d_hash_table_destroy_inplace(&grp_priv->gp_p2s_table, true);
 		d_hash_table_destroy_inplace(&grp_priv->gp_s2p_table, true);
@@ -2759,11 +2769,11 @@ crt_grp_remove_from_secondaries(struct crt_grp_priv *grp_priv,
 	struct crt_grp_priv	*sec_priv;
 	struct crt_rank_mapping *rm;
 	d_list_t		*rlink;
+	struct crt_grp_priv_sec	*entry;
 	int			rc;
-	int			i;
 
-	for (i = 0; i < CRT_MAX_SEC_GRPS; i++) {
-		sec_priv = grp_priv->gp_priv_sec[i];
+	d_list_for_each_entry(entry, &grp_priv->gp_sec_list, gps_link) {
+		sec_priv = entry->gps_priv;
 		if (sec_priv == NULL)
 			continue;
 
@@ -2962,9 +2972,9 @@ crt_group_secondary_create(crt_group_id_t grp_name, crt_group_t *primary_grp,
 {
 	struct crt_grp_priv	*grp_priv = NULL;
 	struct crt_grp_priv	*grp_priv_prim = NULL;
+	struct crt_grp_priv_sec *entry;
 	int			rc = 0;
 	int			i;
-	bool			found;
 
 	if (ret_grp == NULL) {
 		D_ERROR("grp ptr is NULL\n");
@@ -3019,23 +3029,20 @@ crt_group_secondary_create(crt_group_id_t grp_name, crt_group_t *primary_grp,
 		D_GOTO(out, rc);
 	}
 
-	found = false;
 	/* Record secondary group in the primary group */
-	for (i = 0; i < CRT_MAX_SEC_GRPS; i++) {
-		if (grp_priv_prim->gp_priv_sec[i] == NULL) {
-			found = true;
-			grp_priv_prim->gp_priv_sec[i] = grp_priv;
-			break;
-		}
+	D_ALLOC_PTR(entry);
+	if (entry == NULL) {
+		D_ERROR("Failed to allocate entry for group\n");
+		D_GOTO(out, rc = -DER_NOMEM);
 	}
-	if (!found) {
-		D_ERROR("Exceeded secondary groups limit\n");
-		D_GOTO(out, rc = -DER_NONEXIST);
-	}
+
+	entry->gps_priv = grp_priv;
+	d_list_add_tail(&entry->gps_link, &grp_priv_prim->gp_sec_list);
+
 	/*
 	 * Record primary group in the secondary group. Note that this field
 	 * controls whether crt_grp_priv_destroy attempts to remove this
-	 * secondary group from grp_priv_prim->gp_priv_sec.
+	 * secondary group from grp_priv_prim->gp_sec_list.
 	 */
 	grp_priv->gp_priv_prim = grp_priv_prim;
 
