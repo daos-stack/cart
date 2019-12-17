@@ -64,15 +64,12 @@ crt_li_destroy(struct crt_lookup_item *li)
 	D_ASSERT(li->li_ref == 0);
 	D_ASSERT(li->li_initialized == 1);
 
-
 	for (i = 0; i < CRT_SRV_CONTEXT_NUM; i++) {
 		if (li->li_tag_addr[i] != NULL)
 			D_ERROR("tag %d, li_tag_addr not freed.\n", i);
-
 	}
 
 	D_MUTEX_DESTROY(&li->li_mutex);
-
 	D_FREE_PTR(li);
 }
 
@@ -159,7 +156,6 @@ crt_rm_link2ptr(d_list_t *rlink)
 	D_ASSERT(rlink != NULL);
 	return container_of(rlink, struct crt_rank_mapping, rm_link);
 }
-
 
 static int
 rm_op_key_get(struct d_hash_table *hhtab, d_list_t *rlink, void **key_pp)
@@ -304,17 +300,14 @@ crt_ui_destroy(struct crt_uri_item *ui)
 	D_ASSERT(ui->ui_ref == 0);
 	D_ASSERT(ui->ui_initialized == 1);
 
-
 	for (i = 0; i < CRT_SRV_CONTEXT_NUM; i++) {
 		if (ui->ui_uri[i])
 			D_FREE(ui->ui_uri[i]);
 	}
 
 	D_MUTEX_DESTROY(&ui->ui_mutex);
-
 	D_FREE_PTR(ui);
 }
-
 
 static inline char *
 grp_li_uri_get(struct crt_lookup_item *li, int tag)
@@ -359,7 +352,6 @@ grp_li_uri_set(struct crt_lookup_item *li, int tag, const char *uri)
 
 	rlink = d_hash_rec_find(&grp_priv->gp_uri_lookup_cache,
 				(void *)&rank, sizeof(rank));
-
 	if (rlink == NULL) {
 		D_ALLOC_PTR(ui);
 		if (!ui) {
@@ -525,7 +517,6 @@ crt_grp_lc_destroy(struct crt_grp_priv *grp_priv)
 	return rc;
 }
 
-
 static void
 crt_grp_lc_uri_remove(struct crt_grp_priv *passed_grp_priv, int ctx_idx,
 		d_rank_t rank)
@@ -596,7 +587,6 @@ grp_lc_uri_insert_internal_locked(struct crt_grp_priv *grp_priv,
 		}
 
 		li->li_initialized = 1;
-		li->li_evicted = 0;
 
 		rc = d_hash_rec_insert(&grp_priv->gp_lookup_cache[ctx_idx],
 				       &rank, sizeof(rank), &li->li_link,
@@ -858,8 +848,6 @@ crt_grp_lc_addr_insert(struct crt_grp_priv *passed_grp_priv,
 	D_ASSERT(li->li_initialized != 0);
 
 	D_MUTEX_LOCK(&li->li_mutex);
-	if (li->li_evicted == 1)
-		rc = -DER_EVICTED;
 	if (li->li_tag_addr[tag] == NULL) {
 		li->li_tag_addr[tag] = *hg_addr;
 	} else {
@@ -927,18 +915,6 @@ crt_grp_lc_lookup(struct crt_grp_priv *grp_priv, int ctx_idx,
 		D_ASSERT(li->li_rank == rank);
 		D_ASSERT(li->li_initialized != 0);
 
-		D_MUTEX_LOCK(&li->li_mutex);
-		if (li->li_evicted == 1) {
-			D_MUTEX_UNLOCK(&li->li_mutex);
-			d_hash_rec_decref(
-				&default_grp_priv->gp_lookup_cache[ctx_idx],
-				rlink);
-			D_ERROR("tag %d on rank %d already evicted.\n", tag,
-				rank);
-			D_GOTO(out, rc = -DER_EVICTED);
-		}
-		D_MUTEX_UNLOCK(&li->li_mutex);
-
 		if (uri != NULL)
 			*uri = grp_li_uri_get(li, tag);
 
@@ -992,38 +968,6 @@ crt_grp_lookup_locked(crt_group_id_t grp_id)
 	return (found == true) ? grp_priv : NULL;
 }
 
-/* lookup by internal subgrp id */
-struct crt_grp_priv *
-crt_grp_lookup_int_grpid(uint64_t int_grpid)
-{
-	struct crt_grp_priv	*grp_priv;
-	bool			 found = false;
-
-	/* Check if the group is primary group or not */
-	if (!crt_grp_is_subgrp_id(int_grpid)) {
-		grp_priv = crt_grp_pub2priv(NULL);
-
-		crt_grp_priv_addref(grp_priv);
-		D_GOTO(exit, 0);
-	}
-
-	/* Lookup subgroup in the list */
-	D_RWLOCK_RDLOCK(&crt_grp_list_rwlock);
-	d_list_for_each_entry(grp_priv, &crt_grp_list, gp_link) {
-		if (grp_priv->gp_int_grpid == int_grpid) {
-			found = true;
-			break;
-		}
-	}
-	if (found == true)
-		crt_grp_priv_addref(grp_priv);
-	else
-		grp_priv = NULL;
-	D_RWLOCK_UNLOCK(&crt_grp_list_rwlock);
-
-exit:
-	return grp_priv;
-}
 
 /* lookup by string subgrp id */
 struct crt_grp_priv *
@@ -1197,10 +1141,8 @@ crt_grp_priv_destroy(struct crt_grp_priv *grp_priv)
 			D_ASSERT(i < CRT_MAX_SEC_GRPS); /* must be found */
 			grp_priv->gp_priv_prim->gp_priv_sec[i] = NULL;
 		}
-		d_hash_table_destroy_inplace(&grp_priv->gp_p2s_table,
-						true);
-		d_hash_table_destroy_inplace(&grp_priv->gp_s2p_table,
-						true);
+		d_hash_table_destroy_inplace(&grp_priv->gp_p2s_table, true);
+		d_hash_table_destroy_inplace(&grp_priv->gp_s2p_table, true);
 	}
 
 	if (grp_priv->gp_psr_phy_addr != NULL)
@@ -1209,15 +1151,8 @@ crt_grp_priv_destroy(struct crt_grp_priv *grp_priv)
 	D_FREE(grp_priv->gp_pub.cg_grpid);
 
 	crt_barrier_info_destroy(grp_priv);
-
 	D_FREE(grp_priv);
 }
-
-struct gc_req {
-	d_list_t	 gc_link;
-	crt_rpc_t	*gc_rpc;
-};
-
 
 /**
  * Validates an input group id string. Checks both length and for presence of
@@ -1245,7 +1180,6 @@ crt_validate_grpid(const crt_group_id_t grpid) {
 	}
 	return 0;
 }
-
 
 
 crt_group_t *
@@ -1278,7 +1212,7 @@ crt_group_lookup(crt_group_id_t grp_id)
 		goto out;
 	}
 
-	/* check sub-group */
+	/* check list of groups */
 	D_RWLOCK_RDLOCK(&crt_grp_list_rwlock);
 	grp_priv = crt_grp_lookup_locked(grp_id);
 	if (grp_priv == NULL)
@@ -1292,12 +1226,9 @@ out:
 static void
 crt_grp_lock_fini(struct crt_grp_priv *grp_priv)
 {
-	if (grp_priv->gp_primary) {
-		D_RWLOCK_DESTROY(grp_priv->gp_rwlock_ft);
-		D_FREE(grp_priv->gp_rwlock_ft);
-	}
+	D_RWLOCK_DESTROY(grp_priv->gp_rwlock_ft);
+	D_FREE(grp_priv->gp_rwlock_ft);
 }
-
 
 int
 crt_group_rank(crt_group_t *grp, d_rank_t *rank)
@@ -1536,7 +1467,6 @@ crt_primary_grp_init(crt_group_id_t grpid)
 		D_ERROR("grp_priv_init_membs() failed; rc=%d\n", rc);
 		D_GOTO(out, rc);
 	}
-
 
 	grp_gdata->gg_primary_grp = grp_priv;
 
@@ -1925,7 +1855,6 @@ crt_grp_init(crt_group_id_t grpid)
 		D_GOTO(out, rc);
 	}
 
-	grp_gdata->gg_inited = 1;
 	crt_gdata.cg_grp_inited = 1;
 
 out:
@@ -3097,8 +3026,6 @@ crt_group_secondary_create(crt_group_id_t grp_name, crt_group_t *primary_grp,
 
 	grp_priv->gp_size = 0;
 	grp_priv->gp_self = 0;
-
-	grp_priv->gp_int_grpid = crt_get_subgrp_id();
 
 	crt_grp_lock_init(grp_priv);
 

@@ -85,10 +85,6 @@ crt_corpc_info_init(struct crt_rpc_priv *rpc_priv,
 	co_hdr = &rpc_priv->crp_coreq_hdr;
 	if (init_hdr) {
 		rpc_priv->crp_flags |= CRT_RPC_FLAG_COLL;
-		if (co_info->co_grp_priv->gp_primary)
-			rpc_priv->crp_flags |= CRT_RPC_FLAG_PRIMARY_GRP;
-		else if (flags & CRT_RPC_FLAG_GRP_DESTROY)
-			rpc_priv->crp_flags |= CRT_RPC_FLAG_GRP_DESTROY;
 		if (flags & CRT_RPC_FLAG_EXCLUSIVE)
 			rpc_priv->crp_flags |= CRT_RPC_FLAG_EXCLUSIVE;
 
@@ -133,18 +129,13 @@ crt_corpc_initiate(struct crt_rpc_priv *rpc_priv)
 	D_ASSERT(grp_gdata != NULL);
 
 	co_hdr = &rpc_priv->crp_coreq_hdr;
-	if (rpc_priv->crp_flags & CRT_RPC_FLAG_PRIMARY_GRP) {
-		grp_priv = grp_gdata->gg_primary_grp;
-		D_ASSERT(grp_priv != NULL);
+	grp_priv = crt_grp_lookup_grpid(co_hdr->coh_grpid);
+	if (grp_priv != NULL) {
+		grp_ref_taken = true;
 	} else {
-		grp_priv = crt_grp_lookup_grpid(co_hdr->coh_grpid);
-		if (grp_priv != NULL) {
-			grp_ref_taken = true;
-		} else {
-			D_ERROR("crt_grp_lookup_grpid: %s failed.\n",
-				co_hdr->coh_grpid);
-			D_GOTO(out, rc = -DER_INVAL);
-		}
+		D_ERROR("crt_grp_lookup_grpid: %s failed.\n",
+			co_hdr->coh_grpid);
+		D_GOTO(out, rc = -DER_INVAL);
 	}
 
 	rc = crt_corpc_info_init(rpc_priv, grp_priv, grp_ref_taken,
@@ -578,9 +569,6 @@ crt_corpc_complete(struct crt_rpc_priv *rpc_priv)
 		 */
 		rpc_priv->crp_coreq_hdr.coh_bulk_hdl = NULL;
 	}
-	if (co_info->co_rc == 0 && co_info->co_root_excluded == 0 &&
-	    (rpc_priv->crp_flags & CRT_RPC_FLAG_GRP_DESTROY))
-		crt_grp_priv_decref(co_info->co_grp_priv);
 
 	/* correspond to addref in crt_corpc_req_hdlr */
 	RPC_DECREF(rpc_priv);
