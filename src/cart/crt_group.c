@@ -43,9 +43,6 @@
 #include "crt_internal.h"
 #include <sys/stat.h>
 
-static void
-crt_grp_lock_fini(struct crt_grp_priv *grp_priv);
-
 static int crt_group_primary_add_internal(struct crt_grp_priv *grp_priv,
 					d_rank_t rank, int tag,
 					char *uri);
@@ -1025,6 +1022,10 @@ crt_grp_priv_create(struct crt_grp_priv **grp_priv_created,
 	if (grp_priv == NULL)
 		D_GOTO(out, rc = -DER_NOMEM);
 
+	rc = D_RWLOCK_INIT(&grp_priv->gp_rwlock_ft, NULL);
+	if (rc != 0)
+		D_GOTO(out_grp_priv, rc);
+
 	D_INIT_LIST_HEAD(&grp_priv->gp_link);
 	grp_priv->gp_primary = primary_grp;
 	D_STRNDUP(grp_priv->gp_pub.cg_grpid, grp_id, CRT_GROUP_ID_MAX_LEN + 1);
@@ -1069,21 +1070,6 @@ out:
 	return rc;
 }
 
-static int
-crt_grp_lock_init(struct crt_grp_priv *grp_priv)
-{
-	int rc = 0;
-
-	D_ALLOC_PTR(grp_priv->gp_rwlock_ft);
-	if (!grp_priv->gp_rwlock_ft)
-		return -DER_NOMEM;
-
-	rc = D_RWLOCK_INIT(grp_priv->gp_rwlock_ft, NULL);
-	if (rc != 0)
-		D_FREE(grp_priv->gp_rwlock_ft);
-
-	return rc;
-}
 
 
 void
@@ -1111,7 +1097,6 @@ crt_grp_priv_destroy(struct crt_grp_priv *grp_priv)
 	}
 
 	crt_grp_lc_destroy(grp_priv);
-	crt_grp_lock_fini(grp_priv);
 	d_list_del_init(&grp_priv->gp_link);
 
 	/* remove from group list */
@@ -1151,6 +1136,8 @@ crt_grp_priv_destroy(struct crt_grp_priv *grp_priv)
 	D_FREE(grp_priv->gp_pub.cg_grpid);
 
 	crt_barrier_info_destroy(grp_priv);
+
+	D_RWLOCK_DESTROY(&grp_priv->gp_rwlock_ft);
 	D_FREE(grp_priv);
 }
 
@@ -1223,12 +1210,6 @@ out:
 	return (grp_priv == NULL) ? NULL : &grp_priv->gp_pub;
 }
 
-static void
-crt_grp_lock_fini(struct crt_grp_priv *grp_priv)
-{
-	D_RWLOCK_DESTROY(grp_priv->gp_rwlock_ft);
-	D_FREE(grp_priv->gp_rwlock_ft);
-}
 
 int
 crt_group_rank(crt_group_t *grp, d_rank_t *rank)
@@ -1399,9 +1380,9 @@ crt_group_version(crt_group_t *grp, uint32_t *version)
 	}
 	grp_priv = crt_grp_pub2priv(grp);
 	D_ASSERT(grp_priv != NULL);
-	D_RWLOCK_RDLOCK(grp_priv->gp_rwlock_ft);
+	D_RWLOCK_RDLOCK(&grp_priv->gp_rwlock_ft);
 	*version = grp_priv->gp_membs_ver;
-	D_RWLOCK_UNLOCK(grp_priv->gp_rwlock_ft);
+	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock_ft);
 
 out:
 	return rc;
@@ -1424,9 +1405,9 @@ crt_group_version_set(crt_group_t *grp, uint32_t version)
 		D_GOTO(out, rc = -DER_INVAL);
 	}
 
-	D_RWLOCK_RDLOCK(grp_priv->gp_rwlock_ft);
+	D_RWLOCK_RDLOCK(&grp_priv->gp_rwlock_ft);
 	grp_priv->gp_membs_ver = version;
-	D_RWLOCK_UNLOCK(grp_priv->gp_rwlock_ft);
+	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock_ft);
 
 out:
 	return rc;
@@ -1474,13 +1455,6 @@ crt_primary_grp_init(crt_group_id_t grpid)
 	if (rc != 0) {
 		D_ERROR("crt_grp_lc_create failed, rc: %d.\n",
 			rc);
-		D_GOTO(out, rc);
-	}
-
-	rc = crt_grp_lock_init(grp_priv);
-	if (rc != 0) {
-		D_ERROR("crt_grp_lock_init() failed, rc %d.\n", rc);
-		crt_grp_lc_destroy(grp_gdata->gg_primary_grp);
 		D_GOTO(out, rc);
 	}
 
@@ -2917,12 +2891,6 @@ crt_group_view_create(crt_group_id_t srv_grpid,
 		D_GOTO(out, rc);
 	}
 
-	rc = crt_grp_lock_init(grp_priv);
-	if (rc != 0) {
-		D_ERROR("crt_grp_lock_init() failed; rc=%d\n", rc);
-		D_GOTO(out, rc);
-	}
-
 	*ret_grp = &grp_priv->gp_pub;
 
 	D_RWLOCK_WRLOCK(&grp_gdata->gg_rwlock);
@@ -3025,8 +2993,6 @@ crt_group_secondary_create(crt_group_id_t grp_name, crt_group_t *primary_grp,
 
 	grp_priv->gp_size = 0;
 	grp_priv->gp_self = 0;
-
-	crt_grp_lock_init(grp_priv);
 
 	rc = grp_priv_init_membs(grp_priv, grp_priv->gp_size);
 	if (rc != 0) {
