@@ -2487,7 +2487,6 @@ grp_regen_linear_list(struct crt_grp_priv *grp_priv)
 	return 0;
 }
 
-
 /* This function adds node to the membership list.
  * Function should only be called once per rank, even if multiple
  * tags are added with corresponding URIs
