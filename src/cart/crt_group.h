@@ -51,8 +51,6 @@
 
 #define RANK_LIST_REALLOC_SIZE 32
 
-#define CRT_MAX_SEC_GRPS 10
-
 /* Node for keeping info about free index */
 struct free_index {
 	/* Index to store */
