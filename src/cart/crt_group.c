@@ -648,6 +648,7 @@ crt_grp_lc_uri_insert(struct crt_grp_priv *passed_grp_priv, int ctx_idx,
 {
 	struct crt_grp_priv	*grp_priv;
 	int			 rc = 0;
+	int			 i;
 
 	D_ASSERT(ctx_idx >= 0 && ctx_idx < CRT_SRV_CONTEXT_NUM);
 	if (tag >= CRT_SRV_CONTEXT_NUM) {
@@ -664,8 +665,11 @@ crt_grp_lc_uri_insert(struct crt_grp_priv *passed_grp_priv, int ctx_idx,
 	}
 
 	D_RWLOCK_WRLOCK(&grp_priv->gp_rwlock);
-	rc = grp_lc_uri_insert_internal_locked(grp_priv, ctx_idx, rank, tag,
+	for (i = 0; i < CRT_SRV_CONTEXT_NUM; i++) {
+		ctx_idx = i;
+		rc = grp_lc_uri_insert_internal_locked(grp_priv, ctx_idx, rank, tag,
 						uri);
+	}
 	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
 
 	return rc;
