@@ -1022,10 +1022,6 @@ crt_grp_priv_create(struct crt_grp_priv **grp_priv_created,
 	if (grp_priv == NULL)
 		D_GOTO(out, rc = -DER_NOMEM);
 
-	rc = D_RWLOCK_INIT(&grp_priv->gp_rwlock_ft, NULL);
-	if (rc != 0)
-		D_GOTO(out_grp_priv, rc);
-
 	D_INIT_LIST_HEAD(&grp_priv->gp_sec_list);
 	D_INIT_LIST_HEAD(&grp_priv->gp_link);
 	grp_priv->gp_primary = primary_grp;
@@ -1123,6 +1119,7 @@ crt_grp_priv_destroy(struct crt_grp_priv *grp_priv)
 			struct crt_grp_priv_sec	*entry;
 			bool			found = false;
 
+			D_RWLOCK_WRLOCK(&grp_priv_prim->gp_rwlock);
 			d_list_for_each_entry(entry,
 					&grp_priv_prim->gp_sec_list,
 					gps_link) {
@@ -1136,6 +1133,7 @@ crt_grp_priv_destroy(struct crt_grp_priv *grp_priv)
 				d_list_del(&entry->gps_link);
 				D_FREE(entry);
 			}
+			D_RWLOCK_UNLOCK(&grp_priv_prim->gp_rwlock);
 		}
 		d_hash_table_destroy_inplace(&grp_priv->gp_p2s_table, true);
 		d_hash_table_destroy_inplace(&grp_priv->gp_s2p_table, true);
@@ -1143,12 +1141,11 @@ crt_grp_priv_destroy(struct crt_grp_priv *grp_priv)
 
 	if (grp_priv->gp_psr_phy_addr != NULL)
 		D_FREE(grp_priv->gp_psr_phy_addr);
-	D_RWLOCK_DESTROY(&grp_priv->gp_rwlock);
 	D_FREE(grp_priv->gp_pub.cg_grpid);
 
 	crt_barrier_info_destroy(grp_priv);
+	D_RWLOCK_DESTROY(&grp_priv->gp_rwlock);
 
-	D_RWLOCK_DESTROY(&grp_priv->gp_rwlock_ft);
 	D_FREE(grp_priv);
 }
 
@@ -1391,9 +1388,10 @@ crt_group_version(crt_group_t *grp, uint32_t *version)
 	}
 	grp_priv = crt_grp_pub2priv(grp);
 	D_ASSERT(grp_priv != NULL);
-	D_RWLOCK_RDLOCK(&grp_priv->gp_rwlock_ft);
+
+	D_RWLOCK_RDLOCK(&grp_priv->gp_rwlock);
 	*version = grp_priv->gp_membs_ver;
-	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock_ft);
+	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
 
 out:
 	return rc;
@@ -1416,9 +1414,9 @@ crt_group_version_set(crt_group_t *grp, uint32_t version)
 		D_GOTO(out, rc = -DER_INVAL);
 	}
 
-	D_RWLOCK_RDLOCK(&grp_priv->gp_rwlock_ft);
+	D_RWLOCK_RDLOCK(&grp_priv->gp_rwlock);
 	grp_priv->gp_membs_ver = version;
-	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock_ft);
+	D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);
 
 out:
 	return rc;
@@ -2773,6 +2771,7 @@ crt_grp_remove_from_secondaries(struct crt_grp_priv *grp_priv,
 	struct crt_grp_priv_sec	*entry;
 	int			rc;
 
+	/* Note: This function is called with grp_priv lock taken */
 	d_list_for_each_entry(entry, &grp_priv->gp_sec_list, gps_link) {
 		sec_priv = entry->gps_priv;
 		if (sec_priv == NULL)
@@ -3038,7 +3037,10 @@ crt_group_secondary_create(crt_group_id_t grp_name, crt_group_t *primary_grp,
 	}
 
 	entry->gps_priv = grp_priv;
+
+	D_RWLOCK_WRLOCK(&grp_priv_prim->gp_rwlock);
 	d_list_add_tail(&entry->gps_link, &grp_priv_prim->gp_sec_list);
+	D_RWLOCK_UNLOCK(&grp_priv_prim->gp_rwlock);
 
 	/*
 	 * Record primary group in the secondary group. Note that this field
