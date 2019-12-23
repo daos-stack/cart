@@ -49,7 +49,8 @@ struct crt_plugin_gdata crt_plugin_gdata;
 static void
 dump_envariables(void)
 {
-	int 	i;
+	int	i;
+	char	*val;
 	char	*envars[] = {"CRT_PHY_ADDR_STR", "D_LOG_FILE",
 		"D_LOG_FILE_APPEND_PID", "D_LOG_MASK", "DD_MASK",
 		"DD_STDERR", "DD_SUBSYS", "CRT_TIMEOUT", "CRT_ATTACH_INFO_PATH",
@@ -58,8 +59,6 @@ dump_envariables(void)
 
 	D_DEBUG(DB_ALL, "-- ENVARS: --\n");
 	for (i = 0; i < ARRAY_SIZE(envars); i++) {
-		char *val;
-
 		val = getenv(envars[i]);
 		D_DEBUG(DB_ALL, "%s = %s\n", envars[i], val);
 	}
