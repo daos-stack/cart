@@ -317,10 +317,10 @@ crt_init_opt(crt_group_id_t grpid, uint32_t flags, crt_init_options_t *opt)
 do_init:
 		/* Print notice that "ofi+verbs" is legacy */
 		if (crt_gdata.cg_na_plugin == CRT_NA_OFI_VERBS) {
-			D_ERROR("\"ofi+verbs\" provider is no longer supported. "
+			D_ERROR("\"ofi+verbs\" is no longer supported. "
 				"Use \"ofi+verbs;ofi_rxm\" instead for %s env",
 				CRT_PHY_ADDR_ENV);
-			D_GOTO(out,rc = -DER_INVAL);
+			D_GOTO(out, rc = -DER_INVAL);
 		}
 
 		/* the verbs provider only works with regular EP */
