@@ -129,6 +129,16 @@ tc_progress_fn(void *data)
 	return NULL;
 }
 
+void
+tc_finalize(d_rank_t rank)
+{
+        int rc;
+
+        usleep(20000 * rank);
+        rc = crt_finalize();
+        D_ASSERTF(rc == 0, "Failed in crt_finalize, rc = %d\n", rc);
+}
+
 struct wfr_status {
 	sem_t	sem;
 	int	rc;

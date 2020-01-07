@@ -115,8 +115,7 @@ test_run(d_rank_t my_rank)
 			  "crt_group_config_remove() failed. rc: %d\n", rc);
 	}
 
-	rc = crt_finalize();
-	D_ASSERTF(rc == 0, "crt_finalize() failed. rc: %d\n", rc);
+	tc_finalize(my_rank);
 
 	d_log_fini();
 
