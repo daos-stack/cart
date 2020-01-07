@@ -4128,7 +4128,8 @@ crt_rank_uri_get(crt_group_t *group, d_rank_t rank, int tag, char **uri_str)
 		D_GOTO(out, rc = -DER_INVAL);
 	}
 
-	if (rank == grp_priv->gp_self)
+	if (rank == grp_priv->gp_self && crt_is_service()
+			&& grp_priv == crt_gdata.cg_grp->gg_srv_pri_grp)
 		return crt_self_uri_get(tag, uri_str);
 
 	rc = crt_grp_lc_lookup(grp_priv, 0, rank, tag, &uri, &hg_addr);

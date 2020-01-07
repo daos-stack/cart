@@ -139,9 +139,15 @@ class CartUtils():
         log_file = os.path.join(log_path, "output.log")
 
         log_mask = cartobj.params.get("D_LOG_MASK", "/run/defaultENV/")
+        log_append_pid = cartobj.params.get("D_LOG_FILE_APPEND_PID",
+                                            "/run/defaultENV/")
         crt_phy_addr = cartobj.params.get("CRT_PHY_ADDR_STR",
                                           "/run/defaultENV/")
         ofi_interface = cartobj.params.get("OFI_INTERFACE", "/run/defaultENV/")
+        ofi_port = cartobj.params.get("OFI_PORT", "/run/defaultENV/")
+        fi_psm2_name_server = cartobj.params.get("FI_PSM2_NAME_SERVER",
+                                            "/run/defaultENV/")
+
         ofi_share_addr = cartobj.params.get("CRT_CTX_SHARE_ADDR",
                                             "/run/env_CRT_CTX_SHARE_ADDR/*/")
 
@@ -152,11 +158,20 @@ class CartUtils():
         if log_mask is not None:
             env += " -x D_LOG_MASK={!s}".format(log_mask)
 
+        if log_append_pid:
+            env += " -x D_LOG_FILE_APPEND_PID={!s}".format(log_append_pid)
+
         if crt_phy_addr is not None:
             env += " -x CRT_PHY_ADDR_STR={!s}".format(crt_phy_addr)
 
         if ofi_interface is not None:
             env += " -x OFI_INTERFACE={!s}".format(ofi_interface)
+
+        if ofi_port:
+            env += " -x OFI_PORT={!s}".format(ofi_port)
+
+        if fi_psm2_name_server:
+            env += " -x FI_PSM2_NAME_SERVER={!s}".format(fi_psm2_name_server)
 
         if ofi_share_addr is not None:
             env += " -x CRT_CTX_SHARE_ADDR={!s}".format(ofi_share_addr)
@@ -225,7 +240,7 @@ class CartUtils():
         else:
             hostfile = self.write_host_file(tst_host,tst_ppn)
 
-        tst_cmd = "{} --mca btl self,tcp -N {} --hostfile {} "\
+        tst_cmd = "{} --mca mtl ^psm2,ofi -N {} --hostfile {} "\
                   .format(orterun_bin, tst_ppn, hostfile)
 
         if urifile is not None:
@@ -234,6 +249,9 @@ class CartUtils():
             else:
                 tst_cmd += "--ompi-server file:{} ".format(urifile)
 
+        if host in ["srv", "srv2"]:
+#            env += " -x OFI_PORT=44444 -x FI_PSM2_NAME_SERVER=1 "
+            env += " -x FI_PSM2_NAME_SERVER=1 "
         tst_cmd += env
 
         if tst_ctx is not None:
