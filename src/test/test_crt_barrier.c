@@ -145,7 +145,7 @@ int main(int argc, char **argv)
 	pthread_join(tid, &check_ret);
 	D_ASSERTF(check_ret == NULL, "Progress thread failed\n");
 
-	tc_finalized(my_rank);
+	tc_finalize(my_rank);
 
 	d_log_fini();
 
