@@ -145,8 +145,7 @@ int main(int argc, char **argv)
 	pthread_join(tid, &check_ret);
 	D_ASSERTF(check_ret == NULL, "Progress thread failed\n");
 
-	rc = crt_finalize();
-	D_ASSERTF(rc == 0, "Failed in crt_finalize, rc = %d\n", rc);
+	tc_finalized(my_rank);
 
 	d_log_fini();
 
