@@ -989,7 +989,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sh "rm -f coverity/daos_coverity.tgz"
+                        sh "rm -f coverity/cart_coverity.tgz"
                         sconsBuild scons_exe: "scons-3",
                                    coverity: "daos-stack/daos",
                                    clean: "_build.external${arch}",
