@@ -1655,7 +1655,6 @@ crt_hdlr_iv_sync_aux(void *arg)
 	struct crt_iv_ops		*iv_ops = NULL;
 	struct crt_ivns_id		ivns_id;
 	crt_iv_sync_t			*sync_type;
-	d_sg_list_t			iv_value = {0};
 	bool				 need_put = false;
 	void				*user_priv = NULL;
 	crt_rpc_t			*rpc_req;
@@ -1704,11 +1703,11 @@ crt_hdlr_iv_sync_aux(void *arg)
 	case CRT_IV_SYNC_EVENT_UPDATE:
 	{
 		d_sg_list_t tmp_iv;
+		d_iov_t	    tmp_iov = { 0 };
 
 		rc = iv_ops->ivo_on_get(ivns_internal, &input->ivs_key,
-				0, CRT_IV_PERM_WRITE, &iv_value, &user_priv);
+				0, CRT_IV_PERM_WRITE, NULL, &user_priv);
 
-		tmp_iv = iv_value;
 		if (rc != 0) {
 			D_ERROR("ivo_on_get() failed; rc=%d\n", rc);
 			D_GOTO(exit, rc);
@@ -1716,6 +1715,8 @@ crt_hdlr_iv_sync_aux(void *arg)
 
 		need_put = true;
 
+		tmp_iv.sg_nr = 1; /* Only use single bulk seg for IV for now */
+		tmp_iv.sg_iovs = &tmp_iov;
 		rc = crt_bulk_access(rpc_req->cr_co_bulk_hdl, &tmp_iv);
 		if (rc != 0) {
 			D_ERROR("crt_bulk_access() failed; rc=%d\n", rc);
@@ -1729,7 +1730,7 @@ crt_hdlr_iv_sync_aux(void *arg)
 			D_GOTO(exit, rc);
 		}
 
-		rc = iv_ops->ivo_on_put(ivns_internal, &iv_value, user_priv);
+		rc = iv_ops->ivo_on_put(ivns_internal, NULL, user_priv);
 		if (rc != 0) {
 			D_ERROR("ivo_on_put() failed; rc=%d\n", rc);
 			D_GOTO(exit, rc);
@@ -1757,7 +1758,7 @@ crt_hdlr_iv_sync_aux(void *arg)
 
 exit:
 	if (need_put && iv_ops)
-		iv_ops->ivo_on_put(ivns_internal, &iv_value, user_priv);
+		iv_ops->ivo_on_put(ivns_internal, NULL, user_priv);
 
 	output->rc = rc;
 	crt_reply_send(rpc_req);
@@ -1862,7 +1863,7 @@ call_pre_sync_cb(struct crt_ivns_internal *ivns_internal,
 {
 	struct crt_iv_ops	*iv_ops;
 	d_sg_list_t		 iv_value;
-	d_sg_list_t		 tmp_iv;
+	d_iov_t			 tmp_iov;
 	void			*user_priv;
 	bool			 need_put = false;
 	int			 rc;
@@ -1871,16 +1872,17 @@ call_pre_sync_cb(struct crt_ivns_internal *ivns_internal,
 	D_ASSERT(iv_ops != NULL);
 
 	rc = iv_ops->ivo_on_get(ivns_internal, &input->ivs_key, 0,
-				CRT_IV_PERM_WRITE, &iv_value,
+				CRT_IV_PERM_WRITE, NULL,
 				&user_priv);
-	tmp_iv = iv_value;
 	if (rc != 0) {
 		D_ERROR("ivo_on_get() failed; rc=%d\n", rc);
 		D_GOTO(exit, rc);
 	}
 	need_put = true;
 
-	rc = crt_bulk_access(rpc_req->cr_co_bulk_hdl, &tmp_iv);
+	iv_value.sg_nr = 1; /* Only use single bulk seg for IV for now */
+	iv_value.sg_iovs = &tmp_iov;
+	rc = crt_bulk_access(rpc_req->cr_co_bulk_hdl, &iv_value);
 	if (rc != 0) {
 		D_ERROR("crt_bulk_access() failed; rc=%d\n", rc);
 		D_GOTO(exit, rc);
@@ -1894,7 +1896,7 @@ call_pre_sync_cb(struct crt_ivns_internal *ivns_internal,
 
 exit:
 	if (need_put)
-		iv_ops->ivo_on_put(ivns_internal, &iv_value, user_priv);
+		iv_ops->ivo_on_put(ivns_internal, NULL, user_priv);
 	return rc;
 }
 
