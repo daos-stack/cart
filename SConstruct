@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2019 Intel Corporation
+# Copyright (C) 2016-2020 Intel Corporation
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -92,7 +92,8 @@ def scons():
     opts = Variables(opts_file)
     prereqs = PreReqComponent(env, opts, arch=platform)
     prereqs.load_definitions(prebuild=['mercury', 'uuid', 'crypto', 'boost'])
-    load_mpi('openmpi')
+    if env.subst("$MPI_PKG") == "":
+        load_mpi('openmpi')
 
     if not env.GetOption('clean'):
         run_checks(env)
