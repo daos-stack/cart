@@ -162,6 +162,8 @@ struct crt_ivns_internal {
 	crt_iv_namespace_destroy_cb_t	 cii_destroy_cb;
 	/* user data for cii_destroy_cb() */
 	void				*cii_destroy_cb_arg;
+	/* user private data associated with ns */
+	void				*cii_user_priv;
 };
 
 static void
@@ -772,6 +774,60 @@ exit:
 			crt_grp_priv_decref(grp_priv);
 	}
 
+	return rc;
+}
+
+int
+crt_iv_namespace_priv_set(crt_iv_namespace_t *ivns, void *priv)
+{
+	struct crt_ivns_internal        *ivns_internal;
+	int				rc = 0;
+
+	if (ivns == NULL) {
+		D_ERROR("NULL ivns passed\n");
+		D_GOTO(exit, rc = -DER_INVAL);
+	}
+
+	ivns_internal = crt_ivns_internal_get(ivns);
+
+	if (ivns_internal == NULL) {
+		D_ERROR("Invalid ivns passed\n");
+		D_GOTO(exit, rc = -DER_INVAL);
+	}
+
+	ivns_internal->cii_user_priv = priv;
+	IVNS_DECREF(ivns_internal);
+
+exit:
+	return rc;
+}
+
+int
+crt_iv_namespace_priv_get(crt_iv_namespace_t *ivns, void **priv)
+{
+	struct crt_ivns_internal        *ivns_internal;
+	int				rc = 0;
+
+	if (ivns == NULL) {
+		D_ERROR("NULL ivns passed\n");
+		D_GOTO(exit, rc = -DER_INVAL);
+	}
+
+	if (priv == NULL) {
+		D_ERROR("NULL priv passed\n");
+		D_GOTO(exit, rc = -DER_INVAL);
+	}
+
+	ivns_internal = crt_ivns_internal_get(ivns);
+
+	if (ivns_internal == NULL) {
+		D_ERROR("Invalid ivns passed\n");
+		D_GOTO(exit, rc = -DER_INVAL);
+	}
+
+	*priv = ivns_internal->cii_user_priv;
+	IVNS_DECREF(ivns_internal);
+exit:
 	return rc;
 }
 

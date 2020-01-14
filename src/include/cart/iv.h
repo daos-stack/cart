@@ -440,6 +440,28 @@ int
 crt_iv_namespace_id_get(crt_iv_namespace_t *ivns, uint32_t *id);
 
 /**
+ * Associate priv data with IV namespace
+ *
+ * \param[in] ivns              Incast variable namespace handle
+ * \param[in] priv              Private user data
+ *
+ * \return                      DER_SUCCESS on success, negative value on error
+ */
+int
+crt_iv_namespace_priv_set(crt_iv_namespace_t *ivns, void *priv);
+
+/**
+ * Retrieve private data associated with IV namespace
+ *
+ * \param[in] ivns              Incast variable namespace handle
+ * \param[out] priv             Private user data
+ *
+ * \return                      DER_SUCCESS on success, negative value on error
+ */
+int
+crt_iv_namespace_priv_get(crt_iv_namespace_t *ivns, void **priv);
+
+/**
  * Completion callback for \ref crt_iv_namespace_destroy.
  *
  * \param[in] ivns		the local handle of the IV namespace that has
