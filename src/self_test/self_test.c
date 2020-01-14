@@ -117,7 +117,7 @@ static int self_test_init(char *dest_name, crt_context_t *crt_ctx,
 	d_rank_list_t	*rank_list = NULL;
 	int		 attach_retries = 40;
 	int		 i;
-	int		 max_rank = 0;
+	d_rank_t	 max_rank = 0;
 	int		 ret;
 
 	/* rank, num_attach_retries, is_server, assert_on_error */
@@ -199,6 +199,8 @@ static int self_test_init(char *dest_name, crt_context_t *crt_ctx,
 		if (rank_list->rl_ranks[i] > max_rank)
 			max_rank = rank_list->rl_ranks[i];
 	}
+
+	d_rank_list_free(rank_list);
 
 	ret = crt_rank_self_set(max_rank+1);
 	if (ret != 0) {
