@@ -290,7 +290,7 @@ crt_hg_addr_lookup_cb(const struct hg_cb_info *hg_cbinfo)
 
 	rc = comp_cb(hg_cbinfo->info.lookup.addr, cb_args->al_arg);
 	if (rc != 0)
-		rc = HG_OTHER_ERROR;
+		rc = HG_NA_ERROR;
 
 	D_FREE_PTR(cb_args);
 
