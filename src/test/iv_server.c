@@ -111,7 +111,6 @@ static void *
 progress_function(void *data)
 {
 	crt_context_t *p_ctx = (crt_context_t *)data;
-	int i;
 
 	while (g_do_shutdown == 0)
 		crt_progress(*p_ctx, 1000, NULL, NULL);
@@ -122,9 +121,7 @@ progress_function(void *data)
 	 *
 	 * This ensures the reply to the shutdown RPC is sent successfully
 	 */
-	if (p_ctx == &g_main_ctx)
-		for (i = 0; i < 1000; i++)
-			crt_progress(*p_ctx, 1000, NULL, NULL);
+	tc_drain_queue(*p_ctx);
 
 	/* Note the first thread cleans up g_main_ctx */
 	crt_context_destroy(*p_ctx, 1);

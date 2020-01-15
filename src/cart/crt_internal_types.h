@@ -171,6 +171,8 @@ struct crt_context {
 	pthread_mutex_t		 cc_mutex;
 	/* timeout per-context */
 	uint32_t		 cc_timeout_sec;
+	/* Finalization flag */
+	bool			 finalizing;
 };
 
 /* in-flight RPC req list, be tracked per endpoint for every crt_context */

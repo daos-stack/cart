@@ -1124,6 +1124,7 @@ int
 crt_req_send(crt_rpc_t *req, crt_cb_t complete_cb, void *arg)
 {
 	struct crt_rpc_priv	*rpc_priv = NULL;
+	struct crt_context	*ctx = NULL;
 	int			 rc = 0;
 
 	if (req == NULL) {
@@ -1142,14 +1143,21 @@ crt_req_send(crt_rpc_t *req, crt_cb_t complete_cb, void *arg)
 		}
 	}
 
+
 	rpc_priv = container_of(req, struct crt_rpc_priv, crp_pub);
 	/* Take a reference to ensure rpc_priv is valid for duration of this
 	 * function.  Referenced dropped at end of this function.
 	 */
 	RPC_ADDREF(rpc_priv);
 
-	if (req->cr_ctx == NULL) {
+	ctx = rpc_priv->crp_pub.cr_ctx;
+	if (ctx == NULL) {
 		D_ERROR("invalid parameter (NULL req->cr_ctx).\n");
+		D_GOTO(out, rc = -DER_INVAL);
+	}
+
+	if (ctx->finalizing) {
+		D_ERROR("Context is finalizing\n");
 		D_GOTO(out, rc = -DER_INVAL);
 	}
 
