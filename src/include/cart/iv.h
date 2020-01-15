@@ -445,15 +445,17 @@ crt_iv_namespace_create(crt_context_t crt_ctx, crt_group_t *grp, int tree_topo,
  *				class.
  * \param[in] iv_ns_id		Unique id, identifying the namespace within the
  *				group.
- * \param[in] user_priv		Optional private data to associate with namespace
+ * \param[in] user_priv		Optional private data to associate with IV
+ * 				namespace
  * \param[out] ivns		Local handle of the IV namespace
  *
  * \return			DER_SUCCESS on success, negative value if error
  */
 int
-crt_iv_namespace_create_priv(crt_context_t crt_ctx, crt_group_t *grp, int tree_topo,
-		struct crt_iv_class *iv_classes, uint32_t num_classes,
-		uint32_t iv_ns_id, void *user_priv, crt_iv_namespace_t *ivns);
+crt_iv_namespace_create_priv(crt_context_t crt_ctx, crt_group_t *grp,
+		int tree_topo, struct crt_iv_class *iv_classes,
+		uint32_t num_classes, uint32_t iv_ns_id, void *user_priv,
+		crt_iv_namespace_t *ivns);
 
 /**
  * Retrieve IV namespace id from the handle.
