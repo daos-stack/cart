@@ -446,7 +446,7 @@ crt_iv_namespace_create(crt_context_t crt_ctx, crt_group_t *grp, int tree_topo,
  * \param[in] iv_ns_id		Unique id, identifying the namespace within the
  *				group.
  * \param[in] user_priv		Optional private data to associate with IV
- * 				namespace
+ *				namespace
  * \param[out] ivns		Local handle of the IV namespace
  *
  * \return			DER_SUCCESS on success, negative value if error
