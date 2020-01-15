@@ -746,9 +746,10 @@ crt_iv_namespace_create(crt_context_t crt_ctx, crt_group_t *grp, int tree_topo,
 }
 
 int
-crt_iv_namespace_create_priv(crt_context_t crt_ctx, crt_group_t *grp, int tree_topo,
-		struct crt_iv_class *iv_classes, uint32_t num_classes,
-		uint32_t iv_ns_id, void *user_priv, crt_iv_namespace_t *ivns)
+crt_iv_namespace_create_priv(crt_context_t crt_ctx, crt_group_t *grp,
+		int tree_topo, struct crt_iv_class *iv_classes,
+		uint32_t num_classes, uint32_t iv_ns_id, void *user_priv,
+		crt_iv_namespace_t *ivns)
 {
 	struct crt_ivns_internal	*ivns_internal = NULL;
 	struct crt_grp_priv		*grp_priv = NULL;
