@@ -181,6 +181,9 @@ ivns_destroy(struct crt_ivns_internal *ivns_internal)
 	destroy_cb = ivns_internal->cii_destroy_cb;
 	cb_arg = ivns_internal->cii_destroy_cb_arg;
 
+	if (destroy_cb)
+		destroy_cb(ivns, cb_arg);
+
 	/* addref in crt_grp_lookup_int_grpid or crt_iv_namespace_create */
 	crt_grp_priv_decref(ivns_internal->cii_grp_priv);
 
@@ -190,10 +193,6 @@ ivns_destroy(struct crt_ivns_internal *ivns_internal)
 	D_FREE_PTR(ivns_internal->cii_iv_classes);
 	D_FREE(ivns_internal->cii_gns.gn_ivns_id.ii_group_name);
 	D_FREE_PTR(ivns_internal);
-
-
-	if (destroy_cb)
-		destroy_cb(ivns, cb_arg);
 }
 
 

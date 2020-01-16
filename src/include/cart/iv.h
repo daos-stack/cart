@@ -494,8 +494,7 @@ crt_iv_namespace_priv_get(crt_iv_namespace_t *ivns, void **priv);
  * Completion callback for \ref crt_iv_namespace_destroy.
  *
  * \param[in] ivns		the local handle of the IV namespace that has
- *				been destroyed. The value is an address, but
- *				can't be dereferenced.
+ *				been destroyed.
  * \param[in] cb_arg		pointer to argument provide by the user to
  *				crt_iv_namespace_destroy.
  */
