@@ -136,7 +136,7 @@
    fun:NA_Progress
 }
 {
-   oreterun --mca pml ob1 leaks
+   oreterun --mca pml ob1 leak
    Memcheck:Param
    socketcall.sendto(msg)
    fun:send
