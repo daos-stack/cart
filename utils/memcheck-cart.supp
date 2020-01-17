@@ -145,8 +145,5 @@
    fun:opal_libevent2022_event_base_loop
    fun:opal_progress
    fun:mca_pml_ob1_send
-   fun:ompi_coll_base_sendrecv_actual
-   fun:ompi_coll_base_allgather_intra_recursivedoubling
-   fun:PMPI_Allgather
-   fun:main
+   ...
 }
