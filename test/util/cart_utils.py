@@ -1,6 +1,6 @@
 #!/usr/bin/python
 '''
-  (C) Copyright 2018-2019 Intel Corporation.
+  (C) Copyright 2018-2020 Intel Corporation.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -154,6 +154,7 @@ class CartUtils():
         crt_phy_addr = cartobj.params.get("CRT_PHY_ADDR_STR",
                                           "/run/defaultENV/")
         ofi_interface = cartobj.params.get("OFI_INTERFACE", "/run/defaultENV/")
+        ofi_domain = cartobj.params.get("OFI_DOMAIN", "/run/defaultENV/")
         ofi_share_addr = cartobj.params.get("CRT_CTX_SHARE_ADDR",
                                             "/run/env_CRT_CTX_SHARE_ADDR/*/")
 
@@ -170,6 +171,9 @@ class CartUtils():
 
         if ofi_interface is not None:
             env += " -x OFI_INTERFACE={!s}".format(ofi_interface)
+
+        if ofi_domain not None:
+            env += " -x OFI_DOMAIN={!s}".format(ofi_domain)
 
         if ofi_share_addr is not None:
             env += " -x CRT_CTX_SHARE_ADDR={!s}".format(ofi_share_addr)
@@ -238,7 +242,7 @@ class CartUtils():
         else:
             hostfile = self.write_host_file(tst_host, tst_ppn)
 
-        tst_cmd = "{} --mca btl self,tcp -N {} --hostfile {} "\
+        tst_cmd = "{} --mca btl self,tcp --mca pml ob1 -N {} --hostfile {} "\
                   .format(orterun_bin, tst_ppn, hostfile)
 
         if urifile is not None:
