@@ -172,7 +172,7 @@ class CartUtils():
         if ofi_interface is not None:
             env += " -x OFI_INTERFACE={!s}".format(ofi_interface)
 
-        if ofi_domain not None:
+        if ofi_domain is not None:
             env += " -x OFI_DOMAIN={!s}".format(ofi_domain)
 
         if ofi_share_addr is not None:
