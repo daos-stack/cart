@@ -144,6 +144,5 @@
    obj:/usr/lib64/openmpi3/lib/openmpi/mca_btl_tcp.so
    fun:opal_libevent2022_event_base_loop
    fun:opal_progress
-   fun:mca_pml_ob1_send
    ...
 }
