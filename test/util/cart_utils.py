@@ -152,8 +152,8 @@ class CartUtils():
         if log_mask is not None:
             env += " -x D_LOG_MASK={!s}".format(log_mask)
 
-        if crt_phy_addr is not None:
-            env += " -x CRT_PHY_ADDR_STR={!s}".format(crt_phy_addr)
+        if self.provider is not None:
+            env += " -x CRT_PHY_ADDR_STR={!s}".format(self.provider)
 
         if ofi_interface is not None:
             env += " -x OFI_INTERFACE={!s}".format(ofi_interface)
