@@ -46,6 +46,7 @@ class CartUtils():
         self.stdout = logging.getLogger('avocado.test.stdout')
         self.progress_log = logging.getLogger("progress")
         self.module_init = False
+        self.provider = None
         self.module = lambda *x: False
 
     @staticmethod
@@ -73,19 +74,6 @@ class CartUtils():
                 hostfile_handle.write("{0} slots={1}\n".format(host, slots))
         hostfile_handle.close()
         return hostfile
-
-    @staticmethod
-    def create_uri_file():
-        """ create uri file suitable for orterun """
-
-        path = "./uri"
-        unique = random.randint(1, 100000)
-
-        if not os.path.exists(path):
-            os.makedirs(path)
-        urifile = path + "/urifile" + str(unique)
-
-        return urifile
 
     @staticmethod
     def check_process(proc):
@@ -135,8 +123,7 @@ class CartUtils():
 
         return procrtn
 
-    @staticmethod
-    def get_env(cartobj):
+    def get_env(self, cartobj):
         """ return basic env setting in yaml """
         env_CCSA = cartobj.params.get("env", "/run/env_CRT_CTX_SHARE_ADDR/*/")
         test_name = cartobj.params.get("name", "/run/tests/*/")
@@ -151,7 +138,7 @@ class CartUtils():
         log_file = os.path.join(log_path, "cart.log")
 
         log_mask = cartobj.params.get("D_LOG_MASK", "/run/defaultENV/")
-        crt_phy_addr = cartobj.params.get("CRT_PHY_ADDR_STR",
+        self.provider = cartobj.params.get("CRT_PHY_ADDR_STR",
                                           "/run/defaultENV/")
         ofi_interface = cartobj.params.get("OFI_INTERFACE", "/run/defaultENV/")
         ofi_domain = cartobj.params.get("OFI_DOMAIN", "/run/defaultENV/")
@@ -159,7 +146,6 @@ class CartUtils():
                                             "/run/env_CRT_CTX_SHARE_ADDR/*/")
 
         env = " --output-filename {!s}".format(log_path)
-
         env += " -x D_LOG_FILE={!s}".format(log_file)
         env += " -x D_LOG_FILE_APPEND_PID=1"
 
@@ -204,7 +190,7 @@ class CartUtils():
 
         return srvcnt
 
-    def build_cmd(self, cartobj, env, host, report_uri=True, urifile=None):
+    def build_cmd(self, cartobj, env, host):
         """ build command """
         tst_cmd = ""
 
@@ -242,14 +228,13 @@ class CartUtils():
         else:
             hostfile = self.write_host_file(tst_host, tst_ppn)
 
-        tst_cmd = "{} --mca btl self,tcp --mca pml ob1 -N {} --hostfile {} "\
-                  .format(orterun_bin, tst_ppn, hostfile)
+        mca_flags = "--mca btl self,tcp "
 
-        if urifile is not None:
-            if report_uri:
-                tst_cmd += "--report-uri {} ".format(urifile)
-            else:
-                tst_cmd += "--ompi-server file:{} ".format(urifile)
+        if self.provider == "ofi+psm2":
+            mca_flags += "--mca pml ob1 "
+
+        tst_cmd = "{} {} -N {} --hostfile {} "\
+                  .format(orterun_bin, mca_flags, tst_ppn, hostfile)
 
         tst_cmd += env
 
