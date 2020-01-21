@@ -78,7 +78,7 @@ ping_hdlr_0(crt_rpc_t *rpc_req)
 {
 	int	rc;
 
-	D_DEBUG(DB_TRACE, "entered %s().\n", __func__);
+	DBG_PRINT("entered %s().\n", __func__);
 
 	rc = crt_reply_send(rpc_req);
 	D_ASSERTF(rc == 0, "crt_reply_send() failed. rc: %d\n", rc);
@@ -91,7 +91,7 @@ ping_hdlr_1(crt_rpc_t *rpc_req)
 	struct ping_out	*rpc_req_output;
 	int			 rc;
 
-	D_DEBUG(DB_TRACE, "entered %s().\n", __func__);
+	DBG_PRINT("entered %s().\n", __func__);
 
 	rpc_req_input = crt_req_get(rpc_req);
 	rpc_req_output = crt_reply_get(rpc_req);
@@ -106,7 +106,7 @@ ping_hdlr_2(crt_rpc_t *rpc_req)
 {
 	int	rc;
 
-	D_DEBUG(DB_TRACE, "entered %s().\n", __func__);
+	DBG_PRINT("entered %s().\n", __func__);
 
 	rc = crt_reply_send(rpc_req);
 	D_ASSERTF(rc == 0, "crt_reply_send() failed. rc: %d\n", rc);
