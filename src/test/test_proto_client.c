@@ -93,7 +93,8 @@ test_run()
 	crt_endpoint_t		 server_ep = {0};
 	crt_opcode_t		 my_opc;
 	uint32_t		 my_ver_array[] = {0, 2, 5, 1, 4, 3, 7};
-	uint32_t		 high_ver = 0xFFFFFFFF;
+	uint32_t		 s_high_ver = 0xFFFFFFFF;
+	uint32_t		 c_high_ver = test.tg_num_proto - 1;
 	int			 rc;
 
 	fprintf(stderr, "local group: %s remote group: %s\n",
@@ -116,12 +117,22 @@ test_run()
 	rc = crt_group_rank(NULL, &test.tg_my_rank);
 	D_ASSERTF(rc == 0, "crt_group_rank() failed. rc: %d\n", rc);
 
-	/* Attempt to register actual fmt_0 and fmt_1 */
-	rc = crt_proto_register(&my_proto_fmt_0);
-	D_ASSERTF(rc == 0, "registration failed with rc: %d\n", rc);
-
-	//rc = crt_proto_register(&my_proto_fmt_1);
-	//D_ASSERTF(rc == 0, "registration failed with rc: %d\n", rc);
+	switch (test.tg_num_proto) {
+		case 4:
+			rc = crt_proto_register(&my_proto_fmt_3);
+			D_ASSERT(rc == 0);
+		case 3:
+			rc = crt_proto_register(&my_proto_fmt_2);
+			D_ASSERT(rc == 0);
+		case 2:
+			rc = crt_proto_register(&my_proto_fmt_1);
+			D_ASSERT(rc == 0);
+		case 1:
+			rc = crt_proto_register(&my_proto_fmt_0);
+			D_ASSERT(rc == 0);
+		default:
+			break;
+	}
 
 	/* Attempt to re-register duplicate proto */
 	rc = crt_proto_register(&my_proto_fmt_0_duplicate);
@@ -138,19 +149,19 @@ test_run()
 
 	DBG_PRINT("proto query\n");
 	rc = crt_proto_query(&server_ep, OPC_MY_PROTO, my_ver_array, 7,
-			     query_cb, &high_ver);
+			     query_cb, &s_high_ver);
 	D_ASSERT(rc == 0);
 
-	while (high_ver == 0xFFFFFFFF)
+	while (s_high_ver == 0xFFFFFFFF)
 		sched_yield();
 
-	DBG_PRINT("high_ver %u.\n", high_ver);
-	//D_ASSERT(high_ver == 1);
+	DBG_PRINT("s_high_ver %u.\n", s_high_ver);
+	DBG_PRINT("c_high_ver %u.\n", c_high_ver);
 
-	DBG_PRINT("get opcode of second rpc\n");
-	// get the opcode of the second RPC in version 1 of OPC_MY_PROTO 
-	//my_opc = CRT_PROTO_OPC(OPC_MY_PROTO, 1, 2);
-	my_opc = CRT_PROTO_OPC(OPC_MY_PROTO, high_ver, 1);
+	if (c_high_ver > s_high_ver)
+		my_opc = CRT_PROTO_OPC(OPC_MY_PROTO, s_high_ver, s_high_ver);
+	else
+		my_opc = CRT_PROTO_OPC(OPC_MY_PROTO, c_high_ver, c_high_ver);
 
 	rc = crt_req_create(test.tg_crt_ctx, &server_ep, my_opc, &rpc_req);
 
