@@ -118,20 +118,20 @@ test_run()
 	D_ASSERTF(rc == 0, "crt_group_rank() failed. rc: %d\n", rc);
 
 	switch (test.tg_num_proto) {
-		case 4:
-			rc = crt_proto_register(&my_proto_fmt_3);
-			D_ASSERT(rc == 0);
-		case 3:
-			rc = crt_proto_register(&my_proto_fmt_2);
-			D_ASSERT(rc == 0);
-		case 2:
-			rc = crt_proto_register(&my_proto_fmt_1);
-			D_ASSERT(rc == 0);
-		case 1:
-			rc = crt_proto_register(&my_proto_fmt_0);
-			D_ASSERT(rc == 0);
-		default:
-			break;
+	case 4:
+		rc = crt_proto_register(&my_proto_fmt_3);
+		D_ASSERT(rc == 0);
+	case 3:
+		rc = crt_proto_register(&my_proto_fmt_2);
+		D_ASSERT(rc == 0);
+	case 2:
+		rc = crt_proto_register(&my_proto_fmt_1);
+		D_ASSERT(rc == 0);
+	case 1:
+		rc = crt_proto_register(&my_proto_fmt_0);
+		D_ASSERT(rc == 0);
+	default:
+		break;
 	}
 
 	/* Attempt to re-register duplicate proto */

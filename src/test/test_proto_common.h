@@ -188,7 +188,6 @@ struct crt_proto_rpc_format my_proto_rpc_fmt_1[] = {
 		.prf_hdlr	= shutdown_handler,
 		.prf_co_ops	= NULL,
 	}
-
 };
 
 struct crt_proto_rpc_format my_proto_rpc_fmt_2[] = {
@@ -202,58 +201,56 @@ struct crt_proto_rpc_format my_proto_rpc_fmt_2[] = {
 		.prf_req_fmt	= &CQF_ping,
 		.prf_hdlr	= ping_hdlr_1,
 		.prf_co_ops	= NULL,
-        }, {
+	}, {
 		.prf_flags	= 0,
 		.prf_req_fmt	= &CQF_ping,
 		.prf_hdlr	= ping_hdlr_2,
 		.prf_co_ops	= NULL,
-        }, {
+	}, {
 		.prf_flags	= 0,
 		.prf_req_fmt	= &CQF_ping,
 		.prf_hdlr	= ping_hdlr_3,
 		.prf_co_ops	= NULL,
-        }, {
+	}, {
 		.prf_flags	= CRT_RPC_FEAT_NO_REPLY,
 		.prf_req_fmt	= NULL,
 		.prf_hdlr	= shutdown_handler,
 		.prf_co_ops	= NULL,
-        }
-
+	}
 };
 
 struct crt_proto_rpc_format my_proto_rpc_fmt_3[] = {
-        {
+	{
 		.prf_flags	= 0,
 		.prf_req_fmt	= &CQF_ping,
 		.prf_hdlr	= ping_hdlr_0,
 		.prf_co_ops	= NULL,
-        }, {
+	}, {
 		.prf_flags	= 0,
 		.prf_req_fmt	= &CQF_ping,
 		.prf_hdlr	= ping_hdlr_1,
 		.prf_co_ops	= NULL,
-        }, {
+	}, {
 		.prf_flags	= 0,
 		.prf_req_fmt	= &CQF_ping,
 		.prf_hdlr	= ping_hdlr_2,
 		.prf_co_ops	= NULL,
-        }, {
+	}, {
 		.prf_flags	= 0,
 		.prf_req_fmt	= &CQF_ping,
 		.prf_hdlr	= ping_hdlr_3,
 		.prf_co_ops	= NULL,
-        }, {
+	}, {
 		.prf_flags	= 0,
 		.prf_req_fmt	= &CQF_ping,
 		.prf_hdlr	= ping_hdlr_4,
 		.prf_co_ops	= NULL,
-        }, {
+	}, {
 		.prf_flags	= CRT_RPC_FEAT_NO_REPLY,
 		.prf_req_fmt	= NULL,
 		.prf_hdlr	= shutdown_handler,
 		.prf_co_ops	= NULL,
-        }
-
+	}
 };
 
 struct crt_proto_format my_proto_fmt_0 = {
@@ -354,7 +351,8 @@ test_parse_args(int argc, char **argv)
 	}
 
 	if (test.tg_num_proto < 1 || test.tg_num_proto > 4) {
-		fprintf(stderr, "num_proto should be 1-4, num_proto=%d", test.tg_num_proto);
+		fprintf(stderr, "num_proto should be 1-4, num_proto=%d",
+			test.tg_num_proto);
 		return 1;
 	}
 
