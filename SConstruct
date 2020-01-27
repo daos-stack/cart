@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2019 Intel Corporation
+# Copyright (C) 2016-2020 Intel Corporation
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@ DESIRED_FLAGS = ['-Wno-gnu-designator',
                  '-Wno-gnu-zero-variadic-macro-arguments',
                  '-Wno-tautological-constant-out-of-range-compare']
 
-CART_VERSION = "4.3.1"
+CART_VERSION = "4.5.0"
 
 def save_build_info(env, prereqs, platform):
     """Save the build information"""

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 '''
-  (C) Copyright 2018-2019 Intel Corporation.
+  (C) Copyright 2018-2020 Intel Corporation.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -33,11 +33,11 @@ sys.path.append('./util')
 
 from cart_utils import CartUtils
 
-class CartBarrierTwoNodeTest(Test):
+class CartSelfThreeNodeTest(Test):
     """
-    Runs basic CaRT tests on one-node and two-node
+    Runs basic CaRT self test
 
-    :avocado: tags=all,barrier,two_node
+    :avocado: tags=all,selftest,three_node
     """
     def setUp(self):
         """ Test setup """
@@ -49,16 +49,33 @@ class CartBarrierTwoNodeTest(Test):
         """ Test tear down """
         print("Run TearDown\n")
 
-    def test_cart_barrier(self):
+    def test_cart_selftest(self):
         """
-        Test CaRT barrier
+        Test CaRT Self Test
 
-        :avocado: tags=all,barrier,two_node
+        :avocado: tags=all,selftest,three_node
         """
 
-        cmd = self.utils.build_cmd(self, self.env, "srv")
+        srvcmd = self.utils.build_cmd(self, self.env, "srv")
 
-        self.utils.launch_test(self, cmd)
+        try:
+            srv_rtn = self.utils.launch_cmd_bg(self, srvcmd)
+        except Exception as e:
+            self.utils.print("Exception in launching server : {}".format(e))
+            self.fail("Test failed.\n")
+
+        # Verify the server is still running.
+        if not self.utils.check_process(srv_rtn):
+            procrtn = self.utils.stop_process(srv_rtn)
+            self.fail("Server did not launch, return code %s" \
+                       % procrtn)
+
+        clicmd = self.utils.build_cmd(self, self.env, "cli1")
+        self.utils.launch_test(self, clicmd, srv_rtn)
+        clicmd = self.utils.build_cmd(self, self.env, "cli2")
+        self.utils.launch_test(self, clicmd, srv_rtn)
+        clicmd = self.utils.build_cmd(self, self.env, "cli3")
+        self.utils.launch_test(self, clicmd, srv_rtn)
 
 if __name__ == "__main__":
     main()

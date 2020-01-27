@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2018 Intel Corporation
+/* Copyright (C) 2016-2020 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -162,6 +162,8 @@ struct crt_ivns_internal {
 	crt_iv_namespace_destroy_cb_t	 cii_destroy_cb;
 	/* user data for cii_destroy_cb() */
 	void				*cii_destroy_cb_arg;
+	/* user private data associated with ns */
+	void				*cii_user_priv;
 };
 
 static void
@@ -179,6 +181,9 @@ ivns_destroy(struct crt_ivns_internal *ivns_internal)
 	destroy_cb = ivns_internal->cii_destroy_cb;
 	cb_arg = ivns_internal->cii_destroy_cb_arg;
 
+	if (destroy_cb)
+		destroy_cb(ivns, cb_arg);
+
 	/* addref in crt_grp_lookup_int_grpid or crt_iv_namespace_create */
 	crt_grp_priv_decref(ivns_internal->cii_grp_priv);
 
@@ -188,10 +193,6 @@ ivns_destroy(struct crt_ivns_internal *ivns_internal)
 	D_FREE_PTR(ivns_internal->cii_iv_classes);
 	D_FREE(ivns_internal->cii_gns.gn_ivns_id.ii_group_name);
 	D_FREE_PTR(ivns_internal);
-
-
-	if (destroy_cb)
-		destroy_cb(ivns, cb_arg);
 }
 
 
@@ -666,7 +667,7 @@ crt_ivns_internal_get(crt_iv_namespace_t ivns)
 static struct crt_ivns_internal *
 crt_ivns_internal_create(crt_context_t crt_ctx, struct crt_grp_priv *grp_priv,
 		struct crt_iv_class *iv_classes, uint32_t num_class,
-		int tree_topo, uint32_t nsid)
+		int tree_topo, uint32_t nsid, void *user_priv)
 {
 	struct crt_ivns_internal	*ivns_internal;
 	struct crt_ivns_id		*internal_ivns_id;
@@ -724,6 +725,7 @@ crt_ivns_internal_create(crt_context_t crt_ctx, struct crt_grp_priv *grp_priv,
 	ivns_internal->cii_ctx = crt_ctx;
 
 	ivns_internal->cii_grp_priv = grp_priv;
+	ivns_internal->cii_user_priv = user_priv;
 
 	D_MUTEX_LOCK(&ns_list_lock);
 	d_list_add_tail(&ivns_internal->cii_link, &ns_list);
@@ -737,6 +739,16 @@ int
 crt_iv_namespace_create(crt_context_t crt_ctx, crt_group_t *grp, int tree_topo,
 		struct crt_iv_class *iv_classes, uint32_t num_classes,
 		uint32_t iv_ns_id, crt_iv_namespace_t *ivns)
+{
+	return crt_iv_namespace_create_priv(crt_ctx, grp, tree_topo, iv_classes,
+					num_classes, iv_ns_id, NULL, ivns);
+}
+
+int
+crt_iv_namespace_create_priv(crt_context_t crt_ctx, crt_group_t *grp,
+		int tree_topo, struct crt_iv_class *iv_classes,
+		uint32_t num_classes, uint32_t iv_ns_id, void *user_priv,
+		crt_iv_namespace_t *ivns)
 {
 	struct crt_ivns_internal	*ivns_internal = NULL;
 	struct crt_grp_priv		*grp_priv = NULL;
@@ -757,7 +769,7 @@ crt_iv_namespace_create(crt_context_t crt_ctx, crt_group_t *grp, int tree_topo,
 
 	ivns_internal = crt_ivns_internal_create(crt_ctx, grp_priv,
 						iv_classes, num_classes,
-						tree_topo, iv_ns_id);
+						tree_topo, iv_ns_id, user_priv);
 	if (ivns_internal == NULL) {
 		D_ERROR("Failed to create internal ivns\n");
 		D_GOTO(exit, rc = -DER_NOMEM);
@@ -772,6 +784,60 @@ exit:
 			crt_grp_priv_decref(grp_priv);
 	}
 
+	return rc;
+}
+
+int
+crt_iv_namespace_priv_set(crt_iv_namespace_t *ivns, void *priv)
+{
+	struct crt_ivns_internal        *ivns_internal;
+	int				rc = 0;
+
+	if (ivns == NULL) {
+		D_ERROR("NULL ivns passed\n");
+		D_GOTO(exit, rc = -DER_INVAL);
+	}
+
+	ivns_internal = crt_ivns_internal_get(ivns);
+
+	if (ivns_internal == NULL) {
+		D_ERROR("Invalid ivns passed\n");
+		D_GOTO(exit, rc = -DER_INVAL);
+	}
+
+	ivns_internal->cii_user_priv = priv;
+	IVNS_DECREF(ivns_internal);
+
+exit:
+	return rc;
+}
+
+int
+crt_iv_namespace_priv_get(crt_iv_namespace_t *ivns, void **priv)
+{
+	struct crt_ivns_internal        *ivns_internal;
+	int				rc = 0;
+
+	if (ivns == NULL) {
+		D_ERROR("NULL ivns passed\n");
+		D_GOTO(exit, rc = -DER_INVAL);
+	}
+
+	if (priv == NULL) {
+		D_ERROR("NULL priv passed\n");
+		D_GOTO(exit, rc = -DER_INVAL);
+	}
+
+	ivns_internal = crt_ivns_internal_get(ivns);
+
+	if (ivns_internal == NULL) {
+		D_ERROR("Invalid ivns passed\n");
+		D_GOTO(exit, rc = -DER_INVAL);
+	}
+
+	*priv = ivns_internal->cii_user_priv;
+	IVNS_DECREF(ivns_internal);
+exit:
 	return rc;
 }
 
@@ -1703,12 +1769,11 @@ crt_hdlr_iv_sync_aux(void *arg)
 	switch (sync_type->ivs_event) {
 	case CRT_IV_SYNC_EVENT_UPDATE:
 	{
-		d_sg_list_t tmp_iv;
+		d_sg_list_t	tmp_iv;
+		d_iov_t		*tmp_iovs;
 
 		rc = iv_ops->ivo_on_get(ivns_internal, &input->ivs_key,
-				0, CRT_IV_PERM_WRITE, &iv_value, &user_priv);
-
-		tmp_iv = iv_value;
+				0, CRT_IV_PERM_READ, &iv_value, &user_priv);
 		if (rc != 0) {
 			D_ERROR("ivo_on_get() failed; rc=%d\n", rc);
 			D_GOTO(exit, rc);
@@ -1716,14 +1781,26 @@ crt_hdlr_iv_sync_aux(void *arg)
 
 		need_put = true;
 
+		D_ALLOC_ARRAY(tmp_iovs, iv_value.sg_nr);
+		if (tmp_iovs == NULL) {
+			D_ERROR("Failed to allocate temporary iovs\n");
+			D_GOTO(exit, rc = -DER_NOMEM);
+		}
+
+		tmp_iv.sg_nr = iv_value.sg_nr;
+		tmp_iv.sg_iovs = tmp_iovs;
+
+		/* Populate tmp_iv.sg_iovs[0] to [sg_nr] */
 		rc = crt_bulk_access(rpc_req->cr_co_bulk_hdl, &tmp_iv);
 		if (rc != 0) {
+			D_FREE(tmp_iovs);
 			D_ERROR("crt_bulk_access() failed; rc=%d\n", rc);
 			D_GOTO(exit, rc);
 		}
 
 		rc = iv_ops->ivo_on_refresh(ivns_internal, &input->ivs_key,
 					0, &tmp_iv, false, 0, user_priv);
+		D_FREE(tmp_iovs);
 		if (rc != 0) {
 			D_ERROR("ivo_on_refresh() failed; rc=%d\n", rc);
 			D_GOTO(exit, rc);
@@ -1863,6 +1940,7 @@ call_pre_sync_cb(struct crt_ivns_internal *ivns_internal,
 	struct crt_iv_ops	*iv_ops;
 	d_sg_list_t		 iv_value;
 	d_sg_list_t		 tmp_iv;
+	d_iov_t			*tmp_iovs;
 	void			*user_priv;
 	bool			 need_put = false;
 	int			 rc;
@@ -1871,17 +1949,27 @@ call_pre_sync_cb(struct crt_ivns_internal *ivns_internal,
 	D_ASSERT(iv_ops != NULL);
 
 	rc = iv_ops->ivo_on_get(ivns_internal, &input->ivs_key, 0,
-				CRT_IV_PERM_WRITE, &iv_value,
+				CRT_IV_PERM_READ, &iv_value,
 				&user_priv);
-	tmp_iv = iv_value;
 	if (rc != 0) {
 		D_ERROR("ivo_on_get() failed; rc=%d\n", rc);
 		D_GOTO(exit, rc);
 	}
 	need_put = true;
 
+	D_ALLOC_ARRAY(tmp_iovs, iv_value.sg_nr);
+	if (tmp_iovs == NULL) {
+		D_ERROR("Failed to allocate temporary iovs\n");
+		D_GOTO(exit, rc);
+	}
+
+	tmp_iv.sg_nr = iv_value.sg_nr;
+	tmp_iv.sg_iovs = tmp_iovs;
+
+	/* Populate tmp_iv.sg_iovs[0] to [sg_nr] */
 	rc = crt_bulk_access(rpc_req->cr_co_bulk_hdl, &tmp_iv);
 	if (rc != 0) {
+		D_FREE(tmp_iovs);
 		D_ERROR("crt_bulk_access() failed; rc=%d\n", rc);
 		D_GOTO(exit, rc);
 	}
@@ -1891,6 +1979,8 @@ call_pre_sync_cb(struct crt_ivns_internal *ivns_internal,
 				  &iv_value, user_priv);
 	if (rc != 0)
 		D_ERROR("ivo_pre_sync() failed; rc=%d\n", rc);
+
+	D_FREE(tmp_iovs);
 
 exit:
 	if (need_put)
