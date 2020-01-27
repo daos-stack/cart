@@ -96,6 +96,8 @@ struct crt_gdata {
 
 	/* protects crt_gdata */
 	pthread_rwlock_t	cg_rwlock;
+	/* Job Id associated with this instance. */
+	uint64_t		cg_clid;
 };
 
 extern struct crt_gdata		crt_gdata;

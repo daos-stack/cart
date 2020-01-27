@@ -42,6 +42,146 @@
 
 #include "crt_internal.h"
 
+#ifdef HASH_TEST
+int hg_addr_table_index=0;
+#endif
+
+struct ha_entry {
+        hg_class_t      *hg_class;
+        hg_addr_t       hg_addr;
+};
+
+struct crt_ha_mapping {
+        d_list_t        ha_link;
+        uint64_t 	ha_key;
+        struct ha_entry ha_value;
+
+        uint32_t        ha_ref;
+        uint32_t        ha_initialized;
+
+        pthread_mutex_t ha_mutex;
+};
+
+struct crt_ha_mapping *
+crt_ha_link2ptr(d_list_t *rlink)
+{
+        D_ASSERT(rlink != NULL);
+        return container_of(rlink, struct crt_ha_mapping, ha_link);
+}
+
+static struct crt_ha_mapping *
+crt_ha_mapping_init(uint64_t key, struct ha_entry value)
+{
+        struct crt_ha_mapping  *ha;
+        int                     rc;
+
+        D_ALLOC_PTR(ha);
+        if (!ha) {
+                D_ERROR("Failed to allocate ha item\n");
+                D_GOTO(out, ha);
+        }
+
+        D_INIT_LIST_HEAD(&ha->ha_link);
+        ha->ha_ref = 0;
+        ha->ha_initialized = 1;
+
+        rc = D_MUTEX_INIT(&ha->ha_mutex, NULL);
+        if (rc != 0) {
+                D_FREE_PTR(ha);
+                D_GOTO(out, ha = NULL);
+        }
+
+        ha->ha_key = key;
+        ha->ha_value = value;
+
+out:
+        return ha;
+}
+
+static int
+ha_op_key_get(struct d_hash_table *hhtab, d_list_t *rlink, void **key_pp)
+{
+        struct crt_ha_mapping *ha = crt_ha_link2ptr(rlink);
+
+        *key_pp = (void *)&ha->ha_key;
+        return sizeof(ha->ha_key);
+}
+
+static uint32_t
+ha_op_key_hash(struct d_hash_table *hhtab, const void *key, unsigned int ksize)
+{
+        D_ASSERT(ksize == sizeof(uint64_t));
+
+        return (unsigned int)(*(const uint64_t *)key %
+                (1U << CRT_HG_ADDR_CACHE_LOOKUP_BITS));
+}
+
+static bool
+ha_op_key_cmp(struct d_hash_table *hhtab, d_list_t *rlink,
+              const void *key, unsigned int ksize)
+{
+        struct crt_ha_mapping *ha = crt_ha_link2ptr(rlink);
+
+        D_ASSERT(ksize == sizeof(uint64_t));
+
+        return ha->ha_key == *(uint64_t *)key;
+}
+
+static void
+ha_op_rec_addref(struct d_hash_table *hhtab, d_list_t *halink)
+{
+        struct crt_ha_mapping *ha = crt_ha_link2ptr(halink);
+
+        D_ASSERT(ha->ha_initialized);
+        D_MUTEX_LOCK(&ha->ha_mutex);
+        ha->ha_ref++;
+        D_MUTEX_UNLOCK(&ha->ha_mutex);
+}
+
+static bool
+ha_op_rec_decref(struct d_hash_table *hhtab, d_list_t *halink)
+{
+        uint32_t                ref;
+        struct crt_ha_mapping *ha = crt_ha_link2ptr(halink);
+
+        D_ASSERT(ha->ha_initialized);
+        D_MUTEX_LOCK(&ha->ha_mutex);
+        ref = --ha->ha_ref;
+        D_MUTEX_UNLOCK(&ha->ha_mutex);
+
+        return ref == 0;
+}
+
+static void
+crt_ha_destroy(struct crt_ha_mapping *ha)
+{
+        D_ASSERT(ha != NULL);
+        D_ASSERT(ha->ha_ref == 0);
+        D_ASSERT(ha->ha_initialized == 1);
+
+        D_MUTEX_DESTROY(&ha->ha_mutex);
+        D_FREE(ha);
+}
+
+static void
+ha_op_rec_free(struct d_hash_table *hhtab, d_list_t *halink)
+{
+        crt_ha_destroy(crt_ha_link2ptr(halink));
+}
+
+
+
+static d_hash_table_ops_t ha_mapping_ops = {
+        .hop_key_get            = ha_op_key_get,
+        .hop_key_hash           = ha_op_key_hash,
+        .hop_key_cmp            = ha_op_key_cmp,
+        .hop_rec_addref         = ha_op_rec_addref,
+        .hop_rec_decref         = ha_op_rec_decref,
+        .hop_rec_free           = ha_op_rec_free,
+};
+
+struct d_hash_table ha_hash_table;
+
 /*
  * na_dict table should be in the same order of enum crt_na_type, the last one
  * is terminator with NULL nad_str.
@@ -328,6 +468,85 @@ out:
 }
 
 int
+crt_hg_remove_addr (hg_class_t *hg_class, hg_addr_t hg_addr)
+{
+        hg_return_t     ret = HG_SUCCESS;
+
+        D_DEBUG(DB_TRACE, "removing addr from class \n" );
+        ret = HG_Addr_set_remove(hg_class, hg_addr);
+        if (ret != HG_SUCCESS) {
+                D_ERROR("HG_Addr_set_remove) failed, hg_ret %d.\n", ret);
+              	D_GOTO(out, ret = -DER_HG);
+        }
+
+        D_DEBUG(DB_TRACE, "freeing addr from class\n");
+        ret = HG_Addr_free(hg_class, hg_addr);
+        if (ret != HG_SUCCESS) {
+                D_ERROR("HG_Addr_free() failed, hg_ret %d.\n", ret);
+              	D_GOTO(out, ret = -DER_HG);
+        }
+
+out:
+        return ret;
+}
+int
+crt_hg_remove_client_id (uint64_t client_id)
+{
+        hg_return_t     	ret = HG_SUCCESS;
+	d_list_t		*halink;
+	struct crt_ha_mapping 	*ha;
+ 	struct ha_entry 	ha_value;
+
+        halink = d_hash_rec_find(&ha_hash_table,
+                        (void *)&client_id, sizeof(client_id));
+        if (!halink) {
+                D_ERROR("client=%" PRIu64 " not part of the hash table\n", client_id);
+              	D_GOTO(out, ret = -DER_HG);
+        }
+
+        ha = crt_ha_link2ptr(halink);
+        ha_value = ha->ha_value;
+
+        d_hash_rec_decref(&ha_hash_table, halink);
+
+	ret = crt_hg_remove_addr (ha_value.hg_class, ha_value.hg_addr);
+
+        if (ret != HG_SUCCESS) {
+                D_ERROR("crt_remove_addr failed, hg_ret %d.\n", ret);
+              	D_GOTO(out, ret = -DER_HG);
+        }
+
+
+        d_hash_rec_delete(&ha_hash_table,
+                                &client_id, sizeof(client_id));
+ 
+	D_DEBUG(DB_TRACE, "client id %" PRIu64 "removed from hash table\n",
+				client_id);
+        D_DEBUG(DB_TRACE, "removed hg class %" PRIu64 "\n",(long unsigned int) ha_value.hg_class );
+        D_DEBUG(DB_TRACE, "removed hg addr %" PRIu64 "\n",(long unsigned int) ha_value.hg_addr );
+ 
+out:
+        return ret;
+}
+int
+crt_hg_remove_all_client_ids (void)
+{
+        hg_return_t     	ret = HG_SUCCESS;
+
+#ifdef HASH_TEST
+	while (hg_addr_table_index > 0) {
+		ret = crt_hg_remove_client_id (hg_addr_table[--hg_addr_table_index]);
+        	if (ret != HG_SUCCESS) {
+                	D_ERROR("crt_remove_addr_all failed, hg_ret %d.\n", ret);
+              		D_GOTO(out, ret = -DER_HG);
+       	 	}
+	}
+#endif
+out:
+        return ret;
+}
+
+int
 crt_hg_addr_free(struct crt_hg_context *hg_ctx, hg_addr_t addr)
 {
 	hg_return_t	ret = HG_SUCCESS;
@@ -578,7 +797,15 @@ crt_hg_init(crt_phy_addr_t *addr, bool server)
 
 	D_DEBUG(DB_NET, "in crt_hg_init, listen address: %s.\n", *addr);
 	crt_gdata.cg_hg = hg_gdata;
-
+	/*Create the hg_addr hash table*/
+        rc = d_hash_table_create_inplace(D_HASH_FT_NOLOCK,
+                                        CRT_LOOKUP_CACHE_BITS,
+                                        NULL, &ha_mapping_ops,
+                                        &ha_hash_table);
+        if (rc != 0) {
+                D_ERROR("d_hash_table_create failed, rc: %d\n", rc);
+                D_GOTO(out, rc);
+        }
 out:
 	if (info_string)
 		D_FREE(info_string);
@@ -618,7 +845,7 @@ crt_hg_fini()
 		D_WARN("Could not finalize NA class, na_ret: %d.\n", na_ret);
 		rc = -DER_HG;
 	}
-
+        d_hash_table_destroy_inplace(&ha_hash_table, true);
 	D_FREE(crt_gdata.cg_hg);
 	return rc;
 }
@@ -824,7 +1051,9 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 	bool			 is_coll_req = false;
 	int			 rc = 0;
 	struct crt_rpc_priv	 rpc_tmp = {0};
-
+	d_list_t		*halink;
+	struct crt_ha_mapping 	*ha;
+ 	struct ha_entry 	ha_entry;
 	hg_info = HG_Get_info(hg_hdl);
 	if (hg_info == NULL) {
 		D_ERROR("HG_Get_info failed.\n");
@@ -858,6 +1087,48 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 	D_ASSERT(proc != NULL);
 	opc = rpc_tmp.crp_req_hdr.cch_opc;
 
+	if (crt_gdata.cg_na_plugin == CRT_NA_OFI_PSM2) {
+		/** Search for the recieved hg_addr in the ha hash table. If
+ 		 *  not found, then insert.
+	 	 */
+        	halink = d_hash_rec_find(&ha_hash_table,
+                	        (void *)&rpc_tmp.crp_req_hdr.cch_clid, 
+				sizeof(rpc_tmp.crp_req_hdr.cch_clid));
+        	if (halink != NULL) {
+			D_DEBUG(DB_TRACE, "client id %" PRIu64 "already in hash table\n",
+				rpc_tmp.crp_req_hdr.cch_clid);
+
+        		d_hash_rec_decref(&ha_hash_table, halink);
+        	}
+		else {
+			ha_entry.hg_class = hg_info->hg_class;	
+			HG_Addr_dup(hg_info->hg_class, hg_info->addr, &ha_entry.hg_addr);
+       			ha = crt_ha_mapping_init(rpc_tmp.crp_req_hdr.cch_clid, ha_entry);
+        		if (!ha) {
+                		D_ERROR("Failed to allocate entry\n");
+				D_GOTO(out, hg_ret = HG_SUCCESS);
+        		}
+#ifdef HASH_TEST
+			hg_addr_table[hg_addr_table_index++] =
+                                        rpc_tmp.crp_req_hdr.cch_clid;
+
+#endif
+        		rc = d_hash_rec_insert(&ha_hash_table,
+                        	(void *)&rpc_tmp.crp_req_hdr.cch_clid, 
+				sizeof(rpc_tmp.crp_req_hdr.cch_clid),
+                                &ha->ha_link, true);
+        		if (rc != 0) {
+                		D_ERROR("Failed to add entry; rc=%d\n", rc);
+                			crt_ha_destroy(ha);
+				D_GOTO(out, hg_ret = HG_SUCCESS);
+        		}
+			D_DEBUG(DB_TRACE, "client id %" PRIu64 "inserted in hash table\n",
+					rpc_tmp.crp_req_hdr.cch_clid);
+                	D_DEBUG(DB_TRACE, "inserted hg addr %" PRIu64 "\n", (long unsigned int)ha_entry.hg_addr );
+                	D_DEBUG(DB_TRACE, "inserted hg class %" PRIu64 "\n",(long unsigned int) ha_entry.hg_class );
+ 
+		}
+	}
 	/**
 	 * Set the opcode in the temp RPC so that it can be correctly logged.
 	 */

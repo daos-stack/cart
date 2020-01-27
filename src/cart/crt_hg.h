@@ -58,11 +58,18 @@
 /** MAX number of HG handles in pool */
 #define CRT_HG_POOL_MAX_NUM	(512)
 /** number of prepost HG handles when enable pool */
-#define CRT_HG_POOL_PREPOST_NUM	(16)
+#define CRT_HG_POOL_PREPOST_NUM		(16)
+#define CRT_HG_ADDR_CACHE_LOOKUP_BITS	(5)
+#define HASH_TEST 1
+
+#ifdef HASH_TEST
+uint64_t  hg_addr_table[1000];
+#endif 
 
 struct crt_rpc_priv;
 struct crt_common_hdr;
 struct crt_corpc_hdr;
+
 
 /** type of NA plugin */
 enum crt_na_type {

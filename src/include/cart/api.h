@@ -1972,6 +1972,21 @@ int crt_group_secondary_modify(crt_group_t *grp, d_rank_list_t *sec_ranks,
 			d_rank_list_t *prim_ranks, crt_group_mod_op_t op,
 			uint32_t version);
 
+/**
+ * Remove a client id from the Server hash table of Hg and Fabric Interface
+ * addresses.
+ *
+ * param[in] client_id          System wide unique client id
+ *
+ * return                       DER_SUCCESS on success, negative value on
+ *                              failure.
+ */
+int crt_hg_remove_client_id (uint64_t client_id);
+
+/* Test Function. */
+int crt_hg_remove_all_client_ids (void);
+
+
 #define crt_proc__Bool			crt_proc_bool
 #define crt_proc_d_rank_t		crt_proc_uint32_t
 #define crt_proc_int			crt_proc_int32_t

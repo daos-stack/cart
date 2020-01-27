@@ -101,6 +101,8 @@ struct crt_common_hdr {
 	uint32_t	cch_xid;
 	/* used in crp_reply_hdr to propagate rpc failure back to sender */
 	uint32_t	cch_rc;
+        /* client id */
+        uint64_t        cch_clid;
 };
 
 typedef enum {
