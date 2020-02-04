@@ -419,7 +419,7 @@ crt_ctx_epi_abort(d_list_t *rlink, void *arg)
 			}
 				once = 0;
 			}
-#if 0
+#if 1
 			D_MUTEX_UNLOCK(&ctx->cc_mutex);
 			rc = crt_progress(ctx, 1, NULL, NULL);
 			D_MUTEX_LOCK(&ctx->cc_mutex);
