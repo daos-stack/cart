@@ -161,5 +161,4 @@
    fun:NA_Initialize_opt
    fun:crt_hg_init
    fun:crt_init_opt
-   fun:crt_init
 }
