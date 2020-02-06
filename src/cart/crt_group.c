@@ -2709,6 +2709,9 @@ crt_group_rank_remove_internal(struct crt_grp_priv *grp_priv, d_rank_t rank)
 
 		d_hash_rec_delete(&grp_priv->gp_uri_lookup_cache,
 			&rank, sizeof(d_rank_t));
+		/*If PSM2 then remove the rank from the hash table. */
+		if (crt_gdata.cg_na_plugin == CRT_NA_OFI_PSM2) 
+			crt_hg_remove_hash_rank(rank);
 	} else {
 		d_rank_t prim_rank;
 

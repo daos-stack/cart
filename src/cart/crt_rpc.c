@@ -1139,8 +1139,10 @@ crt_req_send(crt_rpc_t *req, crt_cb_t complete_cb, void *arg)
 	 * function.  Referenced dropped at end of this function.
 	 */
 	RPC_ADDREF(rpc_priv);
-	/* Insert the local job id in the rpc request. */
- 	rpc_priv->crp_req_hdr.cch_clid = crt_gdata.cg_clid;
+	/* Insert the local job id in the rpc request for PSM2. */
+	if (crt_gdata.cg_na_plugin == CRT_NA_OFI_PSM2)
+		rpc_priv->crp_req_hdr.cch_clid = crt_gdata.cg_clid;
+
 	if (req->cr_ctx == NULL) {
 		D_ERROR("invalid parameter (NULL req->cr_ctx).\n");
 		D_GOTO(out, rc = -DER_INVAL);
