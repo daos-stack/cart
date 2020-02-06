@@ -53,15 +53,15 @@ struct crt_ha_list_entry {
 };
 
 struct crt_ha_mapping {
-	d_list_t        	chm_link;
-	uint64_t 		chm_key;
+	d_list_t		chm_link;
+	uint64_t		chm_key;
 
-	d_list_t        	chm_list;
-	uint32_t        	chm_ref;
-	uint32_t        	chm_initialized;
+	d_list_t		chm_list;
+	uint32_t		chm_ref;
+	uint32_t		chm_initialized;
 
-	pthread_mutex_t 	chm_mutex;
-	pthread_rwlock_t        chm_rwlock; /* to protect the list */
+	pthread_mutex_t		chm_mutex;
+	pthread_rwlock_t	chm_rwlock; /* to protect the list */
 };
 
 struct crt_ha_mapping *
@@ -473,9 +473,9 @@ crt_hg_remove_addr(hg_class_t *hg_class, hg_addr_t hg_addr)
 	hg_return_t     ret = HG_SUCCESS;
 
 	D_DEBUG(DB_TRACE, "removing hg addr %" PRIu64 "\n",
-			(long unsigned int)hg_addr );
+			(uint64_t)hg_addr);
 	D_DEBUG(DB_TRACE, "removing  hg class %" PRIu64 "\n",
-			(long unsigned int) hg_class );
+			(uint64_t)hg_class);
 	ret = HG_Addr_set_remove(hg_class, hg_addr);
 	if (ret != HG_SUCCESS) {
 		D_ERROR("HG_Addr_set_remove) failed, hg_ret %d.\n", ret);
@@ -510,26 +510,29 @@ crt_hg_remove_client_id(uint64_t client_id)
 	D_RWLOCK_RDLOCK(&crt_gdata.cg_rwlock);
 
 	d_list_for_each_entry(crt_ctx, &crt_gdata.cg_ctx_list, cc_link) {
-		//Can this lock create a deadlock? TBD
+		/*Can this lock create a deadlock? TBD */
 		D_RWLOCK_WRLOCK(&crt_ctx->cc_ha_hash_table_rwlock);
 		halink = d_hash_rec_find(&crt_ctx->cc_ha_hash_table,
 			(void *)&client_id, sizeof(client_id));
 		if (!halink) {
-			D_ERROR("client=%" PRIu64 " not part of the hash table\n",
+			D_ERROR("client=%" PRIu64 " not in the hash table\n",
 					client_id);
 		}
 		ha = crt_ha_link2ptr(halink);
 
 		/* Remove all entries from list. */
 		while ((entry = d_list_pop_entry(&ha->chm_list,
-				struct crt_ha_list_entry, chl_list_link)) != NULL) {
+				struct crt_ha_list_entry, chl_list_link))
+						!= NULL) {
 			ha_value = entry->chl_entry;
 			D_FREE(entry);
 
-			ret = crt_hg_remove_addr(ha_value.ha_class, ha_value.ha_addr);
+			ret = crt_hg_remove_addr(ha_value.ha_class,
+					ha_value.ha_addr);
 
 			if (ret != HG_SUCCESS) {
-				D_ERROR("crt_remove_addr failed, hg_ret %d.\n", ret);
+				D_ERROR("crt_remove_addr err, hg_ret %d.\n",
+						ret);
 			}
 		}
 
@@ -537,7 +540,7 @@ crt_hg_remove_client_id(uint64_t client_id)
 
 		d_hash_rec_delete(&crt_ctx->cc_ha_hash_table, &client_id,
 				sizeof(client_id));
-		D_DEBUG(DB_TRACE, "client id %" PRIu64 "removed from hash table\n",
+		D_DEBUG(DB_TRACE, "client id %" PRIu64 "removed from hash\n",
 				client_id);
 		D_RWLOCK_UNLOCK(&crt_ctx->cc_ha_hash_table_rwlock);
 	}
@@ -821,10 +824,10 @@ crt_dump_ha_list(d_list_t *halist)
 		ha_value = entry->chl_entry;
 
 		D_DEBUG(DB_TRACE, "hg addr %" PRIu64 "\n",
-				(uint64_t)ha_value.ha_addr );
+				(uint64_t)ha_value.ha_addr);
 		D_DEBUG(DB_TRACE, "hg class %" PRIu64 "\n\n",
-				(uint64_t) ha_value.ha_class );
-        }
+				(uint64_t) ha_value.ha_class);
+	}
 	return rc;
 }
 
@@ -842,7 +845,7 @@ crt_hg_ha_list_empty(d_list_t *halink, void *arg)
 	ha = crt_ha_link2ptr(halink);
 
 	if (ha->chm_initialized != 1)
-		D_GOTO(out,rc);
+		D_GOTO(out, rc);
 
 	D_DEBUG(DB_TRACE, "client id %" PRIu64 " removing from hash table\n",
 				ha->chm_key);
@@ -850,7 +853,7 @@ crt_hg_ha_list_empty(d_list_t *halink, void *arg)
 	d_list_for_each_entry_safe(entry, temp, &ha->chm_list,
 					chl_list_link) {
 		ha_value = entry->chl_entry;
-		rc = crt_hg_remove_addr (ha_value.ha_class, ha_value.ha_addr);
+		rc = crt_hg_remove_addr(ha_value.ha_class, ha_value.ha_addr);
 
 		if (rc != HG_SUCCESS) {
 			D_ERROR("crt_remove_addr failed, hg_ret %d.\n", rc);
@@ -865,24 +868,23 @@ int
 crt_hg_remove_hash_rank(d_rank_t rank)
 {
 	d_list_t			*halink;
-	struct crt_ha_mapping 		*ha;
-	struct ha_entry 		ha_value;
+	struct crt_ha_mapping		*ha;
+	struct ha_entry			ha_value;
 	struct crt_ha_list_entry	*entry;
 	uint64_t			client_id;
-	int 				rc = 0;
-
+	int				rc = 0;
 	struct crt_context		*crt_ctx;
 
-//	if (!crt_is_service())
-//		D_GOTO(out, rc);
-
+/*	if (!crt_is_service())
+*		D_GOTO(out, rc);
+*/
 	if (crt_gdata.cg_na_plugin != CRT_NA_OFI_PSM2)
 		D_GOTO(out, rc);
 	D_RWLOCK_RDLOCK(&crt_gdata.cg_rwlock);
 
 	client_id = (uint64_t)rank;
 	d_list_for_each_entry(crt_ctx, &crt_gdata.cg_ctx_list, cc_link) {
-		//Can this lock create a deadlock? TBD
+		/*Can this lock create a deadlock? TBD*/
 		D_RWLOCK_WRLOCK(&crt_ctx->cc_ha_server_hash_table_rwlock);
 		halink = d_hash_rec_find(&crt_ctx->cc_ha_server_hash_table,
 				(void *)&client_id, sizeof(client_id));
@@ -896,12 +898,15 @@ crt_hg_remove_hash_rank(d_rank_t rank)
 
 		/* Remove all entries from list. */
 		while ((entry = d_list_pop_entry(&ha->chm_list,
-				struct crt_ha_list_entry, chl_list_link)) != NULL) {
+				struct crt_ha_list_entry, chl_list_link))
+					!= NULL) {
 			ha_value = entry->chl_entry;
 			D_FREE(entry);
-			rc = crt_hg_remove_addr (ha_value.ha_class, ha_value.ha_addr);
+			rc = crt_hg_remove_addr (ha_value.ha_class,
+					ha_value.ha_addr);
 			if (rc != HG_SUCCESS) {
-				D_ERROR("crt_remove_addr failed, hg_ret %d.\n", rc);
+				D_ERROR("crt_remove_addr failed, hg_ret %d.\n",
+						rc);
 				rc = -DER_NONEXIST;
         		}
 		}
@@ -1129,7 +1134,7 @@ crt_hg_ctx_fini(struct crt_hg_context *hg_ctx)
 	hg_context = hg_ctx->chc_hgctx;
 	D_ASSERT(hg_context != NULL);
 
-	if (crt_gdata.cg_na_plugin == CRT_NA_OFI_PSM2){
+	if (crt_gdata.cg_na_plugin == CRT_NA_OFI_PSM2) {
 		crt_ctx = container_of(hg_ctx, struct crt_context, cc_hg_ctx);
 		D_RWLOCK_WRLOCK(&crt_ctx->cc_ha_hash_table_rwlock);
 		rc = crt_hg_ha_table_empty(&crt_ctx->cc_ha_hash_table);
@@ -1199,23 +1204,23 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 	const struct hg_info		*hg_info;
 	struct crt_rpc_priv		*rpc_priv;
 	crt_rpc_t			*rpc_pub;
-	crt_opcode_t		 	opc;
-	crt_proc_t		 	proc = NULL;
+	crt_opcode_t			opc;
+	crt_proc_t			proc = NULL;
 	struct crt_opc_info		*opc_info = NULL;
-	hg_return_t		 	hg_ret = HG_SUCCESS;
-	bool			 	is_coll_req = false;
-	int			 	rc = 0;
-	struct crt_rpc_priv	 	rpc_tmp = {0};
+	hg_return_t			hg_ret = HG_SUCCESS;
+	bool				is_coll_req = false;
+	int				rc = 0;
+	struct crt_rpc_priv		rpc_tmp = {0};
 	crt_rpc_t			*rpc_tmp_pub;
 	d_list_t			*halink;
-	struct crt_ha_mapping 		*ha;
- 	struct ha_entry 		ha_entry;
-        bool                    	found = false;
-	struct crt_ha_list_entry     	*ha_list_entry;
+	struct crt_ha_mapping		*ha;
+	struct ha_entry			ha_entry;
+	bool				found = false;
+	struct crt_ha_list_entry	*ha_list_entry;
 	d_rank_t			hdr_src_rank;
 	uint64_t			client_id;
-	struct d_hash_table 		*ha_hash_table_ptr;
-	pthread_rwlock_t 		*ha_hash_table_rwlock_ptr;
+	struct d_hash_table		*ha_hash_table_ptr;
+	pthread_rwlock_t		*ha_hash_table_rwlock_ptr;
 
 	hg_info = HG_Get_info(hg_hdl);
 	if (hg_info == NULL) {
@@ -1252,14 +1257,15 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 
 	if (crt_gdata.cg_na_plugin == CRT_NA_OFI_PSM2) {
 
-		/* Determine whether this came from cleint or server in order to 
+		/* Determine whether this came from cleint or server in order to
 		 * determine which hash table to use
 		 */
 		rpc_tmp_pub = &rpc_tmp.crp_pub;
 
 		rc = crt_req_src_rank_get(rpc_tmp_pub, &hdr_src_rank);
 		if (rc != 0) {
-			D_ERROR("failed to retrieve rpc src rank, rc: %d.\n", rc);
+			D_ERROR("failed to retrieve rpc src rank, rc: %d.\n",
+						rc);
 			D_GOTO(out, hg_ret = -DER_NONEXIST);
 		}
 
@@ -1268,26 +1274,30 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 		 */
 
 		if (hdr_src_rank == CRT_NO_RANK) {
-			ha_hash_table_rwlock_ptr = &crt_ctx->cc_ha_hash_table_rwlock;
+			ha_hash_table_rwlock_ptr =
+					&crt_ctx->cc_ha_hash_table_rwlock;
 			ha_hash_table_ptr = &crt_ctx->cc_ha_hash_table;
 			client_id = rpc_tmp.crp_req_hdr.cch_clid;
-		}
-		else {
-			ha_hash_table_rwlock_ptr = &crt_ctx->cc_ha_server_hash_table_rwlock;
+		} else {
+			ha_hash_table_rwlock_ptr =
+				&crt_ctx->cc_ha_server_hash_table_rwlock;
 			ha_hash_table_ptr = &crt_ctx->cc_ha_server_hash_table;
 			client_id = (uint64_t)hdr_src_rank;
 		}
 		D_RWLOCK_WRLOCK(ha_hash_table_rwlock_ptr);
-		halink = d_hash_rec_find(ha_hash_table_ptr, (void *)&client_id, 
+		halink = d_hash_rec_find(ha_hash_table_ptr, (void *)&client_id,
 				sizeof(client_id));
 		if (halink != NULL) {
-			/*Traverse the list and add new entry to tail if not found. */
+			/*Traverse the list and add new entry to tail
+  			 *if not found. 
+  			 */
 			ha = crt_ha_link2ptr(halink);
 			d_list_for_each_entry(ha_list_entry, &ha->chm_list,
 					chl_list_link) {
-				if ((ha_list_entry->chl_entry.ha_class == hg_info->hg_class)
-					&& (HG_Addr_cmp(hg_info->hg_class, 
-					ha_list_entry->chl_entry.ha_addr, 
+				if ((ha_list_entry->chl_entry.ha_class ==
+						hg_info->hg_class)
+					&& (HG_Addr_cmp(hg_info->hg_class,
+					ha_list_entry->chl_entry.ha_addr,
 						hg_info->addr))) {
 					found = true;
 					break;
@@ -1298,23 +1308,28 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 				/* Add new entry to tail. */
 				D_ALLOC_PTR(ha_list_entry);
 				if (ha_list_entry == NULL) {
-					D_ERROR("Failed to allocate entry for hash table list\n");
-					d_hash_rec_decref(ha_hash_table_ptr, halink);
-					D_RWLOCK_UNLOCK(ha_hash_table_rwlock_ptr);
+					D_ERROR("Failed to allocate entry\n");
+					d_hash_rec_decref(ha_hash_table_ptr,
+						halink);
+					D_RWLOCK_UNLOCK
+						(ha_hash_table_rwlock_ptr);
 					D_GOTO(out, hg_ret = -DER_NOMEM);
 				}
 
-				D_INIT_LIST_HEAD(&ha_list_entry->chl_list_link);
-				ha_list_entry->chl_entry.ha_class = hg_info->hg_class;
-				HG_Addr_dup(hg_info->hg_class, hg_info->addr,
+				D_INIT_LIST_HEAD
+					(&ha_list_entry->chl_list_link);
+				ha_list_entry->chl_entry.ha_class =
+					hg_info->hg_class;
+				HG_Addr_dup(hg_info->hg_class,
+					hg_info->addr,
 					&ha_list_entry->chl_entry.ha_addr);
 
-				d_list_add_tail(&ha_list_entry->chl_list_link, &ha->chm_list);
+				d_list_add_tail(&ha_list_entry->chl_list_link,
+					&ha->chm_list);
 				crt_dump_ha_list(&ha->chm_list);
 			}
 			d_hash_rec_decref(ha_hash_table_ptr, halink);
-		}
-		else {
+		} else {
 			ha = crt_ha_mapping_init(client_id, ha_entry);
 			if (!ha) {
 				D_ERROR("Failed to allocate entry\n");
@@ -1324,7 +1339,7 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 
 			D_ALLOC_PTR(ha_list_entry);
 			if (ha_list_entry == NULL) {
-				D_ERROR("Failed to allocate entry for hash table list\n");
+				D_ERROR("Failed to allocate entry\n");
 				D_RWLOCK_UNLOCK(ha_hash_table_rwlock_ptr);
 				D_GOTO(out, hg_ret = -DER_NOMEM);
 			}
@@ -1334,15 +1349,15 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 			HG_Addr_dup(hg_info->hg_class, hg_info->addr,
 				&ha_list_entry->chl_entry.ha_addr);
 
-			d_list_add_tail(&ha_list_entry->chl_list_link, &ha->chm_list);
+			d_list_add_tail(&ha_list_entry->chl_list_link,
+					&ha->chm_list);
 			crt_dump_ha_list(&ha->chm_list);
 			rc = d_hash_rec_insert(ha_hash_table_ptr,
 				(void *)&client_id, sizeof(client_id),
 				&ha->chm_link, true);
 			if (rc != 0) {
 				D_ERROR("Failed to add entry; rc=%d\n", rc);
-				crt_ha_destroy(ha); //TBD is this needed
-				//D_RWLOCK_UNLOCK(&ha->chm_rwlock);
+				crt_ha_destroy(ha); /*TBD is this needed*/
 				D_RWLOCK_UNLOCK(ha_hash_table_rwlock_ptr);
 				D_GOTO(out, hg_ret = -DER_NONEXIST);
 			}

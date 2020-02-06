@@ -153,9 +153,9 @@ get_self_uri(struct host *h)
 	char			*p;
 	int			len;
 	int			rc;
-        crt_init_options_t      opt = {0};
+	crt_init_options_t	opt = {0};
 
-        opt.cio_clid = h->my_rank;
+	opt.cio_clid = h->my_rank;
 
 	rc = crt_init_opt(0, CRT_FLAG_BIT_SERVER, &opt);
 	if (rc != 0) {
