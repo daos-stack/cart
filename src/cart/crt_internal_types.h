@@ -171,12 +171,12 @@ struct crt_context {
 	struct d_hash_table	cc_ha_hash_table;
 	struct d_hash_table	cc_ha_server_hash_table;
 	/* Locks associated with above hg addr tables. */
-	pthread_rwlock_t 	cc_ha_hash_table_rwlock;
-	pthread_rwlock_t 	cc_ha_server_hash_table_rwlock;
+	pthread_rwlock_t        cc_ha_hash_table_rwlock;
+	pthread_rwlock_t        cc_ha_server_hash_table_rwlock;
 	/* binheap for inflight RPC timeout tracking */
 	struct d_binheap	cc_bh_timeout;
 	/* mutex to protect cc_epi_table and timeout binheap */
-	pthread_mutex_t		cc_mutex;
+	pthread_mutex_t         cc_mutex;
 	/* timeout per-context */
 	uint32_t		cc_timeout_sec;
 };

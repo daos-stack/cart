@@ -497,7 +497,7 @@ crt_hg_remove_client_id(uint64_t client_id)
 	int				ret = 0;
 	d_list_t			*halink;
 	struct crt_ha_mapping		*ha;
-	struct ha_entry 		ha_value;
+	struct ha_entry			ha_value;
 	struct crt_ha_list_entry	*entry;
 	struct crt_context		*crt_ctx;
 
@@ -858,8 +858,8 @@ crt_hg_ha_list_empty(d_list_t *halink, void *arg)
 		if (rc != HG_SUCCESS) {
 			D_ERROR("crt_remove_addr failed, hg_ret %d.\n", rc);
 		}
-                D_FREE(entry);
-        }
+		D_FREE(entry);
+	}
 out:
 	return rc;
 }
@@ -889,7 +889,7 @@ crt_hg_remove_hash_rank(d_rank_t rank)
 		halink = d_hash_rec_find(&crt_ctx->cc_ha_server_hash_table,
 				(void *)&client_id, sizeof(client_id));
 		if (!halink) {
-        		D_ERROR("client=%" PRIu64 "not in server hash table\n",
+			D_ERROR("client=%" PRIu64 "not in server hash table\n",
 				client_id);
 			D_GOTO(out, rc = -DER_NONEXIST);
 		}
@@ -908,7 +908,7 @@ crt_hg_remove_hash_rank(d_rank_t rank)
 				D_ERROR("crt_remove_addr failed, hg_ret %d.\n",
 						rc);
 				rc = -DER_NONEXIST;
-        		}
+			}
 		}
 
 		d_hash_rec_decref(&crt_ctx->cc_ha_server_hash_table, halink);
@@ -992,7 +992,7 @@ crt_hg_ctx_init(struct crt_hg_context *hg_ctx, int idx)
 
 	if (crt_gdata.cg_na_plugin == CRT_NA_OFI_PSM2) {
 		/*Create the hg_addr hash tables*/
- 		rc = d_hash_table_create_inplace(D_HASH_FT_NOLOCK,
+		rc = d_hash_table_create_inplace(D_HASH_FT_NOLOCK,
 			CRT_HG_ADDR_CACHE_LOOKUP_BITS, NULL,
 			&ha_mapping_ops, &crt_ctx->cc_ha_hash_table);
 		if (rc != 0) {
@@ -1146,7 +1146,8 @@ crt_hg_ctx_fini(struct crt_hg_context *hg_ctx)
 		D_RWLOCK_WRLOCK(&crt_ctx->cc_ha_server_hash_table_rwlock);
 		rc = crt_hg_ha_table_empty(&crt_ctx->cc_ha_server_hash_table);
 		if (rc != 0)
-			D_ERROR("d_hash_table_empty server failed, rc: %d.\n", rc);
+			D_ERROR("d_hash_table_empty server failed, rc: %d.\n",
+					rc);
 		D_RWLOCK_UNLOCK(&crt_ctx->cc_ha_server_hash_table_rwlock);
 	}
 
@@ -1289,8 +1290,8 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 				sizeof(client_id));
 		if (halink != NULL) {
 			/*Traverse the list and add new entry to tail
-  			 *if not found. 
-  			 */
+			*if not found. 
+			*/
 			ha = crt_ha_link2ptr(halink);
 			d_list_for_each_entry(ha_list_entry, &ha->chm_list,
 					chl_list_link) {
