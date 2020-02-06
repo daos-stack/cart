@@ -902,7 +902,7 @@ crt_hg_remove_hash_rank(d_rank_t rank)
 					!= NULL) {
 			ha_value = entry->chl_entry;
 			D_FREE(entry);
-			rc = crt_hg_remove_addr (ha_value.ha_class,
+			rc = crt_hg_remove_addr(ha_value.ha_class,
 					ha_value.ha_addr);
 			if (rc != HG_SUCCESS) {
 				D_ERROR("crt_remove_addr failed, hg_ret %d.\n",
@@ -1290,7 +1290,7 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 				sizeof(client_id));
 		if (halink != NULL) {
 			/*Traverse the list and add new entry to tail
-			*if not found. 
+			*if not found.
 			*/
 			ha = crt_ha_link2ptr(halink);
 			d_list_for_each_entry(ha_list_entry, &ha->chm_list,
