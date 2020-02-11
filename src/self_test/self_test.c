@@ -993,6 +993,8 @@ cleanup_nothread:
 		D_FREE(latencies_sg_list);
 	if (latencies_iov != NULL)
 		D_FREE(latencies_iov);
+	if (ms_endpts != NULL)
+                  D_FREE(ms_endpts);
 	if (latencies != NULL) {
 		for (m_idx = 0; m_idx < num_ms_endpts; m_idx++)
 			if (latencies[m_idx] != NULL)
