@@ -783,7 +783,7 @@ static int run_self_test(struct st_size_params all_params[],
 	int			  ret;
 	int			  cleanup_ret;
 
-	struct st_master_endpt	 *ms_endpts;
+	struct st_master_endpt	 *ms_endpts = NULL;
 	uint32_t		  num_ms_endpts = 0;
 
 	struct st_latency	**latencies = NULL;
