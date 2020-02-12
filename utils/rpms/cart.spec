@@ -145,7 +145,8 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %changelog
 * Tue Feb 11 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.5.1-2
 - Libcart version 4.5.1-2
-- mercury_version 2.0.0a1-0.3.git.c2c2628 - unrolled nameserver patch
+- mercury_version 2.0.0a1-0.3.git.c2c2628 - unrolled nameserver patch due to
+  verbs instability
 
 * Mon Jan 27 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.5.1-1
 - Libcart version 4.5.1-1
