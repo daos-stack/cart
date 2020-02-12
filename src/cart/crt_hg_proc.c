@@ -296,6 +296,7 @@ crt_proc_d_rank_list_t(crt_proc_t proc, d_rank_list_t **data)
 			if (rc != 0) {
 				D_ERROR("crt_proc_d_rank_t failed,rc: %d.\n",
 					rc);
+				d_rank_list_free(rank_list);
 				D_GOTO(out, rc = -DER_HG);
 			}
 		}
