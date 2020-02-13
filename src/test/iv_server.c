@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2018 Intel Corporation
+/* Copyright (C) 2016-2020 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -107,30 +107,6 @@ static pthread_mutex_t g_key_lock = PTHREAD_MUTEX_INITIALIZER;
 #define LOCK_KEYS() D_MUTEX_LOCK(&g_key_lock)
 #define UNLOCK_KEYS() D_MUTEX_UNLOCK(&g_key_lock)
 
-static void *
-progress_function(void *data)
-{
-	crt_context_t *p_ctx = (crt_context_t *)data;
-	int i;
-
-	while (g_do_shutdown == 0)
-		crt_progress(*p_ctx, 1000, NULL, NULL);
-
-	/*
-	 * Once shutdown begins, progress cart for a short while on the
-	 * main thread to finish processing the shutdown message
-	 *
-	 * This ensures the reply to the shutdown RPC is sent successfully
-	 */
-	if (p_ctx == &g_main_ctx)
-		for (i = 0; i < 1000; i++)
-			crt_progress(*p_ctx, 1000, NULL, NULL);
-
-	/* Note the first thread cleans up g_main_ctx */
-	crt_context_destroy(*p_ctx, 1);
-
-	return NULL;
-}
 
 /* handler for RPC_SHUTDOWN */
 int
@@ -170,7 +146,7 @@ init_work_contexts(void)
 	assert(rc == 0);
 
 	rc = pthread_create(&g_progress_thread, 0,
-			    progress_function, &g_main_ctx);
+			    tc_progress_fn, &g_main_ctx);
 	assert(rc == 0);
 }
 
@@ -1167,7 +1143,8 @@ int main(int argc, char **argv)
 	/* rank, num_attach_retries, is_server, assert_on_error */
 	tc_test_init(my_rank, 20, true, true);
 
-	rc = crt_init(IV_GRP_NAME, CRT_FLAG_BIT_SERVER);
+	rc = crt_init(IV_GRP_NAME, CRT_FLAG_BIT_SERVER |
+				CRT_FLAG_BIT_AUTO_SWIM_DISABLE);
 	assert(rc == 0);
 
 	rc = crt_rank_self_set(my_rank);
@@ -1212,6 +1189,9 @@ int main(int argc, char **argv)
 	assert(rc == 0);
 
 	d_rank_list_free(rank_list);
+
+	rc = crt_swim_init(0);
+	assert(rc == 0);
 
 	init_iv();
 

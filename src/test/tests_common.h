@@ -1,4 +1,4 @@
-/* Copyright (C) 2019 Intel Corporation
+/* Copyright (C) 2019-2020 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -109,14 +109,23 @@ tc_drain_queue(crt_context_t ctx)
 void *
 tc_progress_fn(void *data)
 {
-	int rc;
+	int		rc;
+	int		idx = -1;
+	crt_context_t	*p_ctx = (crt_context_t *)data;
 
 	D_ASSERTF(opts.is_initialized == true, "tc_test_init not called.\n");
 
-	crt_context_t *p_ctx = (crt_context_t *)data;
+	rc = crt_context_idx(*p_ctx, &idx);
+	if (rc != 0) {
+		D_ERROR("crt_context_idx() failed; rc=%d\n", rc);
+		assert(0);
+	}
 
 	while (g_shutdown == 0)
 		crt_progress(*p_ctx, 1000, NULL, NULL);
+
+	if (idx == 0)
+		crt_swim_fini();
 
 	rc = tc_drain_queue(*p_ctx);
 	D_ASSERTF(rc == 0, "tc_drain_queue() failed with rc=%d\n", rc);
@@ -458,10 +467,11 @@ tc_srv_start_basic(char *srv_group_name, crt_context_t *crt_ctx,
 	D_ASSERT(rc == 0);
 
 	if (init_opt) {
-		rc = crt_init_opt(srv_group_name, CRT_FLAG_BIT_SERVER,
-				  init_opt);
+		rc = crt_init_opt(srv_group_name, CRT_FLAG_BIT_SERVER |
+				CRT_FLAG_BIT_AUTO_SWIM_DISABLE, init_opt);
 	} else {
-		rc = crt_init(srv_group_name, CRT_FLAG_BIT_SERVER);
+		rc = crt_init(srv_group_name, CRT_FLAG_BIT_SERVER |
+				CRT_FLAG_BIT_AUTO_SWIM_DISABLE);
 	}
 	D_ASSERTF(rc == 0, "crt_init() failed, rc: %d\n", rc);
 
@@ -492,6 +502,9 @@ tc_srv_start_basic(char *srv_group_name, crt_context_t *crt_ctx,
 	D_ASSERTF(rc == 0, "tc_load_group_from_file() failed; rc=%d\n", rc);
 
 	D_FREE(my_uri);
+
+	rc = crt_swim_init(0);
+	D_ASSERTF(rc == 0, "crt_swim_init() failed; rc=%d\n", rc);
 
 	rc = crt_group_size(NULL, grp_size);
 	D_ASSERTF(rc == 0, "crt_group_size() failed; rc=%d\n", rc);

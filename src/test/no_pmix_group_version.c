@@ -1,4 +1,4 @@
-/* Copyright (C) 2018-2019 Intel Corporation
+/* Copyright (C) 2018-2020 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -183,15 +183,25 @@ struct crt_proto_format my_proto_fmt = {
 	.cpf_base = MY_BASE,
 };
 
-
 static void *
 progress_function(void *data)
 {
-	int i;
-	crt_context_t *p_ctx = (crt_context_t *)data;
+	int		i;
+	int		idx = -1;
+	int		rc;
+	crt_context_t	*p_ctx = (crt_context_t *)data;
+
+	rc = crt_context_idx(*p_ctx, &idx);
+	if (rc != 0) {
+		D_ERROR("crt_context_idx() failed; rc=%d\n", rc);
+		assert(0);
+	}
 
 	while (g_do_shutdown == 0)
 		crt_progress(*p_ctx, 1000, NULL, NULL);
+
+	if (idx == 0)
+		crt_swim_fini();
 
 	/* Progress contexts for a while after shutdown to send response */
 	for (i = 0; i < 1000; i++)
@@ -201,7 +211,6 @@ progress_function(void *data)
 
 	return NULL;
 }
-
 
 struct corpc_wait_info {
 	sem_t	sem;
@@ -328,7 +337,8 @@ int main(int argc, char **argv)
 	assert(rc == 0);
 
 	DBG_PRINT("Server starting up\n");
-	rc = crt_init(NULL, CRT_FLAG_BIT_SERVER);
+	rc = crt_init(NULL, CRT_FLAG_BIT_SERVER |
+			CRT_FLAG_BIT_AUTO_SWIM_DISABLE);
 	if (rc != 0) {
 		D_ERROR("crt_init() failed; rc=%d\n", rc);
 		assert(0);
@@ -451,6 +461,12 @@ int main(int argc, char **argv)
 
 	d_rank_list_free(rank_list);
 	rank_list = NULL;
+
+	rc = crt_swim_init(0);
+	if (rc != 0) {
+		D_ERROR("crt_swim_init() failed; rc=%d\n", rc);
+		assert(0);
+	}
 
 	rc = sem_init(&sem, 0, 0);
 	if (rc != 0) {

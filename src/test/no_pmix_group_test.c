@@ -1,4 +1,4 @@
-/* Copyright (C) 2018-2019 Intel Corporation
+/* Copyright (C) 2018-2020 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -199,23 +199,6 @@ struct crt_proto_format my_proto_fmt = {
 };
 
 
-static void *
-progress_function(void *data)
-{
-	int i;
-	crt_context_t *p_ctx = (crt_context_t *)data;
-
-	while (g_do_shutdown == 0)
-		crt_progress(*p_ctx, 1000, NULL, NULL);
-
-	/* Progress contexts for a while after shutdown to send response */
-	for (i = 0; i < 1000; i++)
-		crt_progress(*p_ctx, 1000, NULL, NULL);
-
-	crt_context_destroy(*p_ctx, 1);
-
-	return NULL;
-}
 
 static void
 __dump_ranks(crt_group_t *grp) {
@@ -374,7 +357,8 @@ int main(int argc, char **argv)
 	assert(rc == 0);
 
 	DBG_PRINT("Server starting up\n");
-	rc = crt_init(NULL, CRT_FLAG_BIT_SERVER);
+	rc = crt_init(NULL, CRT_FLAG_BIT_SERVER |
+			CRT_FLAG_BIT_AUTO_SWIM_DISABLE);
 	if (rc != 0) {
 		D_ERROR("crt_init() failed; rc=%d\n", rc);
 		assert(0);
@@ -400,7 +384,7 @@ int main(int argc, char **argv)
 		}
 
 		rc = pthread_create(&progress_thread[i], 0,
-				progress_function, &crt_ctx[i]);
+				tc_progress_fn, &crt_ctx[i]);
 		assert(rc == 0);
 	}
 
@@ -430,6 +414,12 @@ int main(int argc, char **argv)
 	DBG_PRINT("self_rank=%d uri=%s grp_cfg_file=%s\n", my_rank,
 			my_uri, grp_cfg_file);
 	D_FREE(my_uri);
+
+	rc = crt_swim_init(0);
+	if (rc != 0) {
+		D_ERROR("crt_swim_init() failed; rc=%d\n", rc);
+		assert(0);
+	}
 
 	rc = crt_group_size(NULL, &grp_size);
 	if (rc != 0) {

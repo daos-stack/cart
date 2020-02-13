@@ -1,4 +1,4 @@
-/* Copyright (C) 2018-2019 Intel Corporation
+/* Copyright (C) 2018-2020 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -141,28 +141,6 @@ static struct crt_proto_format my_proto_fmt_basic_corpc = {
 	.cpf_base = TEST_CORPC_PREFWD_BASE,
 };
 
-void crt_swim_disable_all(void);
-
-static void *
-progress_function(void *data)
-{
-	int i;
-	crt_context_t *p_ctx = (crt_context_t *)data;
-
-	while (g_do_shutdown == 0)
-		crt_progress(*p_ctx, 1000, NULL, NULL);
-
-	crt_swim_disable_all();
-
-	/* Progress contexts for a while after shutdown to send response */
-	for (i = 0; i < 1000; i++)
-		crt_progress(*p_ctx, 1000, NULL, NULL);
-
-	crt_context_destroy(*p_ctx, 1);
-
-	return NULL;
-}
-
 int main(void)
 {
 	int		rc;
@@ -189,7 +167,8 @@ int main(void)
 	rc = d_log_init();
 	assert(rc == 0);
 
-	rc = crt_init(NULL, CRT_FLAG_BIT_SERVER);
+	rc = crt_init(NULL, CRT_FLAG_BIT_SERVER |
+			CRT_FLAG_BIT_AUTO_SWIM_DISABLE);
 	assert(rc == 0);
 
 	rc = crt_proto_register(&my_proto_fmt_basic_corpc);
@@ -199,7 +178,7 @@ int main(void)
 	assert(rc == 0);
 
 	rc = pthread_create(&progress_thread, 0,
-				progress_function, &g_main_ctx);
+			tc_progress_fn, &g_main_ctx);
 	if (rc != 0) {
 		D_ERROR("pthread_create() failed; rc=%d\n", rc);
 		assert(0);
@@ -228,7 +207,6 @@ int main(void)
 		assert(0);
 	}
 
-
 	rc = crt_group_ranks_get(grp, &rank_list);
 	if (rc != 0) {
 		D_ERROR("crt_group_ranks_get() failed; rc=%d\n", rc);
@@ -245,6 +223,12 @@ int main(void)
 
 	d_rank_list_free(rank_list);
 	rank_list = NULL;
+
+	rc = crt_swim_init(0);
+	if (rc != 0) {
+		D_ERROR("crt_swim_init() failed; rc=%d\n", rc);
+		assert(0);
+	}
 
 	if (my_rank == 0) {
 		DBG_PRINT("Rank 0 sending CORPC call\n");
