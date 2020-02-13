@@ -456,7 +456,8 @@ int crt_swim_init(int crt_ctx_idx)
 		}
 
 		for (i = 0; i < grp_priv->gp_size; i++) {
-			rc = crt_swim_rank_add(grp_priv, grp_membs->rl_ranks[i]);
+			rc = crt_swim_rank_add(grp_priv,
+					grp_membs->rl_ranks[i]);
 			if (rc) {
 				D_ERROR("crt_swim_rank_add() failed=%d\n", rc);
 				D_GOTO(cleanup, rc);
