@@ -1189,9 +1189,6 @@ int main(int argc, char **argv)
 
 	d_rank_list_free(rank_list);
 
-	rc = crt_swim_init(0);
-	assert(rc == 0);
-
 	init_iv();
 
 	/* Wait for IV namespace attach before saving group config
@@ -1199,6 +1196,9 @@ int main(int argc, char **argv)
 	 * before those are fully initialized
 	 */
 	wait_for_namespace();
+
+	rc = crt_swim_init(0);
+	assert(rc == 0);
 
 	if (g_my_rank == 0) {
 		rc = crt_group_config_save(grp, true);
