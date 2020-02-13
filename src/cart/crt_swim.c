@@ -399,10 +399,8 @@ void crt_swim_fini(void)
 	struct crt_grp_priv	*grp_priv = crt_gdata.cg_grp->gg_primary_grp;
 	struct crt_swim_membs	*csm = &grp_priv->gp_membs_swim;
 
-	if (!crt_gdata.cg_swim_inited) {
-		D_ERROR("swim fini called without init\n");
+	if (!crt_gdata.cg_swim_inited)
 		return;
-	}
 
 	crt_swim_rank_del_all(grp_priv);
 
