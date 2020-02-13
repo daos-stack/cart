@@ -48,7 +48,6 @@
 #include <sys/stat.h>
 #include "tests_common.h"
 
-static int	g_do_shutdown;
 static d_rank_t my_rank;
 
 static int
@@ -71,7 +70,7 @@ test_basic_corpc_hdlr(crt_rpc_t *rpc)
 	rc = crt_reply_send(rpc);
 	assert(rc == 0);
 
-	g_do_shutdown = 1;
+	tc_progress_stop();
 
 	/* CORPC is not sent to those ranks */
 	if (my_rank == 3 || my_rank == 0) {
@@ -98,7 +97,7 @@ CRT_RPC_DEFINE(basic_corpc, CRT_ISEQ_BASIC_CORPC, CRT_OSEQ_BASIC_CORPC)
 static void
 corpc_response_hdlr(const struct crt_cb_info *info)
 {
-	g_do_shutdown = 1;
+	tc_progress_stop();
 }
 
 static struct crt_proto_rpc_format my_proto_rpc_fmt_basic_corpc[] = {
@@ -228,16 +227,13 @@ int main(void)
 		assert(rc == 0);
 	}
 
+	sleep(10);
 	/* rank=3 is not sent shutdown sequence */
 	if (my_rank == 3)
-		g_do_shutdown = 1;
-
-	while (!g_do_shutdown)
-		sleep(1);
-
-	DBG_PRINT("All tests done\n");
+		tc_progress_stop();
 
 	pthread_join(progress_thread, NULL);
+	DBG_PRINT("All tests done\n");
 
 	rc = crt_finalize();
 	assert(rc == 0);

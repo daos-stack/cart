@@ -50,7 +50,6 @@
 
 #include "tests_common.h"
 
-static int g_do_shutdown;
 
 #define MY_BASE 0x010000000
 #define MY_VER  0
@@ -149,7 +148,7 @@ handler_shutdown(crt_rpc_t *rpc)
 	DBG_PRINT("Shutdown handler called!\n");
 	crt_reply_send(rpc);
 
-	g_do_shutdown = true;
+	tc_progress_stop();
 	return 0;
 }
 static int
@@ -836,7 +835,7 @@ int main(int argc, char **argv)
 	d_rank_list_free(mod_prim_ranks);
 	d_rank_list_free(mod_sec_ranks);
 
-	g_do_shutdown = 1;
+	tc_progress_stop();
 	sem_destroy(&sem);
 
 	DBG_PRINT("All tesst succeeded\n");

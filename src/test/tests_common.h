@@ -88,6 +88,12 @@ static inline int
 tc_drain_queue(crt_context_t ctx)
 {
 	int	rc;
+	int 	i;
+
+	/* TODO: Need better mechanism for tests to drain all queues */
+	for (i = 0; i < 1000; i++)
+		crt_progress(ctx, 1000, NULL, NULL);
+
 	/* Drain the queue. Progress until 1 second timeout.  We need
 	 * a more robust method
 	 */
@@ -104,6 +110,12 @@ tc_drain_queue(crt_context_t ctx)
 
 	D_DEBUG(DB_TEST, "Done draining queue\n");
 	return 0;
+}
+
+void
+tc_progress_stop(void)
+{
+	g_shutdown = 1;
 }
 
 void *
@@ -130,7 +142,7 @@ tc_progress_fn(void *data)
 	rc = tc_drain_queue(*p_ctx);
 	D_ASSERTF(rc == 0, "tc_drain_queue() failed with rc=%d\n", rc);
 
-	rc = crt_context_destroy(*p_ctx, 0);
+	rc = crt_context_destroy(*p_ctx, 1);
 	D_ASSERTF(rc == 0, "Failed to destroy context rc=%d\n", rc);
 
 	pthread_exit(rc ? *p_ctx : NULL);

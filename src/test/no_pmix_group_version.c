@@ -50,7 +50,6 @@
 
 #include "tests_common.h"
 
-static int g_do_shutdown;
 
 #define MY_BASE 0x010000000
 #define MY_VER  0
@@ -134,7 +133,7 @@ handler_shutdown(crt_rpc_t *rpc)
 	DBG_PRINT("Shutdown handler called!\n");
 	crt_reply_send(rpc);
 
-	g_do_shutdown = true;
+	tc_progress_stop();
 	return 0;
 }
 static int
@@ -182,35 +181,6 @@ struct crt_proto_format my_proto_fmt = {
 	.cpf_prf = &my_proto_rpc_fmt[0],
 	.cpf_base = MY_BASE,
 };
-
-static void *
-progress_function(void *data)
-{
-	int		i;
-	int		idx = -1;
-	int		rc;
-	crt_context_t	*p_ctx = (crt_context_t *)data;
-
-	rc = crt_context_idx(*p_ctx, &idx);
-	if (rc != 0) {
-		D_ERROR("crt_context_idx() failed; rc=%d\n", rc);
-		assert(0);
-	}
-
-	while (g_do_shutdown == 0)
-		crt_progress(*p_ctx, 1000, NULL, NULL);
-
-	if (idx == 0)
-		crt_swim_fini();
-
-	/* Progress contexts for a while after shutdown to send response */
-	for (i = 0; i < 1000; i++)
-		crt_progress(*p_ctx, 1000, NULL, NULL);
-
-	crt_context_destroy(*p_ctx, 1);
-
-	return NULL;
-}
 
 struct corpc_wait_info {
 	sem_t	sem;
@@ -364,7 +334,7 @@ int main(int argc, char **argv)
 		}
 
 		rc = pthread_create(&progress_thread[i], 0,
-				progress_function, &crt_ctx[i]);
+				tc_progress_fn, &crt_ctx[i]);
 		assert(rc == 0);
 	}
 
@@ -557,7 +527,7 @@ int main(int argc, char **argv)
 	d_rank_list_free(s_list);
 	d_rank_list_free(p_list);
 
-	g_do_shutdown = 1;
+	tc_progress_stop();
 	sem_destroy(&sem);
 
 	DBG_PRINT("All tesst succeeded\n");

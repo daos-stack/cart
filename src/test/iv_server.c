@@ -101,7 +101,6 @@ struct iv_value_struct {
 };
 
 static crt_context_t g_main_ctx;
-static int g_do_shutdown;
 static pthread_t g_progress_thread;
 static pthread_mutex_t g_key_lock = PTHREAD_MUTEX_INITIALIZER;
 #define LOCK_KEYS() D_MUTEX_LOCK(&g_key_lock)
@@ -131,7 +130,7 @@ iv_shutdown(crt_rpc_t *rpc)
 	rc = crt_reply_send(rpc);
 	assert(rc == 0);
 
-	g_do_shutdown = 1;
+	tc_progress_stop();
 
 	DBG_EXIT();
 	return 0;
@@ -1206,15 +1205,11 @@ int main(int argc, char **argv)
 		assert(rc == 0);
 	}
 
-	while (!g_do_shutdown)
-		sleep(1);
+	pthread_join(g_progress_thread, NULL);
+	DBG_PRINT("Finished joining progress thread\n");
 
 	deinit_iv_storage();
 	deinit_iv();
-
-	DBG_PRINT("Joining progress thread\n");
-	pthread_join(g_progress_thread, NULL);
-	DBG_PRINT("Finished joining progress thread\n");
 
 	if (g_my_rank == 0) {
 		rc = crt_group_config_remove(NULL);

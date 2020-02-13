@@ -60,8 +60,6 @@
 #define NUM_CTX 8
 #define NUM_RANKS 99
 
-static int g_do_shutdown;
-
 int main(int argc, char **argv)
 {
 	crt_group_t	*grp;
@@ -125,7 +123,7 @@ int main(int argc, char **argv)
 
 	D_FREE(my_uri);
 	sleep(1);
-	g_do_shutdown = 1;
+	tc_progress_stop();
 
 	for (i = 0; i < NUM_CTX; i++)
 		pthread_join(progress_thread[i], NULL);

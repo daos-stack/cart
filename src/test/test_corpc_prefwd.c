@@ -51,7 +51,6 @@
 static bool pre_forward_called;
 static bool hdlr_called;
 static bool post_reply_called;
-static int g_do_shutdown;
 
 static int
 corpc_aggregate(crt_rpc_t *src, crt_rpc_t *result, void *priv)
@@ -101,7 +100,7 @@ test_basic_corpc_hdlr(crt_rpc_t *rpc)
 	rc = crt_reply_send(rpc);
 	assert(rc == 0);
 
-	g_do_shutdown = 1;
+	tc_progress_stop();
 }
 
 #define TEST_BASIC_CORPC 0xC1
@@ -121,7 +120,7 @@ CRT_RPC_DEFINE(basic_corpc, CRT_ISEQ_BASIC_CORPC, CRT_OSEQ_BASIC_CORPC)
 static void
 corpc_response_hdlr(const struct crt_cb_info *info)
 {
-	g_do_shutdown = 1;
+	tc_progress_stop();
 }
 
 static struct crt_proto_rpc_format my_proto_rpc_fmt_basic_corpc[] = {
@@ -242,13 +241,9 @@ int main(void)
 		assert(rc == 0);
 	}
 
-	while (!g_do_shutdown)
-		crt_progress(g_main_ctx, 1000, NULL, NULL);
-
-	DBG_PRINT("Test finished\n");
-	crt_swim_disable_all();
 
 	pthread_join(progress_thread, NULL);
+	DBG_PRINT("Test finished\n");
 
 	if (my_rank != 0) {
 		if (!post_reply_called) {
