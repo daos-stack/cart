@@ -1212,7 +1212,7 @@ int main(int argc, char **argv)
 	deinit_iv();
 
 	if (g_my_rank == 0) {
-		rc = crt_group_config_remove(NULL);
+		rc = crt_group_config_remove(grp);
 		assert(rc == 0);
 	}
 
