@@ -72,7 +72,7 @@ crt_ha_link2ptr(d_list_t *rlink)
 }
 
 static struct crt_ha_mapping *
-crt_ha_mapping_init(uint64_t key, struct ha_entry value)
+crt_ha_mapping_init(uint64_t key)
 {
 	struct crt_ha_mapping  *ha;
 	int                     rc;
@@ -1221,7 +1221,6 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 	crt_rpc_t			*rpc_tmp_pub;
 	d_list_t			*halink;
 	struct crt_ha_mapping		*ha;
-	struct ha_entry			ha_entry;
 	bool				found = false;
 	struct crt_ha_list_entry	*ha_list_entry;
 	d_rank_t			hdr_src_rank;
@@ -1337,7 +1336,7 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 			}
 			d_hash_rec_decref(ha_hash_table_ptr, halink);
 		} else {
-			ha = crt_ha_mapping_init(client_id, ha_entry);
+			ha = crt_ha_mapping_init(client_id);
 			if (!ha) {
 				D_ERROR("Failed to allocate entry\n");
 				D_RWLOCK_UNLOCK(ha_hash_table_rwlock_ptr);
