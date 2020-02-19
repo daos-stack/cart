@@ -472,7 +472,7 @@ crt_hg_remove_addr(hg_class_t *hg_class, hg_addr_t hg_addr)
 {
 	hg_return_t     ret = HG_SUCCESS;
 
-	D_DEBUG(DB_TRACE, "removing hg addr %" PRIu64," class %" PRIu64 "\n",
+	D_DEBUG(DB_TRACE, "removing hg addr %"PRIx64 " class %"PRIx64 "\n",
 			(uint64_t)hg_addr, (uint64_t)hg_class);
 	ret = HG_Addr_set_remove(hg_class, hg_addr);
 	if (ret != HG_SUCCESS) {
