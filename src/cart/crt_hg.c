@@ -1302,7 +1302,7 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 					chl_list_link) {
 				if ((ha_list_entry->chl_entry.ha_class ==
 						hg_info->hg_class)
-					&& (HG_Addr_cmp(hg_info->hg_class,
+					&& ((bool)HG_Addr_cmp(hg_info->hg_class,
 					ha_list_entry->chl_entry.ha_addr,
 						hg_info->addr))) {
 					found = true;
