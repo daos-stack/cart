@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2018 Intel Corporation
+/* Copyright (C) 2016-2020 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -472,13 +472,11 @@ crt_hg_remove_addr(hg_class_t *hg_class, hg_addr_t hg_addr)
 {
 	hg_return_t     ret = HG_SUCCESS;
 
-	D_DEBUG(DB_TRACE, "removing hg addr %" PRIu64 "\n",
-			(uint64_t)hg_addr);
-	D_DEBUG(DB_TRACE, "removing  hg class %" PRIu64 "\n",
-			(uint64_t)hg_class);
+	D_DEBUG(DB_TRACE, "removing hg addr %" PRIu64," class %" PRIu64 "\n",
+			(uint64_t)hg_addr, (uint64_t)hg_class);
 	ret = HG_Addr_set_remove(hg_class, hg_addr);
 	if (ret != HG_SUCCESS) {
-		D_ERROR("HG_Addr_set_remove) failed, hg_ret %d.\n", ret);
+		D_ERROR("HG_Addr_set_remove failed, hg_ret %d.\n", ret);
 		D_GOTO(out, ret = -DER_HG);
 	}
 	ret = HG_Addr_free(hg_class, hg_addr);
@@ -492,7 +490,7 @@ out:
 }
 
 int
-crt_hg_remove_client_id(uint64_t client_id)
+crt_cleanup_client_id(uint64_t client_id)
 {
 	int				ret = 0;
 	d_list_t			*halink;
@@ -517,6 +515,7 @@ crt_hg_remove_client_id(uint64_t client_id)
 		if (!halink) {
 			D_ERROR("client=%" PRIu64 " not in the hash table\n",
 					client_id);
+			continue;
 		}
 		ha = crt_ha_link2ptr(halink);
 
@@ -676,7 +675,10 @@ crt_get_info_string(char **string)
 	} else {
 		/* OFI_PORT is only for context 0 to use */
 		port = crt_na_ofi_conf.noc_port;
-		crt_na_ofi_conf.noc_port = -1;
+		if (crt_gdata.cg_na_plugin == CRT_NA_OFI_PSM2)
+			crt_na_ofi_conf.noc_port++;
+		else
+			crt_na_ofi_conf.noc_port = -1;
 
 		D_ASPRINTF(*string, "%s://%s/%s:%d", plugin_str,
 			crt_na_ofi_conf.noc_domain,
@@ -798,7 +800,11 @@ crt_hg_init(crt_phy_addr_t *addr, bool server)
 		}
 	}
 
-	D_DEBUG(DB_NET, "in crt_hg_init, listen address: %s.\n", *addr);
+	if (server)
+		D_DEBUG(DB_NET, "listening address: %s.\n", *addr);
+	else
+		D_DEBUG(DB_NET, "passive address: %s.\n", *addr);
+
 	crt_gdata.cg_hg = hg_gdata;
 
 out:
@@ -832,6 +838,7 @@ crt_dump_ha_list(d_list_t *halist)
 }
 
 
+/* This function will be used to clean out server hash tables. */
 int
 crt_hg_ha_list_empty(d_list_t *halink, void *arg)
 {
@@ -884,14 +891,13 @@ crt_hg_remove_hash_rank(d_rank_t rank)
 
 	client_id = (uint64_t)rank;
 	d_list_for_each_entry(crt_ctx, &crt_gdata.cg_ctx_list, cc_link) {
-		/*Can this lock create a deadlock? TBD*/
 		D_RWLOCK_WRLOCK(&crt_ctx->cc_ha_server_hash_table_rwlock);
 		halink = d_hash_rec_find(&crt_ctx->cc_ha_server_hash_table,
 				(void *)&client_id, sizeof(client_id));
 		if (!halink) {
 			D_ERROR("client=%" PRIu64 "not in server hash table\n",
 				client_id);
-			D_GOTO(out, rc = -DER_NONEXIST);
+			continue;
 		}
 
 		ha = crt_ha_link2ptr(halink);
@@ -916,7 +922,7 @@ crt_hg_remove_hash_rank(d_rank_t rank)
 				&client_id, sizeof(client_id));
 		D_RWLOCK_UNLOCK(&crt_ctx->cc_ha_server_hash_table_rwlock);
 	}
-	D_RWLOCK_RDLOCK(&crt_gdata.cg_rwlock);
+	D_RWLOCK_UNLOCK(&crt_gdata.cg_rwlock);
 	D_DEBUG(DB_TRACE, "client id %" PRIu64 "removed from hash table\n",
 				client_id);
 out:
