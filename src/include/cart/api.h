@@ -1957,6 +1957,7 @@ int crt_group_secondary_modify(crt_group_t *grp, d_rank_list_t *sec_ranks,
  */
 int crt_cleanup_client_id(uint64_t client_id);
 
+/*
  * Initialize swim on the specified context index.
  *
  * \param[in] crt_ctx_idx        Context index to initialize swim on
@@ -1969,7 +1970,6 @@ int crt_swim_init(int crt_ctx_idx);
 /** Finalize swim.
  */
 void crt_swim_fini(void);
->>>>>>> master
 
 #define crt_proc__Bool			crt_proc_bool
 #define crt_proc_d_rank_t		crt_proc_uint32_t
