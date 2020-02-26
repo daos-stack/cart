@@ -281,7 +281,7 @@ class CartIvOneNodeTest(Test):
                 failed = True
                 self.utils.print("Exception in launching client : {}".format(e))
 
-        time.sleep(1)
+        time.sleep(3)
 
         # Shutdown rank 0 separately
         clicmd += " -o shutdown -r 0"
@@ -297,7 +297,7 @@ class CartIvOneNodeTest(Test):
         # Stop the server if it is still running
         if self.utils.check_process(srv_rtn):
             # Return value is meaningless with --continuous
-            self.utils.stop_process(srv_rtn)
+            self.utils.wait_process(srv_rtn, 121)
 
         if failed:
             self.fail("Test failed.\n")
