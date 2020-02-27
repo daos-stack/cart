@@ -269,8 +269,9 @@ pipeline {
                               if git show -s --format=%B | grep "^Skip-build: true"; then
                                   exit 0
                               fi
-                              make CHROOT_NAME="opensuse-leap-15.1-x86_64" -C utils/rpms chrootbuild
-                              cp /etc/mock/opensuse-leap-15.1-x86_64.cfg artifacts/leap15/'''
+                              if ! make CHROOT_NAME="opensuse-leap-15.1-x86_64" -C utils/rpms chrootbuild; then
+                                  cp /etc/mock/opensuse-leap-15.1-x86_64.cfg artifacts/leap15/;
+                              fi'''
                     }
                     post {
                         success {
