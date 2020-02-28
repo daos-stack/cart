@@ -283,7 +283,7 @@ pipeline {
                                           (cd $mockroot/result/ &&
                                            cp -r . $OLDPWD/artifacts/leap15/)
                                           createrepo artifacts/leap15/
-                                          rpm --qf %{version}-%{release}.%{arch} -qp artifacts/centos7/daos-server-*.x86_64.rpm > leap15-rpm-version
+                                          rpm --qf %{version}-%{release}.%{arch} -qp artifacts/centos7/cart-*.x86_64.rpm > leap15-rpm-version
                                           cat $mockroot/result/{root,build}.log'''
                             stash name: 'Leap-rpm-version', includes: 'leap15-rpm-version'
                             publishToRepository product: 'cart',
