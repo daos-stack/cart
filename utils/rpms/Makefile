@@ -2,6 +2,7 @@ NAME    := cart
 SRC_EXT := gz
 SOURCE   = $(NAME)-$(VERSION).tar.$(SRC_EXT)
 PATCHES  = scons_local-$(VERSION).tar.$(SRC_EXT)
+PR_REPOS := mercury@PR-39
 
 SLES_12_PR_REPOS := scons
 LEAP_42_PR_REPOS := scons
