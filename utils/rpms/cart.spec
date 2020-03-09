@@ -143,7 +143,7 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %{carthome}/.build_vars-Linux.sh
 
 %changelog
-* Fri Mar 06 2020 Vikram Chhabra <vikram.chhabra@intel.com> - 4.6.0-1
+* Fri Mar 06 2020 Vikram Chhabra <vikram.chhabra@intel.com> - 4.6.0-2
 - mercury_version 2.0.0a1-0.4.git.5d0cd77 - Pulled in HG_Forward fix.
 
 * Thu Feb 13 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.6.0-1
