@@ -4,7 +4,7 @@
 
 Name:          cart
 Version:       4.6.0
-Release:       1%{?relval}%{?dist}
+Release:       2%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
