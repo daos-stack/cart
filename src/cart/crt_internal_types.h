@@ -66,7 +66,8 @@ struct crt_gdata {
 	 * means each context has its own NA class.  Each NA class has an
 	 * independent listening address.
 	 */
-	bool			cg_share_na;
+	bool			cg_share_na[CRT_NA_TYPE_NUM];
+	/* default na type, this is the one from CRT_PHY_ADDR */
 	int			cg_na_plugin; /* NA plugin type */
 
 	/* global timeout value (second) for all RPCs */
@@ -75,15 +76,16 @@ struct crt_gdata {
 	uint32_t		cg_credit_ep_ctx;
 
 	/* CaRT contexts list */
-	d_list_t		cg_ctx_list;
+	d_list_t		cg_ctx_list[CRT_NA_TYPE_NUM];
 	/* actual number of items in CaRT contexts list */
-	int			cg_ctx_num;
+	int			cg_ctx_num[CRT_NA_TYPE_NUM];
+	int			cg_ctx_num_all;
 	/* maximum number of contexts user wants to create */
-	uint32_t		cg_ctx_max_num;
+	uint32_t		cg_ctx_max_num[CRT_NA_TYPE_NUM];
 	/* the global opcode map */
 	struct crt_opc_map	*cg_opc_map;
 	/* HG level global data */
-	struct crt_hg_gdata	*cg_hg;
+	struct crt_hg_gdata	*cg_hg[CRT_NA_TYPE_NUM];
 
 	struct crt_grp_gdata	*cg_grp;
 
@@ -175,6 +177,7 @@ struct crt_context {
 	pthread_mutex_t		 cc_mutex;
 	/* timeout per-context */
 	uint32_t		 cc_timeout_sec;
+	struct na_ofi_config	*cc_na_conf;
 };
 
 /* in-flight RPC req list, be tracked per endpoint for every crt_context */
@@ -266,11 +269,17 @@ struct na_ofi_config {
 	char		*noc_domain;
 	/* IP addr str for the noc_interface */
 	char		 noc_ip_str[INET_ADDRSTRLEN];
+	char		*noc_na_str;
+	int		 noc_na_type;
+	d_list_t	 noc_link; /* link to crt_na_ofi_config_opt */
 };
 
 int crt_na_ofi_config_init(void);
 void crt_na_ofi_config_fini(void);
 
 extern struct na_ofi_config crt_na_ofi_conf;
+
+extern d_list_t crt_na_ofi_config_opt;
+extern pthread_rwlock_t	crt_na_ofi_config_rwlock;
 
 #endif /* __CRT_INTERNAL_TYPES_H__ */

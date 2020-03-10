@@ -43,6 +43,7 @@
 
 #define OPC_MY_PROTO    (0x01000000)
 #define OPC_SHUTDOWN    (0x01000002)
+#define DEFAULT_PROGRESS_CTX_IDX	0
 
 struct test_global_t {
 	crt_group_t		*tg_local_group;

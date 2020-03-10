@@ -62,6 +62,7 @@ int main(int argc, char **argv)
 	d_rank_t		my_rank;
 	char			*grp_cfg_file;
 	uint32_t		grp_size;
+	int			na_type;
 	int			rc;
 
 	env_self_rank = getenv("CRT_L_RANK");
@@ -74,6 +75,10 @@ int main(int argc, char **argv)
 	assert(rc == 0);
 
 	DBG_PRINT("Server starting up\n");
+	/**
+	 * need to load URIs from file, then call crt_init_opt. Otherwise this
+	 * test is not using the predefined URIs.
+	 */
 	rc = crt_init("server_grp", CRT_FLAG_BIT_SERVER |
 				CRT_FLAG_BIT_AUTO_SWIM_DISABLE);
 	if (rc != 0) {
@@ -100,6 +105,8 @@ int main(int argc, char **argv)
 		assert(0);
 	}
 
+	na_type = crt_context_na_type(crt_ctx[0]);
+
 	rc = pthread_create(&progress_thread[0], 0,
 			    tc_progress_fn, &crt_ctx[0]);
 	if (rc != 0) {
@@ -109,7 +116,7 @@ int main(int argc, char **argv)
 
 	grp_cfg_file = getenv("CRT_L_GRP_CFG");
 
-	rc = crt_rank_uri_get(grp, my_rank, 0, &my_uri);
+	rc = crt_rank_uri_get(grp, my_rank, na_type, 0, &my_uri);
 	if (rc != 0) {
 		D_ERROR("crt_rank_uri_get() failed; rc=%d\n", rc);
 		assert(0);
@@ -127,7 +134,7 @@ int main(int argc, char **argv)
 		  my_uri, grp_cfg_file);
 	D_FREE(my_uri);
 
-	rc = crt_swim_init(0);
+	rc = crt_swim_init(na_type, 0);
 	if (rc != 0) {
 		D_ERROR("crt_swim_init() failed; rc=%d\n", rc);
 		assert(0);

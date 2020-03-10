@@ -130,6 +130,7 @@ int main(void)
 	char		*env_self_rank;
 	char		*grp_cfg_file;
 	pthread_t	progress_thread;
+	int		na_type = 0;
 
 	membs.rl_nr = 3;
 	membs.rl_ranks = memb_ranks;
@@ -205,7 +206,7 @@ int main(void)
 		assert(0);
 	}
 
-	rc = crt_swim_init(0);
+	rc = crt_swim_init(na_type, 0);
 	if (rc != 0) {
 		D_ERROR("crt_swim_init() failed; rc=%d\n", rc);
 		assert(0);

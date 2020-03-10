@@ -74,9 +74,9 @@ typedef struct crt_init_options {
 	 */
 	uint32_t	cio_sep_override:1,
 			/**
-			* overrides the value of the environment variable
-			* CRT_CTX_SHARE_ADDR
-			*/
+			 * overrides the value of the environment variable
+			 * CRT_CTX_SHARE_ADDR
+			 */
 			cio_use_sep:1,
 			/** whether or not to inject faults */
 			cio_fault_inject:1,
@@ -85,16 +85,42 @@ typedef struct crt_init_options {
 			*/
 			cio_use_credits:1;
 			/**
-			* overrides the value of the environment variable
-			* CRT_CTX_NUM
-			*/
+			 * overrides the value of the environment variable
+			 * CRT_CTX_NUM
+			 */
 	int		cio_ctx_max_num;
 
 			/** Used with cio_use_credits to set credit limit */
 	int		cio_ep_credits;
+	int		na_id;
 } crt_init_options_t;
 
-typedef int		crt_status_t;
+typedef struct crt_ctx_init_opt {
+	/* interface name */
+	char		*ccio_interface;
+	/* provider name, e.g. ofi+sockets or ofi+psm2 */
+	char		*ccio_prov;
+	int		 ccio_port;
+	/**
+	 * 1 means to use scalable endpoint, 0 means do not use scalable
+	 * endpoint  
+	 */
+	int		 ccio_share_na;
+	int		 ccio_ctx_max_num;
+} crt_ctx_init_opt_t;
+
+/** type of NA plugin */
+enum crt_na_type {
+	CRT_NA_SM		= 0,
+	CRT_NA_OFI_SOCKETS	= 1,
+	CRT_NA_OFI_VERBS_RXM	= 2,
+	CRT_NA_OFI_VERBS	= 3,
+	CRT_NA_OFI_GNI		= 4,
+	CRT_NA_OFI_PSM2		= 5,
+	CRT_NA_TYPE_NUM
+};
+
+typedef int		 crt_status_t;
 /**
  * CRT uses a string as the group ID
  * This string can only contain ASCII printable characters between 0x20 and 0x7E
@@ -125,6 +151,7 @@ typedef struct {
 	/** group handle, NULL means the primary group */
 	crt_group_t	*ep_grp;
 	/** rank number within the group */
+	int		 ep_na_type;
 	d_rank_t	 ep_rank;
 	/** tag, now used as the context ID of the target rank */
 	uint32_t	 ep_tag;

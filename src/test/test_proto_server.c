@@ -59,10 +59,6 @@ test_run(d_rank_t my_rank)
 	if (test.tg_save_cfg && my_rank == 0) {
 		rc = crt_group_config_path_set(test.tg_cfg_path);
 		D_ASSERTF(rc == 0, "crt_group_config_path_set failed %d\n", rc);
-
-		rc = crt_group_config_save(NULL, true);
-		D_ASSERTF(rc == 0,
-			  "crt_group_config_save() failed. rc: %d\n", rc);
 	}
 
 	switch (test.tg_num_proto) {
@@ -95,6 +91,7 @@ test_run(d_rank_t my_rank)
 			  "crt_group_config_remove() failed. rc: %d\n", rc);
 	}
 
+	crt_swim_fini();
 	rc = crt_finalize();
 	D_ASSERTF(rc == 0, "crt_finalize() failed. rc: %d\n", rc);
 

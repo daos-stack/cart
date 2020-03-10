@@ -595,7 +595,7 @@ crt_proto_query(crt_endpoint_t *tgt_ep, crt_opcode_t base_opc,
 	if (cb == NULL)
 		D_WARN("crt_proto_query() is not useful when cb is NULL.\n");
 
-	crt_ctx = crt_context_lookup(0);
+	crt_ctx = crt_context_lookup(crt_gdata.cg_na_plugin, 0);
 	if (crt_ctx == NULL) {
 		D_ERROR("crt_context 0 doesn't exist.\n");
 		return -DER_INVAL;

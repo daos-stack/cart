@@ -67,6 +67,7 @@ int main(int argc, char **argv)
 	pthread_t	progress_thread[NUM_CTX];
 	int		i;
 	int		rc;
+	int		na_type;
 	char		*my_uri;
 
 	rc = d_log_init();
@@ -105,7 +106,8 @@ int main(int argc, char **argv)
 		assert(rc == 0);
 	}
 
-	rc = crt_rank_uri_get(grp, 0, 0, &my_uri);
+	na_type = crt_context_na_type(crt_ctx[0]);
+	rc = crt_rank_uri_get(grp, 0, na_type, 0, &my_uri);
 	if (rc != 0) {
 		D_ERROR("crt_rank_uri_get() failed; rc=%d\n", rc);
 		assert(0);

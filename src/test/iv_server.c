@@ -55,8 +55,8 @@
 #define _SERVER
 #include "iv_common.h"
 
+#define DEFAULT_PROGRESS_CTX_IDX	0
 #define MY_IVNS_ID 0xABCD
-
 
 static d_rank_t g_my_rank;
 static uint32_t g_group_size;
@@ -1113,6 +1113,7 @@ int main(int argc, char **argv)
 	char		*grp_cfg_file;
 	d_rank_list_t	*rank_list;
 	d_rank_t	my_rank;
+	int		na_type = 0;
 	int		c;
 	int		rc;
 
@@ -1155,6 +1156,9 @@ int main(int argc, char **argv)
 
 	rc = crt_rank_self_set(my_rank);
 	assert(rc == 0);
+
+	rc = crt_swim_init(na_type, DEFAULT_PROGRESS_CTX_IDX);
+	D_ASSERTF(rc == 0, "crt_swim_init() failed rc: %d.\n", rc);
 
 	grp = crt_group_lookup(IV_GRP_NAME);
 	if (grp == NULL) {
@@ -1204,7 +1208,7 @@ int main(int argc, char **argv)
 	 */
 	wait_for_namespace();
 
-	rc = crt_swim_init(0);
+	rc = crt_swim_init(na_type, 0);
 	assert(rc == 0);
 
 	if (g_my_rank == 0) {
@@ -1217,6 +1221,8 @@ int main(int argc, char **argv)
 
 	deinit_iv_storage();
 	deinit_iv();
+
+	crt_swim_fini();
 
 	rc = crt_finalize();
 	assert(rc == 0);

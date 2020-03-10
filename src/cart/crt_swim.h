@@ -62,12 +62,16 @@ struct crt_swim_membs {
 	struct crt_swim_target		*csm_target;
 	struct swim_context		*csm_ctx;
 	int				 csm_crt_ctx_idx;
+	int				 csm_crt_na_type;
 };
 
+int  crt_swim_init(int na_type, int crt_ctx_idx);
+void crt_swim_fini(void);
 
 int  crt_swim_enable(struct crt_grp_priv *grp_priv, int crt_ctx_idx);
 int  crt_swim_disable(struct crt_grp_priv *grp_priv, int crt_ctx_idx);
 void crt_swim_disable_all(void);
+bool crt_swim_enabled(struct crt_grp_priv *grp_priv);
 int  crt_swim_rank_add(struct crt_grp_priv *grp_priv, d_rank_t rank);
 int  crt_swim_rank_del(struct crt_grp_priv *grp_priv, d_rank_t rank);
 void crt_swim_rank_del_all(struct crt_grp_priv *grp_priv);

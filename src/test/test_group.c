@@ -49,12 +49,15 @@
 #include <gurt/fault_inject.h>
 #include <cart/api.h>
 #include "crt_fake_events.h"
+//#include "tests_common.h"
 #include "test_group_rpc.h"
+//#include "test_group_np_common.h"
 
 #define TEST_CTX_MAX_NUM	 (72)
 
-#define TEST_GROUP_BASE          0x010000000
-#define TEST_GROUP_VER           0
+#define TEST_GROUP_BASE			0x010000000
+#define TEST_GROUP_VER			0
+#define DEFAULT_PROGRESS_CTX_IDX	0
 
 
 struct test_t {
@@ -446,6 +449,9 @@ test_run(void)
 	if (test_g.t_is_service) {
 		rc = crt_init(test_g.t_local_group_name, 0);
 		D_ASSERTF(rc == 0, "crt_init() failed. rc: %d\n", rc);
+		rc = crt_swim_init(DEFAULT_PROGRESS_CTX_IDX);
+		D_ASSERTF(rc == DER_SUCCESS,
+			  "crt_swim_init() failed rc: %d.\n", rc);
 	}
 
 	/* try until success to avoid intermittent failures under valgrind. */
@@ -511,7 +517,9 @@ test_fini()
 		rc = crt_group_detach(test_g.t_remote_group);
 		D_ASSERTF(rc == 0, "crt_group_detach failed, rc: %d\n", rc);
 	}
-	if (!test_g.t_is_service)
+	if (test_g.t_is_service)
+		crt_swim_fini();
+	else
 		test_g.t_shutdown = 1;
 
 	for (ii = 0; ii < test_g.t_ctx_num; ii++) {
