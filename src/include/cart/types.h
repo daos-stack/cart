@@ -92,6 +92,8 @@ typedef struct crt_init_options {
 
 			/** Used with cio_use_credits to set credit limit */
 	int		cio_ep_credits;
+			/** job id used to uniquely identify the user. **/
+	uint64_t	cio_clid;
 } crt_init_options_t;
 
 typedef int		crt_status_t;

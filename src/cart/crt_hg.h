@@ -58,11 +58,13 @@
 /** MAX number of HG handles in pool */
 #define CRT_HG_POOL_MAX_NUM	(512)
 /** number of prepost HG handles when enable pool */
-#define CRT_HG_POOL_PREPOST_NUM	(16)
+#define CRT_HG_POOL_PREPOST_NUM		(16)
+#define CRT_HG_ADDR_CACHE_LOOKUP_BITS	(5)
 
 struct crt_rpc_priv;
 struct crt_common_hdr;
 struct crt_corpc_hdr;
+
 
 /** type of NA plugin */
 enum crt_na_type {
@@ -152,6 +154,8 @@ int crt_hg_addr_free(struct crt_hg_context *hg_ctx, hg_addr_t addr);
 int crt_hg_get_addr(hg_class_t *hg_class, char *addr_str, size_t *str_size);
 
 int crt_rpc_handler_common(hg_handle_t hg_hdl);
+int crt_hg_remove_hash_rank(d_rank_t rank);
+
 
 /* crt_hg_proc.c */
 int crt_hg_unpack_header(hg_handle_t hg_hdl, struct crt_rpc_priv *rpc_priv,

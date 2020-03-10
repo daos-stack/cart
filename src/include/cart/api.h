@@ -1947,6 +1947,17 @@ int crt_group_secondary_modify(crt_group_t *grp, d_rank_list_t *sec_ranks,
 			uint32_t version);
 
 /**
+ * Cleanup the client ids on server, when there is an abrubt client exit.
+ * Currently only used on PSM2.
+ *
+ * \param[in] client_id          System wide unique client id
+ *
+ * \return                       DER_SUCCESS on success, negative value on
+ *                              failure.
+ */
+int crt_cleanup_client_id(uint64_t client_id);
+
+/*
  * Initialize swim on the specified context index.
  *
  * \param[in] crt_ctx_idx        Context index to initialize swim on

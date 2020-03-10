@@ -97,7 +97,7 @@ static int data_init(crt_init_options_t *opt)
 	crt_gdata.cg_addr = NULL;
 	crt_gdata.cg_na_plugin = CRT_NA_OFI_SOCKETS;
 	crt_gdata.cg_share_na = false;
-
+	crt_gdata.cg_clid = 0;
 	timeout = 0;
 
 	if (opt && opt->cio_crt_timeout != 0)
@@ -164,7 +164,9 @@ static int data_init(crt_init_options_t *opt)
 		else
 			d_fault_inject_disable();
 	}
-
+	if (opt && opt->cio_clid != 0)
+		crt_gdata.cg_clid = opt->cio_clid;
+	/*TBD Do we use an ENV variable if above not defined? */
 	gdata_init_flag = 1;
 exit:
 	return rc;

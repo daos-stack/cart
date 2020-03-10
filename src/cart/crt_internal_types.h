@@ -100,6 +100,8 @@ struct crt_gdata {
 
 	/* protects crt_gdata */
 	pthread_rwlock_t	cg_rwlock;
+	/* Job Id associated with this instance. */
+	uint64_t		cg_clid;
 };
 
 extern struct crt_gdata		crt_gdata;
@@ -162,19 +164,25 @@ extern struct crt_plugin_gdata		crt_plugin_gdata;
 
 /* crt_context */
 struct crt_context {
-	d_list_t		 cc_link; /* link to gdata.cg_ctx_list */
-	int			 cc_idx; /* context index */
-	struct crt_hg_context	 cc_hg_ctx; /* HG context */
+	d_list_t		cc_link; /* link to gdata.cg_ctx_list */
+	int			cc_idx; /* context index */
+	struct crt_hg_context	cc_hg_ctx; /* HG context */
 	void			*cc_rpc_cb_arg;
-	crt_rpc_task_t		 cc_rpc_cb; /* rpc callback */
+	crt_rpc_task_t		cc_rpc_cb; /* rpc callback */
 	/* in-flight endpoint tracking hash table */
-	struct d_hash_table	 cc_epi_table;
+	struct d_hash_table	cc_epi_table;
+	/* hg addr hash tables */
+	struct d_hash_table	cc_ha_hash_table;
+	struct d_hash_table	cc_ha_server_hash_table;
+	/* Locks associated with above hg addr tables. */
+	pthread_rwlock_t        cc_ha_hash_table_rwlock;
+	pthread_rwlock_t        cc_ha_server_hash_table_rwlock;
 	/* binheap for inflight RPC timeout tracking */
-	struct d_binheap	 cc_bh_timeout;
+	struct d_binheap	cc_bh_timeout;
 	/* mutex to protect cc_epi_table and timeout binheap */
-	pthread_mutex_t		 cc_mutex;
+	pthread_mutex_t         cc_mutex;
 	/* timeout per-context */
-	uint32_t		 cc_timeout_sec;
+	uint32_t		cc_timeout_sec;
 };
 
 /* in-flight RPC req list, be tracked per endpoint for every crt_context */

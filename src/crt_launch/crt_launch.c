@@ -148,13 +148,16 @@ parse_args(int argc, char **argv)
 static int
 get_self_uri(struct host *h)
 {
-	char		*uri;
-	crt_context_t	ctx;
-	char		*p;
-	int		len;
-	int		rc;
+	char			*uri;
+	crt_context_t		ctx;
+	char			*p;
+	int			len;
+	int			rc;
+	crt_init_options_t	opt = {0};
 
-	rc = crt_init(0, CRT_FLAG_BIT_SERVER);
+	opt.cio_clid = h->my_rank;
+
+	rc = crt_init_opt(0, CRT_FLAG_BIT_SERVER, &opt);
 	if (rc != 0) {
 		D_ERROR("crt_init() failed; rc=%d\n", rc);
 		D_GOTO(out, rc);
