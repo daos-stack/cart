@@ -125,6 +125,7 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %files
 %defattr(-, root, root, -)
 %{_bindir}/*
+%exclude %{_bindir}/crt_launch
 %{_libdir}/*.so.*
 %dir %{carthome}
 %{carthome}/utils
@@ -141,10 +142,15 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %{carthome}/TESTING
 %{carthome}/multi-node-test.sh
 %{carthome}/.build_vars-Linux.sh
+%{_bindir}/crt_launch
+
 
 %changelog
-* Fri Mar 06 2020 Vikram Chhabra <vikram.chhabra@intel.com> - 4.6.0-2
+* Fri Mar 10 2020 Vikram Chhabra <vikram.chhabra@intel.com> - 4.6.0-3
 - mercury_version 2.0.0a1-0.4.git.5d0cd77 - Pulled in HG_Forward fix.
+*
+* Mon Mar 09 2020 Brian J. Murrell <brian.murrell@intel.com> - 4.6.0-2
+- Move crt_launch to -tests subpackage
 
 * Thu Feb 13 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.6.0-1
 - Libcart version 4.6.0-1
