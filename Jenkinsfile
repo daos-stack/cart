@@ -196,7 +196,14 @@ pipeline {
                                       fi
                                       cd scons_local
                                       ls -alR .
-                                      git status 
+                                      git status || {
+                                          cd ..
+                                          mv scons_local{,.broken}
+                                          mv .git/modules/scons_local{,.broken}
+                                          git submodule --init update
+                                          cd scons_local
+                                          git status
+                                      }
                                       make CHROOT_NAME="epel-7-x86_64" -C utils/rpms chrootbuild'''
                     }
                     post {
