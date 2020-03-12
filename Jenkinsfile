@@ -204,6 +204,7 @@ pipeline {
                                           cd scons_local
                                           git status
                                       }
+                                      cd ..
                                       make CHROOT_NAME="epel-7-x86_64" -C utils/rpms chrootbuild'''
                     }
                     post {
