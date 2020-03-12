@@ -200,7 +200,7 @@ pipeline {
                                           cd ..
                                           mv scons_local{,.broken}
                                           mv .git/modules/scons_local{,.broken}
-                                          git submodule --init update
+                                          git submodule update --init
                                           cd scons_local
                                           git status
                                       }
