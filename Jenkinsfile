@@ -194,6 +194,9 @@ pipeline {
                                       if git show -s --format=%B | grep "^Skip-build: true"; then
                                           exit 0
                                       fi
+                                      cd scons_local
+                                      ls -alR .
+                                      git status 
                                       make CHROOT_NAME="epel-7-x86_64" -C utils/rpms chrootbuild'''
                     }
                     post {
