@@ -194,8 +194,6 @@ pipeline {
                                       if git show -s --format=%B | grep "^Skip-build: true"; then
                                           exit 0
                                       fi
-                                      cd scons_local
-                                      ls -alR .
                                       git status || {
                                           cd ..
                                           mv scons_local{,.broken}
