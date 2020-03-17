@@ -1,10 +1,10 @@
 %global carthome %{_exec_prefix}/lib/%{name}
 
-%global mercury_version 1.0.1-21%{?dist}
+%global mercury_version 2.0.0a1-0.6.git.299b06d%{?dist}
 
 Name:          cart
-Version:       4.5.0
-Release:       2%{?relval}%{?dist}
+Version:       4.6.0
+Release:       5%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -125,6 +125,7 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %files
 %defattr(-, root, root, -)
 %{_bindir}/*
+%exclude %{_bindir}/crt_launch
 %{_libdir}/*.so.*
 %dir %{carthome}
 %{carthome}/utils
@@ -141,8 +142,36 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %{carthome}/TESTING
 %{carthome}/multi-node-test.sh
 %{carthome}/.build_vars-Linux.sh
+%{_bindir}/crt_launch
+
 
 %changelog
+* Fri Mar 13 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.6.0-5
+- mercury update to mercury_version 2.0.0a1-0.6.git.299b06d
+
+* Wed Mar 11 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.6.0-4
+- mercury update to mercury_version 2.0.0a1-0.5.git.ad5a3b3
+
+* Tue Mar 10 2020 Vikram Chhabra <vikram.chhabra@intel.com> - 4.6.0-3
+- mercury_version 2.0.0a1-0.4.git.5d0cd77 - Pulled in HG_Forward fix.
+
+* Mon Mar 09 2020 Brian J. Murrell <brian.murrell@intel.com> - 4.6.0-2
+- Move crt_launch to -tests subpackage
+
+* Thu Feb 13 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.6.0-1
+- Libcart version 4.6.0-1
+- crt_swim_init()/crt_swim_fini() APIs added
+- CRT_FLAG_BIT_AUTO_SWIM_DISABLE flag added to crt_init()
+
+* Tue Feb 11 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.5.1-2
+- Libcart version 4.5.1-2
+- mercury_version 2.0.0a1-0.3.git.c2c2628 - unrolled nameserver patch due to
+  verbs instability
+
+* Mon Jan 27 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.5.1-1
+- Libcart version 4.5.1-1
+- New D_LOG_TRUNCATE environment variable added
+
 * Thu Jan 23 2020 Brian J. Murrell <brian.murrell@intel.com> - 4.5.0-2
 - Add Requires: mercury-$version until we can get an upstream stable release
 

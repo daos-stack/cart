@@ -1,4 +1,4 @@
-/* Copyright (C) 2019 Intel Corporation
+/* Copyright (C) 2019-2020 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -399,6 +399,9 @@ void crt_swim_fini(void)
 	struct crt_grp_priv	*grp_priv = crt_gdata.cg_grp->gg_primary_grp;
 	struct crt_swim_membs	*csm = &grp_priv->gp_membs_swim;
 
+	if (!crt_gdata.cg_swim_inited)
+		return;
+
 	crt_swim_rank_del_all(grp_priv);
 
 	if (csm->csm_ctx != NULL) {
@@ -410,6 +413,8 @@ void crt_swim_fini(void)
 		swim_fini(csm->csm_ctx);
 		csm->csm_ctx = NULL;
 	}
+
+	crt_gdata.cg_swim_inited = 0;
 }
 
 static struct swim_ops crt_swim_ops = {
@@ -424,9 +429,17 @@ int crt_swim_init(int crt_ctx_idx)
 {
 	struct crt_grp_priv	*grp_priv = crt_gdata.cg_grp->gg_primary_grp;
 	struct crt_swim_membs	*csm = &grp_priv->gp_membs_swim;
+	d_rank_list_t		*grp_membs;
 	d_rank_t		 self = grp_priv->gp_self;
 	int			 i, rc;
 
+
+	if (crt_gdata.cg_swim_inited) {
+		D_ERROR("Swim already initialized\n");
+		D_GOTO(out, rc = -DER_ALREADY);
+	}
+
+	grp_membs = grp_priv_get_membs(grp_priv);
 	csm->csm_crt_ctx_idx = crt_ctx_idx;
 	csm->csm_ctx = swim_init(SWIM_ID_INVALID, &crt_swim_ops, grp_priv);
 	if (csm->csm_ctx == NULL) {
@@ -435,9 +448,16 @@ int crt_swim_init(int crt_ctx_idx)
 		D_GOTO(out, rc = -DER_NOMEM);
 	}
 
-	if (self != CRT_NO_RANK) {
+	if (self != CRT_NO_RANK && grp_membs != NULL) {
+		if (grp_membs->rl_nr != grp_priv->gp_size) {
+			D_ERROR("Mismatch in group size. Expected %d got %d\n",
+				grp_membs->rl_nr, grp_priv->gp_size);
+			D_GOTO(cleanup, rc = -DER_INVAL);
+		}
+
 		for (i = 0; i < grp_priv->gp_size; i++) {
-			rc = crt_swim_rank_add(grp_priv, i);
+			rc = crt_swim_rank_add(grp_priv,
+					grp_membs->rl_ranks[i]);
 			if (rc) {
 				D_ERROR("crt_swim_rank_add() failed=%d\n", rc);
 				D_GOTO(cleanup, rc);
@@ -459,14 +479,16 @@ int crt_swim_init(int crt_ctx_idx)
 	D_GOTO(out, rc);
 
 cleanup:
-	if (self != CRT_NO_RANK) {
+	if (self != CRT_NO_RANK && grp_membs != NULL) {
 		for (i = 0; i < grp_priv->gp_size; i++)
-			crt_swim_rank_del(grp_priv, i);
+			crt_swim_rank_del(grp_priv, grp_membs->rl_ranks[i]);
 	}
 	swim_fini(csm->csm_ctx);
 	csm->csm_ctx = NULL;
 	csm->csm_crt_ctx_idx = -1;
 out:
+	if (rc == DER_SUCCESS)
+		crt_gdata.cg_swim_inited = 1;
 	return rc;
 }
 
@@ -474,7 +496,7 @@ int crt_swim_enable(struct crt_grp_priv *grp_priv, int crt_ctx_idx)
 {
 	struct crt_swim_membs	*csm = &grp_priv->gp_membs_swim;
 	d_rank_t		 self = grp_priv->gp_self;
-	swim_id_t		 seld_id;
+	swim_id_t		 self_id;
 	int			 old_ctx_idx = -1;
 	int			 rc = 0;
 
@@ -495,8 +517,8 @@ int crt_swim_enable(struct crt_grp_priv *grp_priv, int crt_ctx_idx)
 	if (csm->csm_crt_ctx_idx != crt_ctx_idx)
 		old_ctx_idx = csm->csm_crt_ctx_idx;
 	csm->csm_crt_ctx_idx = crt_ctx_idx;
-	seld_id = swim_self_get(csm->csm_ctx);
-	if (seld_id != (swim_id_t)self)
+	self_id = swim_self_get(csm->csm_ctx);
+	if (self_id != (swim_id_t)self)
 		swim_self_set(csm->csm_ctx, (swim_id_t)self);
 	D_SPIN_UNLOCK(&csm->csm_lock);
 
@@ -582,7 +604,7 @@ int crt_swim_rank_add(struct crt_grp_priv *grp_priv, d_rank_t rank)
 {
 	struct crt_swim_membs	*csm = &grp_priv->gp_membs_swim;
 	struct crt_swim_target	*cst = NULL;
-	swim_id_t		 seld_id;
+	swim_id_t		 self_id;
 	d_rank_t		 self = grp_priv->gp_self;
 	bool			 self_in_list = false;
 	bool			 rank_in_list = false;
@@ -643,8 +665,8 @@ int crt_swim_rank_add(struct crt_grp_priv *grp_priv, d_rank_t rank)
 		cst = NULL;
 	}
 
-	seld_id = swim_self_get(csm->csm_ctx);
-	if (seld_id != (swim_id_t)self)
+	self_id = swim_self_get(csm->csm_ctx);
+	if (self_id != (swim_id_t)self)
 		swim_self_set(csm->csm_ctx, (swim_id_t)self);
 
 out_unlock:

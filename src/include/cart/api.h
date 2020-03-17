@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2019 Intel Corporation
+/* Copyright (C) 2016-2020 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -715,14 +715,14 @@ crt_rpc_register(crt_opcode_t opc, uint32_t flags, struct crt_req_format *drf);
  * see DAOS.
  *
  * \param[in] ctx              The cart context.
- * \param[in] rpc              RPC received.
+ * \param[in] rpc_hdlr_arg     The argument of rpc_hdlr.
  * \param[in] rpc_hdlr         Real RPC handler.
- * \param[in] arg              The argument for the RPC handler.
+ * \param[in] arg              Extra argument for the callback.
  *
  * \return                     0 for success, negative value if failed.
  *
  */
-typedef int (*crt_rpc_task_t) (crt_context_t *ctx, crt_rpc_t *rpc,
+typedef int (*crt_rpc_task_t) (crt_context_t *ctx, void *rpc_hdlr_arg,
 			       void (*rpc_hdlr)(void *), void *arg);
 /**
  * Register RPC process callback for all RPCs this context received.
@@ -1945,6 +1945,20 @@ int crt_group_primary_modify(crt_group_t *grp, crt_context_t *ctxs,
 int crt_group_secondary_modify(crt_group_t *grp, d_rank_list_t *sec_ranks,
 			d_rank_list_t *prim_ranks, crt_group_mod_op_t op,
 			uint32_t version);
+
+/**
+ * Initialize swim on the specified context index.
+ *
+ * \param[in] crt_ctx_idx        Context index to initialize swim on
+ *
+ * \return                       DER_SUCCESS on success, negative value on
+ *                               failure.
+ */
+int crt_swim_init(int crt_ctx_idx);
+
+/** Finalize swim.
+ */
+void crt_swim_fini(void);
 
 #define crt_proc__Bool			crt_proc_bool
 #define crt_proc_d_rank_t		crt_proc_uint32_t
