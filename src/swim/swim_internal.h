@@ -193,6 +193,13 @@ swim_state_set(struct swim_context *ctx, enum swim_context_state state)
 		ctx->sc_state = state;
 }
 
+void     swim_period_set(uint64_t val);
+uint64_t swim_period_get(void);
+void     swim_suspect_timeout_set(uint64_t val);
+uint64_t swim_suspect_timeout_get(void);
+void     swim_ping_timeout_set(uint64_t val);
+uint64_t swim_ping_timeout_get(void);
+
 #ifdef __cplusplus
 }
 #endif

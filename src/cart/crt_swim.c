@@ -76,6 +76,17 @@ CRT_RPC_DEFINE(crt_rpc_swim,  CRT_ISEQ_RPC_SWIM, /* empty */)
 CRT_RPC_DECLARE(crt_rpc_swim_wack, CRT_ISEQ_RPC_SWIM, CRT_OSEQ_RPC_SWIM)
 CRT_RPC_DEFINE(crt_rpc_swim_wack,  CRT_ISEQ_RPC_SWIM, CRT_OSEQ_RPC_SWIM)
 
+uint32_t crt_swim_rpc_timeout;
+
+static inline uint32_t
+crt_swim_rpc_timeout_default(void)
+{
+	unsigned int val = CRT_SWIM_RPC_TIMEOUT;
+
+	d_getenv_int("CRT_SWIM_RPC_TIMEOUT", &val);
+	return val;
+}
+
 static void crt_swim_srv_cb(crt_rpc_t *rpc_req);
 
 static struct crt_proto_rpc_format crt_swim_proto_rpc_fmt[] = {
@@ -214,7 +225,7 @@ static int crt_swim_send_message(struct swim_context *ctx, swim_id_t to,
 	}
 
 	if (opc_idx == 0) { /* set timeout for one way RPC only */
-		rc = crt_req_set_timeout(rpc_req, CRT_SWIM_RPC_TIMEOUT);
+		rc = crt_req_set_timeout(rpc_req, crt_swim_rpc_timeout);
 		if (rc) {
 			D_TRACE_ERROR(rpc_req,
 				"crt_req_set_timeout() failed rc=%d\n", rc);
@@ -490,6 +501,8 @@ int crt_swim_init(int crt_ctx_idx)
 		D_ERROR("crt_register_progress_cb() failed=%d\n", rc);
 		D_GOTO(cleanup, rc);
 	}
+
+	crt_swim_rpc_timeout = crt_swim_rpc_timeout_default();
 	D_GOTO(out, rc);
 
 cleanup:
