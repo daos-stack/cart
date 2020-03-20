@@ -1,5 +1,5 @@
 /* Copyright (c) 2016 UChicago Argonne, LLC
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -296,7 +296,7 @@ update:
 				swim_ping_timeout_set(swim_ping_timeout_get() +
 						      SWIM_PING_TIMEOUT);
 				SWIM_INFO("%lu: increase ping timeout to %lu\n",
-					  ctx->sc_self, swim_ping_timeout_get());
+					 ctx->sc_self, swim_ping_timeout_get());
 			}
 			D_FREE(item);
 			break;
