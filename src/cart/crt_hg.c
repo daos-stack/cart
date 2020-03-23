@@ -519,7 +519,7 @@ crt_hg_init(crt_phy_addr_t *addr, bool server)
 	if (rc != 0)
 		D_GOTO(out, rc);
 
-	init_info.na_init_info.progress_mode = 0;
+	init_info.na_init_info.progress_mode = NA_NO_BLOCK;
 	init_info.na_init_info.max_contexts = 1;
 	if (crt_gdata.cg_share_na == false)
 		/* one context per NA class */
@@ -680,7 +680,7 @@ crt_hg_ctx_init(struct crt_hg_context *hg_ctx, int idx)
 		if (rc != 0)
 			D_GOTO(out, rc);
 
-		init_info.na_init_info.progress_mode = 0;
+		init_info.na_init_info.progress_mode = NA_NO_BLOCK;
 		init_info.na_init_info.max_contexts = 1;
 		na_class = NA_Initialize_opt(info_string, crt_is_service(),
 					     &init_info.na_init_info);
