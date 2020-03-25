@@ -642,7 +642,7 @@ d_log_open(char *tag, int maxfac_hint, int default_mask, int stderr_mask,
 			goto error;
 		}
 		mst.logfd =
-		    open(mst.logfile, log_flags, 0666);
+		    open(mst.logfile, log_flags, 0600);
 		if (mst.logfd < 0) {
 			fprintf(stderr, "d_log_open: cannot open %s: %s\n",
 				mst.logfile, strerror(errno));
