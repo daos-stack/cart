@@ -4,7 +4,7 @@
 
 Name:          cart
 Version:       4.6.0
-Release:       6%{?relval}%{?dist}
+Release:       7%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -146,6 +146,9 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 
 
 %changelog
+* Wed Mar 25 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.6.0-7
+- ofi update 62f6c9
+
 * Tue Mar 17 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.6.0-6
 - mercrury update 41caa1
 - ofi update 15ce5c
