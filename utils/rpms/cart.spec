@@ -4,7 +4,7 @@
 
 Name:          cart
 Version:       4.6.0
-Release:       7%{?relval}%{?dist}
+Release:       8%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -107,10 +107,13 @@ scons %{?_smp_mflags}                     \
 BUILDROOT="%{?buildroot}"
 PREFIX="%{?_prefix}"
 sed -i -e s/${BUILDROOT//\//\\/}[^\"]\*/${PREFIX//\//\\/}/g %{?buildroot}%{_prefix}/TESTING/.build_vars.*
+sed -i -e 's/\.\.\/etc\//\/etc\//g' %{?buildroot}%{_prefix}/TESTING/{util/cart_utils.py,rpc/cart_rpc_{one,two}_node.yaml}
+grep etc %{?buildroot}%{_prefix}/TESTING/{util/cart_utils.py,rpc/cart_rpc_{one,two}_node.yaml}
 mv %{?buildroot}%{_prefix}/lib{,64}
-#mv %{?buildroot}/{usr/,}etc
+mv %{?buildroot}/{usr/,}etc
 mkdir -p %{?buildroot}/%{carthome}
 cp -al multi-node-test.sh utils %{?buildroot}%{carthome}/
+rm -rf %{?buildroot}%{carthome}/utils/{rpms,docker}/
 mv %{?buildroot}%{_prefix}/{TESTING,lib/cart/}
 ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 
@@ -129,8 +132,8 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %{_libdir}/*.so.*
 %dir %{carthome}
 %{carthome}/utils
-%dir %{_prefix}%{_sysconfdir}
-%{_prefix}%{_sysconfdir}/*
+%dir %{_sysconfdir}
+%{_sysconfdir}/*
 %doc
 
 %files devel
@@ -146,6 +149,10 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 
 
 %changelog
+* Mon Apr 06 2020 Brian J. Murrell <brian.murrell@intel.com> - 4.6.0-8
+- Clean up excess utils/ content
+- Move /usr/etc/ to /etc
+
 * Wed Mar 25 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.6.0-7
 - ofi update 62f6c9
 
