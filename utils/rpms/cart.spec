@@ -4,7 +4,7 @@
 
 Name:          cart
 Version:       4.6.0
-Release:       8%{?relval}%{?dist}
+Release:       9%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -63,7 +63,6 @@ Requires: boost-devel
 Requires: mercury-devel = %{mercury_version}
 Requires: openpa-devel
 Requires: libfabric-devel
-Requires: openmpi3-devel
 Requires: hwloc-devel
 %if %{defined sha1}
 Provides: %{name}-devel-%{sha1}
@@ -149,6 +148,9 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 
 
 %changelog
+* Tue Apr 07 2020 Brian J. Murrell <brian.murrell@intel.com> - 4.6.0-9
+- Rmoeve openmpi3-devel from cart-devel Requires:
+
 * Mon Apr 06 2020 Brian J. Murrell <brian.murrell@intel.com> - 4.6.0-8
 - Clean up excess utils/ content
 - Move /usr/etc/ to /etc
