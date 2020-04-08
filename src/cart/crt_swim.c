@@ -163,6 +163,9 @@ static void crt_swim_cli_cb(const struct crt_cb_info *cb_info)
 
 	/* check for RPC with acknowledge a return code of request */
 	if (cb_info->cci_rc && (rpc_req->cr_opc & 0xFFFF)) {
+		if (cb_info->cci_rc == -DER_UNREG)
+			goto out;
+
 		rc = crt_swim_get_member_state(ctx, id, &id_state);
 		if (!rc) {
 			D_TRACE_ERROR(rpc_req,
@@ -176,6 +179,7 @@ static void crt_swim_cli_cb(const struct crt_cb_info *cb_info)
 		}
 	}
 
+out:
 	D_FREE(rpc_swim_input->upds.ca_arrays);
 }
 
@@ -514,7 +518,8 @@ int crt_swim_enable(struct crt_grp_priv *grp_priv, int crt_ctx_idx)
 	int			 old_ctx_idx = -1;
 	int			 rc = 0;
 
-	if (!crt_initialized() || !crt_is_service())
+	if (!crt_initialized() || !crt_is_service() ||
+		!crt_gdata.cg_swim_inited)
 		D_GOTO(out, rc = 0);
 
 	if (self == CRT_NO_RANK) {
@@ -539,6 +544,8 @@ int crt_swim_enable(struct crt_grp_priv *grp_priv, int crt_ctx_idx)
 	if (old_ctx_idx != -1) {
 		rc = crt_unregister_progress_cb(crt_swim_progress_cb,
 						old_ctx_idx, NULL);
+		if (rc == DER_NONEXIST)
+			rc = 0;
 		if (rc)
 			D_ERROR("crt_unregister_progress_cb() failed: rc=%d\n",
 				rc);
@@ -561,7 +568,8 @@ int crt_swim_disable(struct crt_grp_priv *grp_priv, int crt_ctx_idx)
 	int			 old_ctx_idx = -1;
 	int			 rc = -DER_NONEXIST;
 
-	if (!crt_initialized() || !crt_is_service())
+	if (!crt_initialized() || !crt_is_service() ||
+		!crt_gdata.cg_swim_inited)
 		D_GOTO(out, rc = 0);
 
 	if (crt_ctx_idx < 0) {
@@ -580,6 +588,9 @@ int crt_swim_disable(struct crt_grp_priv *grp_priv, int crt_ctx_idx)
 	if (old_ctx_idx != -1) {
 		rc = crt_unregister_progress_cb(crt_swim_progress_cb,
 						old_ctx_idx, NULL);
+		if (rc == DER_NONEXIST)
+			rc = 0;
+
 		if (rc)
 			D_ERROR("crt_unregister_progress_cb() failed: rc=%d\n",
 				rc);
@@ -594,9 +605,9 @@ void crt_swim_disable_all(void)
 	struct crt_grp_priv	*grp_priv = crt_gdata.cg_grp->gg_primary_grp;
 	struct crt_swim_membs	*csm = &grp_priv->gp_membs_swim;
 	int			 old_ctx_idx;
-	int			 rc;
 
-	if (!crt_initialized() || !crt_is_service())
+	if (!crt_initialized() || !crt_is_service() ||
+		!crt_gdata.cg_swim_inited)
 		return;
 
 	D_SPIN_LOCK(&csm->csm_lock);
@@ -605,13 +616,9 @@ void crt_swim_disable_all(void)
 	swim_self_set(csm->csm_ctx, SWIM_ID_INVALID);
 	D_SPIN_UNLOCK(&csm->csm_lock);
 
-	if (old_ctx_idx != -1) {
-		rc = crt_unregister_progress_cb(crt_swim_progress_cb,
+	if (old_ctx_idx != -1)
+		crt_unregister_progress_cb(crt_swim_progress_cb,
 						old_ctx_idx, NULL);
-		if (rc)
-			D_ERROR("crt_unregister_progress_cb() failed: rc=%d\n",
-				rc);
-	}
 }
 
 int crt_swim_rank_add(struct crt_grp_priv *grp_priv, d_rank_t rank)
