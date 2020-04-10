@@ -1,10 +1,10 @@
 %global carthome %{_exec_prefix}/lib/%{name}
 
-%global mercury_version 2.0.0a1-0.7.git.41caa14%{?dist}
+%global mercury_version 2.0.0a1-0.8.git.4871023%{?dist}
 
 Name:          cart
 Version:       4.6.0
-Release:       9%{?relval}%{?dist}
+Release:       10%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -148,8 +148,11 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 
 
 %changelog
+* Thu Apr 09 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.6.0-10
+- Update to mercury 4871023 to pick na_ofi.c race condition fix
+
 * Tue Apr 07 2020 Brian J. Murrell <brian.murrell@intel.com> - 4.6.0-9
-- Rmoeve openmpi3-devel from cart-devel Requires:
+- Remove openmpi3-devel from cart-devel Requires:
 
 * Mon Apr 06 2020 Brian J. Murrell <brian.murrell@intel.com> - 4.6.0-8
 - Clean up excess utils/ content
