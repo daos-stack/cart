@@ -149,7 +149,7 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 
 %changelog
 * Thu Apr 09 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.6.0-10
-- Update to mercury 4871023 to pick na_ofi race condition fix
+- Update to mercury 4871023 to pick na_ofi.c race condition fix
 
 * Tue Apr 07 2020 Brian J. Murrell <brian.murrell@intel.com> - 4.6.0-9
 - Remove openmpi3-devel from cart-devel Requires:
