@@ -3,8 +3,8 @@
 %global mercury_version 2.0.0a1-0.8.git.4871023%{?dist}
 
 Name:          cart
-Version:       4.6.0
-Release:       10%{?relval}%{?dist}
+Version:       4.6.1
+Release:       1%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -148,6 +148,9 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 
 
 %changelog
+* Sun Apr 12 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.6.1-1
+- Update version to 4.6.1
+
 * Thu Apr 09 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.6.0-10
 - Update to mercury 4871023 to pick na_ofi.c race condition fix
 
