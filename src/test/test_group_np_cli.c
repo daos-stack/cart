@@ -80,10 +80,11 @@ test_run(void)
 	D_ASSERTF(rc == 0, "crt_proto_register() failed. rc: %d\n",
 			rc);
 
-	rc = tc_wait_for_ranks(test_g.t_crt_ctx[0], grp, rank_list,
-			    test_g.t_srv_ctx_num - 1, test_g.t_srv_ctx_num,
-			    5, 150);
-	D_ASSERTF(rc == 0, "wait_for_ranks() failed; rc=%d\n", rc);
+	//rc = tc_wait_for_ranks(test_g.t_crt_ctx[0], grp, rank_list,
+	//		    test_g.t_srv_ctx_num - 1, test_g.t_srv_ctx_num,
+	//		    5, 150);
+	//D_ASSERTF(rc == 0, "wait_for_ranks() failed; rc=%d\n", rc);
+	sleep(60);
 
 	test_g.t_fault_attr_1000 = d_fault_attr_lookup(1000);
 	test_g.t_fault_attr_5000 = d_fault_attr_lookup(5000);

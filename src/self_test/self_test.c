@@ -190,9 +190,10 @@ static int self_test_init(char *dest_name, crt_context_t *crt_ctx,
 	 * 5 - ping timeout
 	 * 150 - total timeout
 	 */
-	ret = tc_wait_for_ranks(*crt_ctx, *srv_grp, rank_list,
-				0, 1, 5, 150);
-	D_ASSERTF(ret == 0, "wait_for_ranks() failed; ret=%d\n", ret);
+	//ret = tc_wait_for_ranks(*crt_ctx, *srv_grp, rank_list,
+	//			0, 1, 5, 150);
+	//D_ASSERTF(ret == 0, "wait_for_ranks() failed; ret=%d\n", ret);
+	sleep(60);
 
 	max_rank = rank_list->rl_ranks[0];
 	for (i = 1; i < rank_list->rl_nr; i++) {
