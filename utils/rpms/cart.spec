@@ -4,7 +4,7 @@
 
 Name:          cart
 Version:       4.6.1
-Release:       1%{?relval}%{?dist}
+Release:       2%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -148,6 +148,10 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 
 
 %changelog
+* Wed Apr 29 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.6.1-2
+- Add memory pinning workaround on server for CART-890.
+  New CRT_DISABLE_MEM_PIN envariable added to disable the workaround when set
+
 * Sun Apr 12 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.6.1-1
 - Update version to 4.6.1
 
