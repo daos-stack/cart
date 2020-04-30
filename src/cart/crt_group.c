@@ -2521,7 +2521,7 @@ grp_add_to_membs_list(struct crt_grp_priv *grp_priv, d_rank_t rank)
 
 	D_ASSERT(index >= 0);
 
-	if (grp_priv->gp_primary) {
+	if (grp_priv->gp_primary && crt_is_service()) {
 		rc = crt_swim_rank_add(grp_priv, rank);
 		if (rc) {
 			D_ERROR("crt_swim_rank_add() failed: rc=%d\n", rc);
