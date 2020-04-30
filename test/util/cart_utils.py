@@ -230,8 +230,7 @@ class CartUtils():
 
         mca_flags = "--mca btl self,tcp "
 
-        if self.provider == "ofi+psm2":
-            mca_flags += "--mca pml ob1 "
+        mca_flags += "--mca pml ob1 "
 
         tst_cmd = "{} {} -N {} --hostfile {} "\
                   .format(orterun_bin, mca_flags, tst_ppn, hostfile)
