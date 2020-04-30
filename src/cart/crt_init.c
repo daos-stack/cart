@@ -59,7 +59,8 @@ dump_envariables(void)
 		"DD_STDERR", "DD_SUBSYS", "CRT_TIMEOUT", "CRT_ATTACH_INFO_PATH",
 		"OFI_PORT", "OFI_INTERFACE", "OFI_DOMAIN", "CRT_CREDIT_EP_CTX",
 		"CRT_CTX_SHARE_ADDR", "CRT_CTX_NUM", "D_FI_CONFIG",
-		"FI_UNIVERSE_SIZE", "CRT_DISABLE_MEM_PIN"};
+		"FI_UNIVERSE_SIZE", "CRT_DISABLE_MEM_PIN",
+		"FI_OFI_RXM_USE_SRX" };
 
 	D_DEBUG(DB_ALL, "-- ENVARS: --\n");
 	for (i = 0; i < ARRAY_SIZE(envars); i++) {
@@ -377,6 +378,17 @@ do_init:
 			D_WARN("set CRT_CTX_SHARE_ADDR as 1 is invalid "
 			       "for current provider, ignore it.\n");
 			crt_gdata.cg_share_na = false;
+		}
+
+		if (crt_gdata.cg_na_plugin == CRT_NA_OFI_VERBS_RXM ||
+		    crt_gdata.cg_na_plugin == CRT_NA_OFI_TCP_RXM) {
+			char *srx_env;
+
+			srx_env = getenv("FI_OFI_RXM_USE_SRX");
+			if (srx_env == NULL) {
+				D_WARN("FI_OFI_RXM_USE_SRX not set, setting to 1\n");
+				setenv("FI_OFI_RXM_USE_SRX", "1", true);
+			}
 		}
 
 		if (crt_gdata.cg_na_plugin == CRT_NA_OFI_PSM2) {
