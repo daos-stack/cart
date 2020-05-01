@@ -3,8 +3,8 @@
 %global mercury_version 2.0.0a1-0.8.git.4871023%{?dist}
 
 Name:          cart
-Version:       4.6.1
-Release:       2%{?relval}%{?dist}
+Version:       4.7.0
+Release:       1%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -148,6 +148,10 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 
 
 %changelog
+* Fri May 01 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.7.0-1
+- Bumped version to 4.7.0, as it was previously missed when new fi function
+  was added
+
 * Wed Apr 29 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.6.1-2
 - Add memory pinning workaround on server for CART-890.
   New CRT_DISABLE_MEM_PIN envariable added to disable the workaround when set
