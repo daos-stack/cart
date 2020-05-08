@@ -10,6 +10,8 @@ SLES_12_REPOS    := https://download.opensuse.org/repositories/science:/HPC/open
 	            https://download.opensuse.org/repositories/science:/HPC:/SLE12SP3_Missing/SLE_12_SP3/ \
 	            https://download.opensuse.org/repositories/devel:libraries:c_c++/SLE_12_SP3/
 
+PR_REPOS := $(shell set -x; git show -s --format=%B | sed -ne 's/^PR-repos: *\(.*\)/\1/p')
+
 GIT_SHA1        := $(shell git rev-parse HEAD)
 GIT_SHORT       := $(shell git rev-parse --short HEAD)
 GIT_NUM_COMMITS := $(shell git rev-list HEAD --count)

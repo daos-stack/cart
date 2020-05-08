@@ -1,10 +1,8 @@
 %global carthome %{_exec_prefix}/lib/%{name}
 
-%global mercury_version 2.0.0a1-0.8.git.4871023%{?dist}
-
 Name:          cart
 Version:       4.7.0
-Release:       1%{?relval}%{?dist}
+Release:       2%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -13,9 +11,11 @@ Source0:       %{name}-%{version}.tar.gz
 Source1:       scons_local-%{version}.tar.gz
 
 BuildRequires: scons >= 2.4
-BuildRequires: libfabric-devel
 BuildRequires: openpa-devel
-BuildRequires: mercury-devel = %{mercury_version}
+BuildRequires: mercury-devel < 2.0.0a1
+# we ideally want to set this minimum version however it seems to confuse yum:
+# https://github.com/rpm-software-management/yum/issues/124
+#BuildRequires: mercury-devel >= 2.0.0~a1
 BuildRequires: openmpi3-devel
 BuildRequires: libpsm2-devel
 BuildRequires: libevent-devel
@@ -41,7 +41,10 @@ Provides: %{name}-%{sha1}
 # This should only be temporary until we can get a stable upstream release
 # of mercury, at which time the autoprov shared library version should
 # suffice
-Requires: mercury = %{mercury_version}
+Requires: mercury < 2.0.0a1
+# we ideally want to set this minimum version however it seems to confuse yum:
+# https://github.com/rpm-software-management/yum/issues/124
+#Requires: mercury >= 2.0.0~a1
 
 %description
 Collective and RPC Transport (CaRT)
@@ -60,9 +63,11 @@ Requires: %{name} = %{version}-%{release}
 Requires: libuuid-devel
 Requires: libyaml-devel
 Requires: boost-devel
-Requires: mercury-devel = %{mercury_version}
+Requires: mercury-devel < 2.0.0a1
+# we ideally want to set this minimum version however it seems to confuse yum:
+# https://github.com/rpm-software-management/yum/issues/124
+#Requires: mercury >= 2.0.0~a1
 Requires: openpa-devel
-Requires: libfabric-devel
 Requires: hwloc-devel
 %if %{defined sha1}
 Provides: %{name}-devel-%{sha1}
@@ -148,6 +153,12 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 
 
 %changelog
+* Thu May 07 2020 Brian J. Murrell <brian.murrell@intel.com> - 4.7.0-2
+- Allow a range of versions for mercury to allow for future updates
+  - but need to set an upper limit so we don't get the mis-versioned
+    2.0.0a1
+- Remove requires on libfabric-devel.  That's mercury's job.
+
 * Fri May 01 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.7.0-1
 - Bumped version to 4.7.0, as it was previously missed when new fi function
   was added
