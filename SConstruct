@@ -107,10 +107,10 @@ def scons():
         env.Append(SHLIBSUFFIX='.so')
 
     AddOption('--with-fault-injection',
-          dest='fault-injection',
-          action='store_true',
-          default=False,
-          help='Enable fault injection framework in this build')             
+              dest='fault-injection',
+              action='store_true',
+              default=False,
+              help='Enable fault injection framework in this build')
 
     # Compiler options
     env.Append(CCFLAGS=['-g3', '-Wshadow', '-Wall', '-Werror', '-fpic',

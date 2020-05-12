@@ -51,7 +51,7 @@
 #include "fi.h"
 
 /**
- * global switxh for fault injection. zero globally turns off fault injection,
+ * global switch for fault injection. zero globally turns off fault injection,
  * non-zero turns on fault injection
  */
 unsigned int			d_fault_inject;
