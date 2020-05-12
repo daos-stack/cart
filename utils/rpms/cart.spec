@@ -3,8 +3,8 @@
 %global mercury_version 2.0.0a1-0.8.git.4871023%{?dist}
 
 Name:          cart
-Version:       4.7.0
-Release:       3%{?relval}%{?dist}
+Version:       4.8.0
+Release:       1%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -149,7 +149,7 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 
 
 %changelog
-* Wed May 19 2020 Maureen Jean <maureen.jean@intel.com> - 4.7.0-3
+* Wed May 19 2020 Maureen Jean <maureen.jean@intel.com> - 4.8.0-1
 - add fault_status to cart-tests files list
 
 * Tue May 19 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.7.0-2
