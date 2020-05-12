@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2019 Intel Corporation
+/* Copyright (C) 2016-2020 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,9 +52,9 @@ crt_hdlr_ctl_fi_toggle(crt_rpc_t *rpc_req)
 	out_args = crt_reply_get(rpc_req);
 
 	if (in_args->op)
-		d_fault_inject_enable();
+		rc = d_fault_inject_enable();
 	else
-		d_fault_inject_disable();
+		rc = d_fault_inject_disable();
 
 	out_args->rc = rc;
 	rc = crt_reply_send(rpc_req);
