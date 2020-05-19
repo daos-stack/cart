@@ -4,7 +4,7 @@
 
 Name:          cart
 Version:       4.7.0
-Release:       1%{?relval}%{?dist}
+Release:       2%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -148,6 +148,10 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 
 
 %changelog
+* Tue May 19 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.7.0-2
+- Updated OFI to 8fa7c5bbbfee7df5194b65d9294929a893eb4093
+- Added custom sockets_provider.patch to build.config
+
 * Fri May 01 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.7.0-1
 - Bumped version to 4.7.0, as it was previously missed when new fi function
   was added
