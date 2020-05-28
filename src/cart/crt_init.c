@@ -83,12 +83,11 @@ mem_pin_workaround(void)
 		D_GOTO(exit, crt_rc = -DER_MISC);
 	}
 
-	/** Disable fastbins */
+	/* Disable fastbins; this option is not available on all systems */
 	rc = mallopt(M_MXFAST, 0);
-	if (rc != 1) {
-		D_ERROR("Failed to disable malloc fastbins: %d\n", errno);
-		D_GOTO(exit, crt_rc = -DER_MISC);
-	}
+	if (rc != 1)
+		D_WARN("Failed to disable malloc fastbins: %d (%s)\n",
+			errno, strerror(errno));
 
 	D_DEBUG(DB_ALL, "Memory pinning workaround enabled\n");
 exit:

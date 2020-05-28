@@ -4,7 +4,7 @@
 
 Name:          cart
 Version:       4.8.0
-Release:       1%{?relval}%{?dist}
+Release:       2%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -149,6 +149,9 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 
 
 %changelog
+* Thu May 28 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.8.0-2
+- Ignore mallopt() failures at startup
+
 * Wed May 19 2020 Maureen Jean <maureen.jean@intel.com> - 4.8.0-1
 - add fault_status to cart-tests files list
 
