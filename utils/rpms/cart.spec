@@ -1,8 +1,8 @@
 %global carthome %{_exec_prefix}/lib/%{name}
 
 Name:          cart
-Version:       4.7.0
-Release:       2%{?relval}%{?dist}
+Version:       4.8.1
+Release:       1%{?relval}%{?dist}
 Summary:       CaRT
 
 License:       Apache
@@ -150,14 +150,22 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 %{carthome}/multi-node-test.sh
 %{carthome}/.build_vars-Linux.sh
 %{_bindir}/crt_launch
+%{_bindir}/fault_status
 
 
 %changelog
-* Thu May 07 2020 Brian J. Murrell <brian.murrell@intel.com> - 4.7.0-2
+* Tue Jun 23 2020 Brian J. Murrell <brian.murrell@intel.com> - 4.8.1-1
 - Allow a range of versions for mercury to allow for future updates
   - but need to set an upper limit so we don't get the mis-versioned
     2.0.0a1
 - Remove requires on libfabric-devel.  That's mercury's job.
+
+* Wed May 19 2020 Maureen Jean <maureen.jean@intel.com> - 4.8.0-1
+- add fault_status to cart-tests files list
+
+* Tue May 19 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.7.0-2
+- Updated OFI to 8fa7c5bbbfee7df5194b65d9294929a893eb4093
+- Added custom sockets_provider.patch to build.config
 
 * Fri May 01 2020 Alexander Oganezov <alexander.a.oganezov@intel.com> - 4.7.0-1
 - Bumped version to 4.7.0, as it was previously missed when new fi function

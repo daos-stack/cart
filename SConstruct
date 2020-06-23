@@ -53,7 +53,7 @@ DESIRED_FLAGS = ['-Wno-gnu-designator',
                  '-Wno-gnu-zero-variadic-macro-arguments',
                  '-Wno-tautological-constant-out-of-range-compare']
 
-CART_VERSION = "4.7.0"
+CART_VERSION = "4.8.0"
 
 def save_build_info(env, prereqs, platform):
     """Save the build information"""
@@ -106,6 +106,12 @@ def scons():
         # generate .so on OSX instead of .dylib
         env.Append(SHLIBSUFFIX='.so')
 
+    AddOption('--with-fault-injection',
+              dest='fault-injection',
+              action='store_true',
+              default=False,
+              help='Enable fault injection framework in this build')
+
     # Compiler options
     env.Append(CCFLAGS=['-g3', '-Wshadow', '-Wall', '-Werror', '-fpic',
                         '-D_GNU_SOURCE'])
@@ -113,6 +119,10 @@ def scons():
     env.Append(CCFLAGS=['-DCART_VERSION=\\"' + CART_VERSION + '\\"'])
 
     env.Append(CFLAGS=['-std=gnu99'])
+
+    if GetOption("fault-injection"):
+        env.Append(CCFLAGS=['-DFAULT_INJECTION=1'])
+
     if not GetOption('clean'):
         env.AppendIfSupported(CCFLAGS=DESIRED_FLAGS)
 
