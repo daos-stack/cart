@@ -1,9 +1,7 @@
 %global carthome %{_exec_prefix}/lib/%{name}
 
-%global mercury_version 2.0.0a1-0.8.git.4871023%{?dist}
-
 Name:          cart
-Version:       4.8.0
+Version:       4.8.1
 Release:       1%{?relval}%{?dist}
 Summary:       CaRT
 
@@ -13,9 +11,11 @@ Source0:       %{name}-%{version}.tar.gz
 Source1:       scons_local-%{version}.tar.gz
 
 BuildRequires: scons >= 2.4
-BuildRequires: libfabric-devel
 BuildRequires: openpa-devel
-BuildRequires: mercury-devel = %{mercury_version}
+BuildRequires: mercury-devel < 2.0.0a1
+# we ideally want to set this minimum version however it seems to confuse yum:
+# https://github.com/rpm-software-management/yum/issues/124
+#BuildRequires: mercury-devel >= 2.0.0~a1
 BuildRequires: openmpi3-devel
 BuildRequires: libpsm2-devel
 BuildRequires: libevent-devel
@@ -41,7 +41,10 @@ Provides: %{name}-%{sha1}
 # This should only be temporary until we can get a stable upstream release
 # of mercury, at which time the autoprov shared library version should
 # suffice
-Requires: mercury = %{mercury_version}
+Requires: mercury < 2.0.0a1
+# we ideally want to set this minimum version however it seems to confuse yum:
+# https://github.com/rpm-software-management/yum/issues/124
+#Requires: mercury >= 2.0.0~a1
 
 %description
 Collective and RPC Transport (CaRT)
@@ -60,9 +63,11 @@ Requires: %{name} = %{version}-%{release}
 Requires: libuuid-devel
 Requires: libyaml-devel
 Requires: boost-devel
-Requires: mercury-devel = %{mercury_version}
+Requires: mercury-devel < 2.0.0a1
+# we ideally want to set this minimum version however it seems to confuse yum:
+# https://github.com/rpm-software-management/yum/issues/124
+#Requires: mercury >= 2.0.0~a1
 Requires: openpa-devel
-Requires: libfabric-devel
 Requires: hwloc-devel
 %if %{defined sha1}
 Provides: %{name}-devel-%{sha1}
@@ -149,6 +154,12 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 
 
 %changelog
+* Tue Jun 23 2020 Brian J. Murrell <brian.murrell@intel.com> - 4.8.1-1
+- Allow a range of versions for mercury to allow for future updates
+  - but need to set an upper limit so we don't get the mis-versioned
+    2.0.0a1
+- Remove requires on libfabric-devel.  That's mercury's job.
+
 * Wed May 19 2020 Maureen Jean <maureen.jean@intel.com> - 4.8.0-1
 - add fault_status to cart-tests files list
 

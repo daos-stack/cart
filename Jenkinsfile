@@ -40,12 +40,35 @@
 // I.e. for testing library changes
 //@Library(value="pipeline-lib@your_branch") _
 
+
+def component_repos() {
+    return cachedCommitPragma(pragma: 'PR-repos')
+}
+
+def cart_repo() {
+    return "cart@${env.BRANCH_NAME}:${env.BUILD_NUMBER}"
+}
+
+def cart_repos() {
+    return component_repos() + ' ' + cart_repo()
+}
+
+commit_pragma_cache = [:]
+def cachedCommitPragma(Map config) {
+
+    if (commit_pragma_cache[config['pragma']]) {
+        return commit_pragma_cache[config['pragma']]
+    }
+
+    commit_pragma_cache[config['pragma']] = commitPragma(config)
+
+    return commit_pragma_cache[config['pragma']]
+
+}
+
 def arch = "-Linux"
 def sanitized_JOB_NAME = JOB_NAME.toLowerCase().replaceAll('/', '-').replaceAll('%2f', '-')
 
-def component_repos = ""
-def cart_repo = "cart@${env.BRANCH_NAME}:${env.BUILD_NUMBER}"
-def cart_repos = component_repos + ' ' + cart_repo
 //def cart_rpms = "openpa libfabric mercury"
 // don't need to install any RPMs for testing yet
 def cart_rpms = "openmpi3"
@@ -424,7 +447,7 @@ pipeline {
                             additionalBuildArgs "-t ${sanitized_JOB_NAME}-centos7 " +
                                                 '$BUILDARGS ' +
                                                 '--build-arg QUICKBUILD=' + env.QUICKBUILD +
-                                                ' --build-arg REPOS="' + component_repos + '"'
+                                                ' --build-arg REPOS="' + component_repos() + '"'
                         }
                     }
                     steps {
@@ -992,7 +1015,7 @@ pipeline {
                             additionalBuildArgs "-t ${sanitized_JOB_NAME}-centos7 " +
                                                 '$BUILDARGS ' +
                                                 '--build-arg QUICKBUILD=0' +
-                                                ' --build-arg REPOS="' + cart_repos + '"'
+                                                ' --build-arg REPOS="' + cart_repos() + '"'
                         }
                     }
                     steps {
@@ -1040,7 +1063,7 @@ pipeline {
                         provisionNodes NODELIST: env.NODELIST,
                                        node_count: 1,
                                        snapshot: true,
-                                       inst_repos: component_repos,
+                                       inst_repos: component_repos(),
                                        inst_rpms: cart_rpms
                         timeout (time: 30, unit: 'MINUTES') {
                             runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
@@ -1102,7 +1125,7 @@ pipeline {
                         provisionNodes NODELIST: env.NODELIST,
                                        node_count: 1,
                                        snapshot: true,
-                                       inst_repos: component_repos,
+                                       inst_repos: component_repos(),
                                        inst_rpms: cart_rpms
                         timeout (time: 30, unit: 'MINUTES') {
                             runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
@@ -1178,7 +1201,7 @@ pipeline {
                         provisionNodes NODELIST: env.NODELIST,
                                        node_count: 2,
                                        snapshot: true,
-                                       inst_repos: component_repos,
+                                       inst_repos: component_repos(),
                                        inst_rpms: cart_rpms
                         timeout (time: 30, unit: 'MINUTES') {
                             runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
@@ -1240,7 +1263,7 @@ pipeline {
                         provisionNodes NODELIST: env.NODELIST,
                                        node_count: 3,
                                        snapshot: true,
-                                       inst_repos: component_repos,
+                                       inst_repos: component_repos(),
                                        inst_rpms: cart_rpms
                         timeout (time: 30, unit: 'MINUTES') {
                             runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
@@ -1302,7 +1325,7 @@ pipeline {
                         provisionNodes NODELIST: env.NODELIST,
                                        node_count: 5,
                                        snapshot: true,
-                                       inst_repos: component_repos,
+                                       inst_repos: component_repos(),
                                        inst_rpms: cart_rpms
                         timeout (time: 30, unit: 'MINUTES') {
                             runTest stashes: [ 'CentOS-install', 'CentOS-build-vars' ],
