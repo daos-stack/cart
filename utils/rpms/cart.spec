@@ -1,9 +1,9 @@
 %global carthome %{_exec_prefix}/lib/%{name}
 
-%global mercury_version 2.0.0a1-0.8.git.4871023%{?dist}
+%global mercury_version 2.0.0a1-0.9.git.4871023%{?dist}
 
 Name:          cart
-Version:       4.8.0
+Version:       4.8.1
 Release:       1%{?relval}%{?dist}
 Summary:       CaRT
 
@@ -149,6 +149,10 @@ ln %{?buildroot}%{carthome}/{TESTING/.build_vars,.build_vars-Linux}.sh
 
 
 %changelog
+* Tue Jun 23 2020 Brian J. Murrell <brian.murrell@intel.com> - 4.8.1-1
+- Update mercury version
+  - Includes updated license requirements
+
 * Wed May 19 2020 Maureen Jean <maureen.jean@intel.com> - 4.8.0-1
 - add fault_status to cart-tests files list
 
