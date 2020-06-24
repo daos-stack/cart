@@ -224,4 +224,6 @@ scp -i ci_key -r jenkins@${nodes[0]}:"$TESTDIR/testLogs-${CART_DIR}_node" \
 scp -i ci_key -r jenkins@${nodes[0]}:"$LOGDIR" \
                                       install/Linux/TESTING/avocado/job-results
 
+sed -i '/DEBUG|/ s/$/ <br\/>/' install/Linux/TESTING/avocado/job-results/*/*/results.xml
+
 exit "$rc"
