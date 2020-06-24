@@ -259,6 +259,7 @@ int main(int argc, char **argv)
 	char		str_rank[255];
 	char		str_port[255];
 
+	d_log_init();
 	if (argc < 2) {
 		show_usage("Insufficient number of arguments");
 		return -1;
@@ -339,6 +340,9 @@ exit:
 
 	if (rc == 0) {
 		/* Exec passed application with rest of arguments */
+		D_DEBUG(DB_ALL, "\n==========================================\n"
+				"= End of crt_launch, forking user app.\n"
+				"==========================================\n");
 		execve(g_opt.app_to_exec, &argv[g_opt.app_args_indx], environ);
 	}
 

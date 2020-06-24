@@ -33,9 +33,9 @@ sys.path.append('./util')
 
 from cart_utils import CartUtils
 
-class CartCoRpcOneNodeTest(Test):
+class CartGhostRankRpcOneNodeTest(Test):
     """
-    Runs CaRT ghost rank RPC test
+    Runs CaRT ghost_rank_rpc test
 
     #:avocado: tags=all,ghost_rank_rpc,one_node
     """

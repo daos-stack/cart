@@ -60,5 +60,16 @@ class CartCoRpcOneNodeTest(Test):
 
         self.utils.launch_test(self, cmd)
 
+    def test_cart_ghost_rank_rpc(self):
+        """
+        Test ghost rank RPC
+
+        #:avocado: tags=all,ghost_rank_rpc,one_node
+        """
+
+        cmd = self.utils.build_cmd(self, self.env, "srv")
+
+        self.utils.launch_test(self, cmd)
+
 if __name__ == "__main__":
     main()
