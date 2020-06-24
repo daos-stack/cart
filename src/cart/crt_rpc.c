@@ -1467,6 +1467,11 @@ crt_rpc_common_hdlr(struct crt_rpc_priv *rpc_priv)
 	if (!rpc_priv->crp_opc_info->coi_no_reply)
 		rpc_priv->crp_reply_pending = 1;
 
+	if (rpc_priv->crp_opc_info->coi_rpc_enq) {
+		rpc_priv->crp_opc_info->coi_rpc_enq(&rpc_priv->crp_pub);
+		goto out;
+	}
+
 	if (crt_rpc_cb_customized(crt_ctx, &rpc_priv->crp_pub)) {
 		rc = crt_ctx->cc_rpc_cb((crt_context_t)crt_ctx,
 					 &rpc_priv->crp_pub,

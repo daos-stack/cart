@@ -227,6 +227,7 @@ struct crt_opc_info {
 				 coi_reset_timer:1; /* reset timer on timeout */
 
 	crt_rpc_cb_t		 coi_rpc_cb;
+	crt_rpc_cb_t		 coi_rpc_enq;
 	struct crt_corpc_ops	*coi_co_ops;
 
 	/* Sizes/offset used when buffers are part of the same allocation
