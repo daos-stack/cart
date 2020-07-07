@@ -236,6 +236,7 @@ out:
 	return rc;
 }
 
+void crt_rpc_free_cached(struct crt_rpc_priv *rpc);
 void
 crt_rpc_priv_free(struct crt_rpc_priv *rpc_priv)
 {
@@ -250,7 +251,10 @@ crt_rpc_priv_free(struct crt_rpc_priv *rpc_priv)
 
 	D_SPIN_DESTROY(&rpc_priv->crp_lock);
 
-	D_FREE(rpc_priv);
+	if (rpc_priv->crp_cached)
+		crt_rpc_free_cached(rpc_priv);
+	else
+		D_FREE(rpc_priv);
 }
 
 static inline void

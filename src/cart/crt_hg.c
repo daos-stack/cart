@@ -820,6 +820,18 @@ crt_hg_context_lookup(hg_context_t *hg_ctx)
 	return (found == 1) ? crt_ctx : NULL;
 }
 
+__thread	bool	 rpc_cache_init;
+__thread	d_list_t rpc_cache;
+
+#define RPC_CACHED_SIZE	(6 << 10)
+
+void
+crt_rpc_free_cached(struct crt_rpc_priv *rpc)
+{
+	d_list_add(&rpc->crp_tmp_link, &rpc_cache);
+	rpc->crp_cached = 1;
+}
+
 int
 crt_rpc_handler_common(hg_handle_t hg_hdl)
 {
@@ -874,7 +886,7 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 	 */
 	rpc_tmp.crp_pub.cr_opc = opc;
 
-	opc_info = crt_opc_lookup(crt_gdata.cg_opc_map, opc, CRT_UNLOCK);
+	opc_info = crt_opc_lookup(crt_gdata.cg_opc_map, opc, CRT_LOCKED);
 	if (opc_info == NULL) {
 		D_ERROR("opc: %#x, lookup failed.\n", opc);
 		/*
@@ -890,7 +902,27 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 	}
 	D_ASSERT(opc_info->coi_opc == opc);
 
-	D_ALLOC(rpc_priv, opc_info->coi_rpc_size);
+	if (!rpc_cache_init) {
+		D_INIT_LIST_HEAD(&rpc_cache);
+		rpc_cache_init = true;
+	}
+
+	if (opc_info->coi_rpc_size > RPC_CACHED_SIZE) {
+		D_ALLOC(rpc_priv, opc_info->coi_rpc_size);
+
+	} else if (d_list_empty(&rpc_cache)) {
+		D_ALLOC(rpc_priv, RPC_CACHED_SIZE);
+		rpc_priv->crp_cached = 1;
+
+	} else {
+		rpc_priv = d_list_entry(rpc_cache.next, struct crt_rpc_priv,
+				        crp_tmp_link);
+		D_ASSERT(rpc_priv->crp_cached);
+		d_list_del_init(&rpc_priv->crp_tmp_link);
+		memset(rpc_priv, 0, opc_info->coi_rpc_size);
+		rpc_priv->crp_cached = 1;
+	}
+
 	if (rpc_priv == NULL) {
 		crt_hg_reply_error_send(&rpc_tmp, -DER_DOS);
 		crt_hg_unpack_cleanup(proc);
