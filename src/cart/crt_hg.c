@@ -519,8 +519,12 @@ crt_hg_init(crt_phy_addr_t *addr, bool server)
 	if (rc != 0)
 		D_GOTO(out, rc);
 
-	init_info.na_init_info.progress_mode = 0;
-	init_info.na_init_info.max_contexts = 1;
+	/* enable NA_NO_BLOCK only for client-side for now */
+	if (server)
+		init_info.na_init_info.progress_mode = 0;
+	else
+		init_info.na_init_info.progress_mode = NA_NO_BLOCK;
+
 	if (crt_gdata.cg_share_na == false)
 		/* one context per NA class */
 		init_info.na_init_info.max_contexts = 1;
@@ -680,8 +684,13 @@ crt_hg_ctx_init(struct crt_hg_context *hg_ctx, int idx)
 		if (rc != 0)
 			D_GOTO(out, rc);
 
-		init_info.na_init_info.progress_mode = 0;
+		if (crt_is_service())
+			init_info.na_init_info.progress_mode = 0;
+		else
+			init_info.na_init_info.progress_mode = NA_NO_BLOCK;
+
 		init_info.na_init_info.max_contexts = 1;
+
 		na_class = NA_Initialize_opt(info_string, crt_is_service(),
 					     &init_info.na_init_info);
 		if (na_class == NULL) {
@@ -820,6 +829,18 @@ crt_hg_context_lookup(hg_context_t *hg_ctx)
 	return (found == 1) ? crt_ctx : NULL;
 }
 
+__thread	bool	 rpc_cache_init;
+__thread	d_list_t rpc_cache;
+
+#define RPC_CACHED_SIZE	(6 << 10)
+
+void
+crt_rpc_free_cached(struct crt_rpc_priv *rpc)
+{
+	d_list_add(&rpc->crp_tmp_link, &rpc_cache);
+	rpc->crp_cached = 1;
+}
+
 int
 crt_rpc_handler_common(hg_handle_t hg_hdl)
 {
@@ -874,7 +895,7 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 	 */
 	rpc_tmp.crp_pub.cr_opc = opc;
 
-	opc_info = crt_opc_lookup(crt_gdata.cg_opc_map, opc, CRT_UNLOCK);
+	opc_info = crt_opc_lookup(crt_gdata.cg_opc_map, opc, CRT_LOCKED);
 	if (opc_info == NULL) {
 		D_ERROR("opc: %#x, lookup failed.\n", opc);
 		/*
@@ -890,7 +911,27 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 	}
 	D_ASSERT(opc_info->coi_opc == opc);
 
-	D_ALLOC(rpc_priv, opc_info->coi_rpc_size);
+	if (!rpc_cache_init) {
+		D_INIT_LIST_HEAD(&rpc_cache);
+		rpc_cache_init = true;
+	}
+
+	if (opc_info->coi_rpc_size > RPC_CACHED_SIZE) {
+		D_ALLOC(rpc_priv, opc_info->coi_rpc_size);
+
+	} else if (d_list_empty(&rpc_cache)) {
+		D_ALLOC(rpc_priv, RPC_CACHED_SIZE);
+		rpc_priv->crp_cached = 1;
+
+	} else {
+		rpc_priv = d_list_entry(rpc_cache.next, struct crt_rpc_priv,
+				        crp_tmp_link);
+		D_ASSERT(rpc_priv->crp_cached);
+		d_list_del_init(&rpc_priv->crp_tmp_link);
+		memset(rpc_priv, 0, opc_info->coi_rpc_size);
+		rpc_priv->crp_cached = 1;
+	}
+
 	if (rpc_priv == NULL) {
 		crt_hg_reply_error_send(&rpc_tmp, -DER_DOS);
 		crt_hg_unpack_cleanup(proc);
@@ -1325,41 +1366,14 @@ crt_hg_reply_error_send(struct crt_rpc_priv *rpc_priv, int error_code)
 	rpc_priv->crp_reply_pending = 0;
 }
 
-static int
-crt_hg_trigger(struct crt_hg_context *hg_ctx)
-{
-	hg_context_t		*hg_context;
-	hg_return_t		hg_ret = HG_SUCCESS;
-	unsigned int		count = 0;
-
-	D_ASSERT(hg_ctx != NULL);
-	hg_context = hg_ctx->chc_hgctx;
-
-	do {
-		hg_ret = HG_Trigger(hg_context, 0, UINT32_MAX, &count);
-	} while (hg_ret == HG_SUCCESS && count > 0);
-
-	if (hg_ret != HG_TIMEOUT) {
-		D_ERROR("HG_Trigger failed, hg_ret: %d.\n", hg_ret);
-		return -DER_HG;
-	}
-
-	return 0;
-}
-
 int
 crt_hg_progress(struct crt_hg_context *hg_ctx, int64_t timeout)
 {
 	hg_context_t		*hg_context;
-	hg_class_t		*hg_class;
-	hg_return_t		hg_ret = HG_SUCCESS;
 	unsigned int		hg_timeout;
-	int			rc;
+	unsigned int		total = 256;
 
-	D_ASSERT(hg_ctx != NULL);
 	hg_context = hg_ctx->chc_hgctx;
-	hg_class = hg_ctx->chc_hgcla;
-	D_ASSERT(hg_context != NULL && hg_class != NULL);
 
 	/**
 	 * Mercury only supports milli-second timeout and uses an unsigned int
@@ -1369,24 +1383,41 @@ crt_hg_progress(struct crt_hg_context *hg_ctx, int64_t timeout)
 	else
 		hg_timeout = timeout / 1000;
 
-	rc = crt_hg_trigger(hg_ctx);
-	if (rc != 0)
-		return rc;
+	do {
+		hg_return_t     hg_ret = HG_SUCCESS;
+		int             rc = 0;
+		unsigned int count = 0;
 
-	/** progress RPC execution */
-	hg_ret = HG_Progress(hg_context, hg_timeout);
-	if (hg_ret == HG_TIMEOUT)
-		D_GOTO(out, rc = -DER_TIMEDOUT);
-	if (hg_ret != HG_SUCCESS) {
-		D_ERROR("HG_Progress failed, hg_ret: %d.\n", hg_ret);
-		D_GOTO(out, rc = -DER_HG);
-	}
+		/** progress RPC execution */
+		hg_ret = HG_Progress(hg_context, hg_timeout);
+		if (hg_ret == HG_TIMEOUT) {
+			rc = -DER_TIMEDOUT;
+		} else if (hg_ret != HG_SUCCESS) {
+			D_ERROR("HG_Progress failed, hg_ret: %d.\n", hg_ret);
+			return -DER_HG;
+		}
 
-	/* some RPCs have progressed, call Trigger again */
-	rc = crt_hg_trigger(hg_ctx);
+		/** some RPCs have progressed, call Trigger */
+		hg_ret = HG_Trigger(hg_context, 0, total, &count);
+		if (hg_ret == HG_TIMEOUT) {
+			/** nothing to trigger */
+			return rc;
+		} else if (hg_ret != HG_SUCCESS) {
+			D_ERROR("HG_Trigger failed, hg_ret: %d.\n", hg_ret);
+			return -DER_HG;
+		}
 
-out:
-	return rc;
+		if (count == 0 || rc)
+			/** nothing to trigger */
+			return rc;
+
+		/** continue network progress and callback processing, but w/o
+		 * waiting this time */
+		total -= count;
+		hg_timeout = 0;
+	} while (total > 0);
+
+	return 0;
 }
 
 #define CRT_HG_IOVN_STACK	(8)

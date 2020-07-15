@@ -218,25 +218,44 @@ int
 crt_finalize(void);
 
 /**
- * Progress CRT transport layer.
+ * Progress RPC execution on a cart context \a crt_ctx for at most \a timeout
+ * micro-seconds.
+ * The progress call returns when the timeout is reached or any completion has
+ * occurred.
  *
  * \param[in] crt_ctx          CRT transport context
  * \param[in] timeout          how long is caller going to wait (micro-second)
+ *			       at most for a completion to occur.
  *                             if \a timeout > 0 when there is no operation to
  *                             progress. Can return when one or more operation
  *                             progressed.
  *                             zero means no waiting and -1 waits indefinitely.
- * \param[in] cond_cb          optional progress condition callback.
- *                             CRT internally calls this function, when it
- *                             returns non-zero then stops the progressing or
- *                             waiting and returns.
- * \param[in] arg              argument to cond_cb.
  *
  * \return                     DER_SUCCESS on success, negative value if error
  */
 int
-crt_progress(crt_context_t crt_ctx, int64_t timeout,
-	     crt_progress_cond_cb_t cond_cb, void *arg);
+crt_progress(crt_context_t crt_ctx, int64_t timeout);
+
+/**
+ * Progress RPC execution on a cart context with a callback function.
+ * The callback function is regularly called internally. The progress call
+ * returns when the callback returns a non-zero value or when the timeout
+ * expires.
+ *
+ * \param[in] crt_ctx          CRT transport context
+ * \param[in] timeout          how long is caller going to wait (micro-second)
+ *                             zero means no waiting and -1 waits indefinitely.
+ * \param[in] cond_cb          progress condition callback.
+ *                             CRT internally calls this function, when it
+ *                             returns non-zero then stops the progressing or
+ *                             waiting and returns.
+ * \param[in] arg              optional argument to cond_cb.
+ *
+ * \return                     DER_SUCCESS on success, negative value if error
+ */
+int
+crt_progress_cond(crt_context_t crt_ctx, int64_t timeout,
+		  crt_progress_cond_cb_t cond_cb, void *arg);
 
 /**
  * Create an RPC request.
@@ -1289,6 +1308,8 @@ typedef enum {
 	CRT_PROC_FREE
 } crt_proc_op_t;
 
+#define crt_proc_raw crt_proc_memcpy
+
 /**
  * Get the operation type associated to the proc processor.
  *
@@ -1302,7 +1323,6 @@ crt_proc_get_op(crt_proc_t proc, crt_proc_op_t *proc_op);
 
 /**
  * Base proc routine using memcpy().
- * Only uses memcpy() / use crt_proc_raw() for encoding raw buffers.
  *
  * \param[in,out] proc         abstract processor object
  * \param[in,out] data         pointer to data
@@ -1411,18 +1431,6 @@ crt_proc_uint64_t(crt_proc_t proc, uint64_t *data);
  */
 int
 crt_proc_bool(crt_proc_t proc, bool *data);
-
-/**
- * Generic processing routine.
- *
- * \param[in,out] proc         abstract processor object
- * \param[in,out] buf          pointer to buffer
- * \param[in] buf_size         buffer size
- *
- * \return                     DER_SUCCESS on success, negative value if error
- */
-int
-crt_proc_raw(crt_proc_t proc, void *buf, size_t buf_size);
 
 /**
  * Generic processing routine.
