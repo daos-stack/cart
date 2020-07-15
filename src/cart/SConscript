@@ -93,6 +93,7 @@ def scons():
     denv = env.Clone()
 
     denv.AppendUnique(CPPPATH=['#/src/cart'])
+    denv.AppendUnique(CPPPATH=['/usr/include/dpdk'])
     denv.AppendUnique(LIBS=['gurt'])
     prereqs.require(denv, 'mercury')
     denv.AppendUnique(RPATH=['$PREFIX/lib'])
