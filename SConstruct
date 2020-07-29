@@ -51,7 +51,8 @@ except ImportError:
 DESIRED_FLAGS = ['-Wno-gnu-designator',
                  '-Wno-missing-braces',
                  '-Wno-gnu-zero-variadic-macro-arguments',
-                 '-Wno-tautological-constant-out-of-range-compare']
+                 '-Wno-tautological-constant-out-of-range-compare',
+		 '-mavx2']
 
 CART_VERSION = "4.8.0"
 

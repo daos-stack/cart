@@ -42,6 +42,7 @@
 #define D_LOGFAC	DD_FAC(hg)
 
 #include "crt_internal.h"
+#include <rte_memcpy.h>
 
 #define CRT_PROC_NULL (NULL)
 #define CRT_PROC_TYPE_FUNC(type) \
@@ -116,10 +117,10 @@ crt_proc_memcpy(crt_proc_t proc, void *data, size_t data_size)
 	buf = hg_proc_save_ptr(proc, data_size);
 	switch (proc_op) {
 	case CRT_PROC_ENCODE:
-		memcpy(buf, data, data_size);
+		rte_memcpy(buf, data, data_size);
 		break;
 	case CRT_PROC_DECODE:
-		memcpy(data, buf, data_size);
+		rte_memcpy(data, buf, data_size);
 		break;
 	case CRT_PROC_FREE:
 		break;
