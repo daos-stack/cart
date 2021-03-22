@@ -1478,6 +1478,8 @@ crt_rpc_common_hdlr(struct crt_rpc_priv *rpc_priv)
 					 crt_ctx->cc_rpc_cb_arg);
 	} else {
 		rpc_priv->crp_opc_info->coi_rpc_cb(&rpc_priv->crp_pub);
+		if (rpc_priv->crp_srv)
+			RPC_DECREF(rpc_priv);
 	}
 
 out:
