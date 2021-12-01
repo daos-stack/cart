@@ -63,9 +63,11 @@ if (!env.CHANGE_ID &&
 pipeline {
     agent { label 'lightweight' }
 
+    /* we don't need timed runs of this any more
     triggers {
         cron(env.BRANCH_NAME == 'master' ? '0 0 * * *' : '')
     }
+    */
 
     environment {
         GITHUB_USER = credentials('daos-jenkins-review-posting')
@@ -85,6 +87,7 @@ pipeline {
     options {
         // preserve stashes so that jobs can be started at the test stage
         preserveStashes(buildCount: 5)
+        buildDiscarder(logRotator(artifactDaysToKeepStr: '100', daysToKeepStr: '365'))
     }
 
     stages {
