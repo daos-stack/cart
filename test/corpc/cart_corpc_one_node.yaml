@@ -39,3 +39,9 @@ tests: !mux
     srv_arg: "-e tests/no_pmix_corpc_errors"
     srv_env: ""
     srv_ppn: "8"
+  ghost_rank:
+    name: rpc_to_ghost_rank
+    srv_bin: ../bin/crt_launch
+    srv_arg: "-e tests/test_rpc_to_ghost_rank --name service_group -c 2"
+    srv_env: "-x CRT_TIMEOUT=15"
+    srv_ppn: "2"
