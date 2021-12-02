@@ -211,6 +211,7 @@ struct crt_proto_rpc_format {
 	struct crt_req_format	*prf_req_fmt;
 	/** the RPC hander on the server side */
 	crt_rpc_cb_t		 prf_hdlr;
+	crt_rpc_cb_t		 prf_enq;
 	/** aggregation function for co-rpc */
 	struct crt_corpc_ops	*prf_co_ops;
 	/**

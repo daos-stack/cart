@@ -247,7 +247,7 @@ out:
 static int
 crt_opc_reg(struct crt_opc_info *opc_info, crt_opcode_t opc, uint32_t flags,
 	    struct crt_req_format *crf, crt_rpc_cb_t rpc_cb,
-	    struct crt_corpc_ops *co_ops)
+	    crt_rpc_cb_t rpc_enq, struct crt_corpc_ops *co_ops)
 {
 	size_t	size_in  = 0;
 	size_t	size_out = 0;
@@ -262,6 +262,7 @@ crt_opc_reg(struct crt_opc_info *opc_info, crt_opcode_t opc, uint32_t flags,
 	opc_info->coi_opc = opc;
 	opc_info->coi_crf = crf;
 	opc_info->coi_proc_init = 1;
+	opc_info->coi_rpc_enq = rpc_enq;
 	if (rpc_cb != NULL) {
 		opc_info->coi_rpc_cb = rpc_cb;
 		opc_info->coi_rpccb_init = 1;
@@ -327,7 +328,7 @@ crt_opc_reg_internal(struct crt_opc_info *opc_info, crt_opcode_t opc,
 
 reg_opc:
 	rc = crt_opc_reg(opc_info, opc, prf->prf_flags, crf, prf->prf_hdlr,
-			 prf->prf_co_ops);
+			 prf->prf_enq, prf->prf_co_ops);
 	if (rc != 0)
 		D_ERROR("rpc (opc: %#x) register failed, rc: %d.\n", opc, rc);
 
