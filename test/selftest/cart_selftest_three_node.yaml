@@ -2,10 +2,10 @@
 # required quantity is indicated by the placeholders
 
 defaultENV:
-  #!filter-only : /run/env_CRT_CTX_SHARE_ADDR/no_sep
+  !filter-only : /run/env_CRT_CTX_SHARE_ADDR/no_sep
   #!filter-only : /run/tests/self_np
   D_LOG_MASK: "WARN"
-  CRT_PHY_ADDR_STR: "ofi+sockets"
+  CRT_PHY_ADDR_STR: "ofi+verbs"
   OFI_INTERFACE: "eth0"
   srv_CRT_CTX_NUM: "16"
   cli1_CRT_CTX_NUM: "16"
